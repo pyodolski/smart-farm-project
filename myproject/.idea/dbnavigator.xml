@@ -33,7 +33,7 @@
           <description value="" />
           <database-type value="MYSQL" />
           <config-type value="BASIC" />
-          <database-version value="9999.0" />
+          <database-version value="9.2" />
           <driver-source value="BUNDLED" />
           <driver-library value="" />
           <driver value="" />
@@ -48,7 +48,7 @@
           <token-type value="" />
           <token-config-file value="" />
           <token-profile value="" />
-          <session-user value="" />
+          <session-user value="root@localhost" />
         </database>
         <properties>
           <auto-commit value="false" />

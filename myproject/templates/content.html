@@ -31,6 +31,14 @@
 
         <hr>
 
+        <!-- 글 수정 및 삭제 버튼 -->
+        {% if username == data.name %}
+            <p>
+                <a href="/post/edit/{{ data.id }}">✏️ 수정</a> |
+                <a href="/post/delete/{{ data.id }}" onclick="return confirm('정말 삭제하시겠습니까?');">🗑️ 삭제</a>
+            </p>
+        {% endif %}
+
         <!-- 💬 댓글 영역 -->
         <h3>💬 댓글</h3>
         {% if comments %}
