@@ -38,7 +38,7 @@ def add_farm():
 @farm_bp.route('/farm/<int:farm_id>', endpoint='farm_detail')
 def farm_detail(farm_id):
     #로그인 상태 확인
-    user = session.get('name')
+    user = session.get('user_id')
     if not user:
         return redirect(url_for('login'))
 
