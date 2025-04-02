@@ -15,7 +15,9 @@ def add_farm():
         name = request.form['name']
         area = request.form['area']
         location = request.form['location']
-        owner = request.form['owner'] #추후 교체 필요 (직접입력 -> 로그인되어있는 유저로 자동 입력)
+        #owner = request.form['owner'] #추후 교체 필요 (직접입력 -> 로그인되어있는 유저로 자동 입력)
+        owner = session.get('name')
+
 
         if not owner:
             return '로그인 후 이용해주세요.', 403
@@ -36,7 +38,7 @@ def add_farm():
 @farm_bp.route('/farm/<int:farm_id>', endpoint='farm_detail')
 def farm_detail(farm_id):
     #로그인 상태 확인
-    user = session.get('username')
+    user = session.get('name')
     if not user:
         return redirect(url_for('login'))
 
@@ -57,7 +59,7 @@ def farm_detail(farm_id):
 #농장 페이지 -> 농장 수정
 @farm_bp.route('/farm/<int:farm_id>/edit', methods=['GET', 'POST'])
 def edit_farm(farm_id):
-    username = session.get('username')
+    username = session.get('name')
     if not username:
         return redirect(url_for('login'))
 
@@ -93,7 +95,7 @@ def edit_farm(farm_id):
 #농장 페이지 -> 농장 삭제
 @farm_bp.route('/farm/<int:farm_id>/delete', methods=['POST'])
 def delete_farm(farm_id):
-    username = session.get('username')
+    username = session.get('name')
     if not username:
         return redirect(url_for('login'))
 
