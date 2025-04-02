@@ -1,352 +1,196 @@
-from flask import Flask, render_template, session, url_for, request, redirect
 import pymysql
-
+from flask import Flask, render_template, request, redirect, session, url_for, flash
+from routes.farm import farm_bp
+from config import DB_CONFIG
+from routes.post import post_bp
 app = Flask(__name__)
-app.secret_key = 'sample_secret'  # 세션 암호화를 위한 시크릿 키
+app.register_blueprint(farm_bp)
+app.register_blueprint(post_bp)
 
-# MySQL 연결 함수
-def connectsql():
-    conn = pymysql.connect(
-        host='localhost',
-        user='root',
-        passwd='comep1522w',
-        db='smartfarm',
-        charset='utf8'
-    )
-    return conn
+def get_db_connection():
+    try:
+        return pymysql.connect(**DB_CONFIG)
+    except pymysql.MySQLError as e:
+        print(f"DB 연결 실패: {e}")
+        return None
 
-# 메인 페이지 - 로그인 여부에 따라 분기
 @app.route('/')
-def index():
-    username = session.get('username')
-    return render_template('index.html', logininfo=username)
+def home():
+    username = session.get('user_id')  #로그인한 유저 이름
 
-# 게시판 목록 화면
-@app.route('/post')
-def post():
-    username = session.get('username')
-    sort = request.args.get('sort', 'new')  # 정렬 기준 (new 또는 popular)
-    keyword = request.args.get('search', '')  # 검색 키워드
+    farms = []
 
-    # 정렬 조건 구성
-    order_query = "ORDER BY likes DESC, b.id DESC" if sort == 'popular' else "ORDER BY b.id DESC"
+    if username:
+        conn = get_db_connection()
+        cur = conn.cursor(pymysql.cursors.DictCursor)
+        sql = "SELECT * FROM farms WHERE owner_username = %s"
+        cur.execute(sql, (username,))
+        farms = cur.fetchall()
+        conn.close()
 
-    conn = connectsql()
-    cursor = conn.cursor(pymysql.cursors.DictCursor)
+    return render_template('my_farms.html', farms=farms)
 
-    # 검색 조건 구성
-    if keyword:
-        search_condition = "WHERE b.title LIKE %s OR b.content LIKE %s"
-        search_values = (f"%{keyword}%", f"%{keyword}%")
-    else:
-        search_condition = ""
-        search_values = ()
+#임시(로그인/회원가입) --------------------------------------------------------------------
+app.secret_key = 'your_secret_key'  # 세션에 필요한 비밀키 (랜덤한 문자열)
 
-    # 게시글 목록 쿼리
-    query = f"""
-    SELECT 
-        b.id, 
-        b.name, 
-        b.title, 
-        b.wdate, 
-        b.view,
-        (SELECT COUNT(*) FROM likes WHERE board_id = b.id) AS likes
-    FROM board AS b
-    {search_condition}
-    {order_query}
-    """
-    cursor.execute(query, search_values)
-    post_list = cursor.fetchall()
-    cursor.close()
-    conn.close()
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        # username = request.form['username']
+        # password = request.form['password']
+        user_id = request.form.get('id')
+        password = request.form.get('password')
 
-    return render_template('post.html', postlist=post_list, logininfo=username, current_sort=sort, current_search=keyword)
+        if not user_id or not password:
+            flash("모든 필드를 입력해주세요.")
+            return redirect(url_for('login'))
 
-# 게시글 상세 페이지
-@app.route('/post/content/<id>')
-def content(id):
-    if 'username' not in session:
-        return render_template('Error.html')
+        # conn = get_db_connection()
+        # cur = conn.cursor()
+        # sql = 'SELECT * FROM users WHERE username=%s AND password=%s'
+        # cur.execute(sql, (username, password))
+        # user = cur.fetchone()
+        # conn.close()
+        conn = get_db_connection()
+        if conn:
+            try:
+                with conn.cursor() as cursor:
+                    cursor.execute("SELECT * FROM users WHERE id = %s AND password = %s", (user_id, password))
+                    user = cursor.fetchone()
+                    if user:
+                        session['user_id'] = user_id
+                        #session['name'] = 
+                        flash("로그인 성공!")
+                        return redirect(url_for('home'))
+                    else:
+                        flash("아이디 또는 비밀번호가 일치하지 않습니다.")
+                        return redirect(url_for('login'))
+            finally:
+                conn.close()
+        else:
+            flash("DB 연결 실패")
+            return redirect(url_for('login'))
+    return render_template('login.html')
 
-    username = session['username']
+    #     if user:
+    #         session['username'] = username
+    #         return redirect(url_for('home'))
+    #     else:
+    #         return '로그인 실패'
+    # return render_template('login.html')
 
-    # 조회수 증가
-    conn = connectsql()
-    cursor = conn.cursor()
-    cursor.execute("UPDATE board SET view = view + 1 WHERE id = %s", (id,))
-    conn.commit()
-    cursor.close()
-    conn.close()
+@app.route('/logout')
+def logout():
+    session.pop('user_id', None)
+    flash("로그아웃 되었습니다.")
+    return redirect(url_for('home'))
 
-    # 게시글, 좋아요 수, 댓글 가져오기
-    conn = connectsql()
-    cursor = conn.cursor(pymysql.cursors.DictCursor)
-    cursor.execute("SELECT id, title, content, name FROM board WHERE id = %s", (id,))
-    content = cursor.fetchone()
-    cursor.execute("SELECT COUNT(*) AS cnt FROM likes WHERE board_id = %s", (id,))
-    like_count = cursor.fetchone()['cnt']
-    cursor.execute("SELECT id, commenter, content, cdate FROM comments WHERE board_id = %s ORDER BY cdate DESC", (id,))
-    comments = cursor.fetchall()
-    cursor.close()
-    conn.close()
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        # username = request.form['username']
+        # password = request.form['password']
+        user_id = request.form.get('id')
+        password = request.form.get('password')
+        password_confirm = request.form.get('password_confirm')
+        nickname = request.form.get('nickname')
+        email = request.form.get('email')
+        name = request.form.get('name')
+        
+        if not (user_id and password and password_confirm and nickname and email and name):
+            flash("모든 필드를 입력해주세요.")
+            return redirect(url_for('register'))
 
-    return render_template('content.html', data=content, username=username, like_count=like_count, comments=comments)
+        if password != password_confirm:
+            flash("비밀번호가 일치하지 않습니다.")
+            return redirect(url_for('register'))
 
-# 게시글 좋아요 기능
-@app.route('/like/<id>')
-def like(id):
-    if 'username' not in session:
-        return redirect(url_for('login'))
+        # try:
+        #     conn = get_db_connection()
+        #     cur = conn.cursor()
+        #     sql = 'INSERT INTO users (username, password) VALUES (%s, %s)'
+        #     cur.execute(sql, (username, password))
+        #     conn.commit()
+        #     conn.close()
+        #     return '회원가입 성공!'
+        # except pymysql.err.IntegrityError:
+        #     return '이미 존재하는 아이디입니다.'
+        # except Exception as e:
+        #     return f'에러 발생: {str(e)}'
+        conn = get_db_connection()
+        if conn:
+            try:
+                with conn.cursor() as cursor:
+                    cursor.execute("SELECT * FROM users WHERE id = %s OR nickname = %s OR email = %s", (user_id, nickname, email))
+                    if cursor.fetchone():
+                        flash("이미 등록된 아이디, 닉네임 또는 이메일입니다.")
+                        return redirect(url_for('register'))
 
-    username = session['username']
-    conn = connectsql()
-    cursor = conn.cursor()
+                    cursor.execute("""
+                        INSERT INTO users (id, password, nickname, email, name, is_black)
+                        VALUES (%s, %s, %s, %s, %s, %s)
+                    """, (user_id, password, nickname, email, name, False))
+                    conn.commit()
+                    flash("회원가입에 성공했습니다!")
+                    return redirect(url_for('login'))
+            finally:
+                conn.close()
+        else:
+            flash("DB 연결 실패")
+            return redirect(url_for('register'))
 
-    # 중복 좋아요 확인 및 등록
-    cursor.execute("SELECT * FROM likes WHERE board_id = %s AND user_name = %s", (id, username))
-    if not cursor.fetchone():
-        cursor.execute("INSERT INTO likes (board_id, user_name) VALUES (%s, %s)", (id, username))
-        conn.commit()
+    return render_template('register.html')
 
-    cursor.close()
-    conn.close()
-    return redirect(url_for('content', id=id))
 
-# 게시글 수정
-@app.route('/post/edit/<id>', methods=['GET', 'POST'])
-def edit(id):
-    if 'username' not in session:
-        return render_template('Error.html')
-
-    username = session['username']
+#정보 수정
+@app.route('/edit', methods=['GET', 'POST'])
+def edit_profile():
+    user_id = session['user_id']
+    conn = get_db_connection()
 
     if request.method == 'POST':
-        edittitle = request.form['title']
-        editcontent = request.form['content']
+        new_nickname = request.form.get('nickname')
+        new_email = request.form.get('email')
+        new_name = request.form.get('name')
+        current_password = request.form.get('current_password')
 
-        conn = connectsql()
-        cursor = conn.cursor()
-        cursor.execute("UPDATE board SET title = %s, content = %s WHERE id = %s", (edittitle, editcontent, id))
-        conn.commit()
-        cursor.close()
-        conn.close()
-        return render_template('editSuccess.html')
+        if conn:
+            try:
+                with conn.cursor() as cursor:
+                    cursor.execute("SELECT password FROM users WHERE id = %s", (user_id,))
+                    user = cursor.fetchone()
+                    if not user or user[0] != current_password:
+                        flash("현재 비밀번호가 일치하지 않습니다.")
+                        return render_template('edit.html', nickname=new_nickname, email=new_email, name=new_name)
 
-    else:
-        conn = connectsql()
-        cursor = conn.cursor(pymysql.cursors.DictCursor)
-        cursor.execute("SELECT id, title, content, name FROM board WHERE id = %s", (id,))
-        postdata = cursor.fetchone()
-        cursor.close()
-        conn.close()
-
-        if postdata and postdata['name'] == username:
-            return render_template('edit.html', data=postdata, logininfo=username)
-        else:
-            return render_template('editError.html')
-
-# 게시글 삭제
-@app.route('/post/delete/<id>', methods=['GET', 'POST'])
-def delete(id):
-    if 'username' not in session:
-        return render_template('Error.html')
-
-    username = session['username']
-
-    if request.method == 'POST':
-        conn = connectsql()
-        cursor = conn.cursor()
-        cursor.execute("DELETE FROM board WHERE id = %s", (id,))
-        conn.commit()
-        cursor.close()
-        conn.close()
-        return render_template('deleteSuccess.html')
-    else:
-        conn = connectsql()
-        cursor = conn.cursor(pymysql.cursors.DictCursor)
-        cursor.execute("SELECT name FROM board WHERE id = %s", (id,))
-        result = cursor.fetchone()
-        cursor.close()
-        conn.close()
-
-        if result and result['name'] == username:
-            return render_template('delete.html', id=id)
-        else:
-            return render_template('editError.html')
-
-# 게시글 삭제 성공 처리
-@app.route('/post/delete/success/<id>')
-def deletesuccess(id):
-    if 'username' not in session:
-        return render_template('Error.html')
-
-    username = session['username']
-    conn = connectsql()
-    cursor = conn.cursor(pymysql.cursors.DictCursor)
-    cursor.execute("SELECT name FROM board WHERE id = %s", (id,))
-    result = cursor.fetchone()
-
-    if result and result['name'] == username:
-        cursor.execute("DELETE FROM board WHERE id = %s", (id,))
-        conn.commit()
-        cursor.close()
-        conn.close()
-        return render_template('deleteSuccess.html')
-    else:
-        cursor.close()
-        conn.close()
-        return render_template('editError.html')
-
-# 게시글 작성
-@app.route('/write', methods=['GET', 'POST'])
-def write():
-    if 'username' not in session:
-        return render_template('Error.html')
-
-    username = session['username']
-
-    if request.method == 'POST':
-        usertitle = request.form['title']
-        usercontent = request.form['content']
-
-        conn = connectsql()
-        cursor = conn.cursor()
-        cursor.execute("INSERT INTO board (name, title, content) VALUES (%s, %s, %s)", (username, usertitle, usercontent))
-        conn.commit()
-        cursor.close()
-        conn.close()
-        return redirect(url_for('post'))
-
-    return render_template('write.html', logininfo=username)
-
-# 댓글 작성
-@app.route('/comment/<post_id>', methods=['POST'])
-def comment(post_id):
-    if 'username' not in session:
-        return render_template('Error.html')
-
-    commenter = session['username']
-    content = request.form['content']
-
-    conn = connectsql()
-    cursor = conn.cursor()
-    cursor.execute("INSERT INTO comments (board_id, commenter, content) VALUES (%s, %s, %s)", (post_id, commenter, content))
-    conn.commit()
-    cursor.close()
-    conn.close()
-    return redirect(url_for('content', id=post_id))
-
-# 댓글 삭제
-@app.route('/comment/delete/<comment_id>/<post_id>')
-def delete_comment(comment_id, post_id):
-    if 'username' not in session:
-        return render_template('Error.html')
-
-    username = session['username']
-    conn = connectsql()
-    cursor = conn.cursor(pymysql.cursors.DictCursor)
-
-    cursor.execute("SELECT commenter FROM comments WHERE id = %s", (comment_id,))
-    result = cursor.fetchone()
-
-    if result and result['commenter'] == username:
-        cursor.execute("DELETE FROM comments WHERE id = %s", (comment_id,))
-        conn.commit()
-
-    cursor.close()
-    conn.close()
-    return redirect(url_for('content', id=post_id))
-
-# 댓글 수정
-@app.route('/comment/edit/<int:comment_id>', methods=['GET', 'POST'])
-def edit_comment(comment_id):
-    if 'username' not in session:
-        return render_template('Error.html')
-
-    username = session['username']
-    conn = connectsql()
-    cursor = conn.cursor(pymysql.cursors.DictCursor)
-
-    if request.method == 'POST':
-        new_content = request.form['content']
-        cursor.execute("SELECT board_id FROM comments WHERE id = %s AND commenter = %s", (comment_id, username))
-        result = cursor.fetchone()
-
-        if result:
-            cursor.execute("UPDATE comments SET content = %s WHERE id = %s AND commenter = %s", (new_content, comment_id, username))
-            conn.commit()
-            board_id = result['board_id']
-            cursor.close()
-            conn.close()
-            return redirect(url_for('content', id=board_id))
-        else:
-            cursor.close()
-            conn.close()
-            return render_template('editError.html')
+                    update_query = """
+                        UPDATE users
+                        SET nickname = %s, email = %s, name = %s
+                        WHERE id = %s
+                    """
+                    cursor.execute(update_query, (new_nickname, new_email, new_name, user_id))
+                    conn.commit()
+                    flash("정보가 성공적으로 수정되었습니다.")
+                    return redirect(url_for('edit_profile'))
+            finally:
+                conn.close()
 
     else:
-        cursor.execute("SELECT * FROM comments WHERE id = %s", (comment_id,))
-        comment = cursor.fetchone()
-        cursor.close()
-        conn.close()
+        if conn:
+            try:
+                with conn.cursor() as cursor:
+                    cursor.execute("SELECT nickname, email, name FROM users WHERE id = %s", (user_id,))
+                    user = cursor.fetchone()
+                    if user:
+                        return render_template('edit.html', nickname=user[0], email=user[1], name=user[2])
+                    else:
+                        flash("사용자 정보를 찾을 수 없습니다.")
+                        return redirect(url_for('index'))
+            finally:
+                conn.close()
 
-        if comment and comment['commenter'] == username:
-            return render_template('editComment.html', comment=comment)
-        else:
-            return render_template('editError.html')
 
-# # 로그아웃
-# @app.route('/logout')
-# def logout():
-#     session.pop('username', None)
-#     return redirect(url_for('index'))
 
-# # 로그인
-# @app.route('/login', methods=['GET', 'POST'])
-# def login():
-#     if request.method == 'POST':
-#         userid = request.form['id']
-#         userpw = request.form['pw']
-
-#         conn = connectsql()
-#         cursor = conn.cursor()
-#         cursor.execute("SELECT * FROM user WHERE user_name = %s AND user_password = %s", (userid, userpw))
-#         user = cursor.fetchone()
-#         cursor.close()
-#         conn.close()
-
-#         if user:
-#             session['username'] = userid
-#             return redirect(url_for('post'))
-#         else:
-#             return render_template('loginError.html')
-#     else:
-#         return render_template('login.html')
-
-# # 회원가입
-# @app.route('/regist', methods=['GET', 'POST'])
-# def regist():
-#     if request.method == 'POST':
-#         userid = request.form['id']
-#         userpw = request.form['pw']
-
-#         conn = connectsql()
-#         cursor = conn.cursor()
-#         cursor.execute("SELECT * FROM user WHERE user_name = %s", (userid,))
-#         existing = cursor.fetchone()
-
-#         if existing:
-#             cursor.close()
-#             conn.close()
-#             return render_template('registError.html')
-#         else:
-#             cursor.execute("INSERT INTO user (user_name, user_password) VALUES (%s, %s)", (userid, userpw))
-#             conn.commit()
-#             cursor.close()
-#             conn.close()
-#             return render_template('registSuccess.html')
-#     else:
-#         return render_template('regist.html')
 
 if __name__ == '__main__':
     app.run(debug=True)
