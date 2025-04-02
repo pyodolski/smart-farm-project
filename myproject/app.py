@@ -295,58 +295,58 @@ def edit_comment(comment_id):
         else:
             return render_template('editError.html')
 
-# 로그아웃
-@app.route('/logout')
-def logout():
-    session.pop('username', None)
-    return redirect(url_for('index'))
+# # 로그아웃
+# @app.route('/logout')
+# def logout():
+#     session.pop('username', None)
+#     return redirect(url_for('index'))
 
-# 로그인
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if request.method == 'POST':
-        userid = request.form['id']
-        userpw = request.form['pw']
+# # 로그인
+# @app.route('/login', methods=['GET', 'POST'])
+# def login():
+#     if request.method == 'POST':
+#         userid = request.form['id']
+#         userpw = request.form['pw']
 
-        conn = connectsql()
-        cursor = conn.cursor()
-        cursor.execute("SELECT * FROM user WHERE user_name = %s AND user_password = %s", (userid, userpw))
-        user = cursor.fetchone()
-        cursor.close()
-        conn.close()
+#         conn = connectsql()
+#         cursor = conn.cursor()
+#         cursor.execute("SELECT * FROM user WHERE user_name = %s AND user_password = %s", (userid, userpw))
+#         user = cursor.fetchone()
+#         cursor.close()
+#         conn.close()
 
-        if user:
-            session['username'] = userid
-            return redirect(url_for('post'))
-        else:
-            return render_template('loginError.html')
-    else:
-        return render_template('login.html')
+#         if user:
+#             session['username'] = userid
+#             return redirect(url_for('post'))
+#         else:
+#             return render_template('loginError.html')
+#     else:
+#         return render_template('login.html')
 
-# 회원가입
-@app.route('/regist', methods=['GET', 'POST'])
-def regist():
-    if request.method == 'POST':
-        userid = request.form['id']
-        userpw = request.form['pw']
+# # 회원가입
+# @app.route('/regist', methods=['GET', 'POST'])
+# def regist():
+#     if request.method == 'POST':
+#         userid = request.form['id']
+#         userpw = request.form['pw']
 
-        conn = connectsql()
-        cursor = conn.cursor()
-        cursor.execute("SELECT * FROM user WHERE user_name = %s", (userid,))
-        existing = cursor.fetchone()
+#         conn = connectsql()
+#         cursor = conn.cursor()
+#         cursor.execute("SELECT * FROM user WHERE user_name = %s", (userid,))
+#         existing = cursor.fetchone()
 
-        if existing:
-            cursor.close()
-            conn.close()
-            return render_template('registError.html')
-        else:
-            cursor.execute("INSERT INTO user (user_name, user_password) VALUES (%s, %s)", (userid, userpw))
-            conn.commit()
-            cursor.close()
-            conn.close()
-            return render_template('registSuccess.html')
-    else:
-        return render_template('regist.html')
+#         if existing:
+#             cursor.close()
+#             conn.close()
+#             return render_template('registError.html')
+#         else:
+#             cursor.execute("INSERT INTO user (user_name, user_password) VALUES (%s, %s)", (userid, userpw))
+#             conn.commit()
+#             cursor.close()
+#             conn.close()
+#             return render_template('registSuccess.html')
+#     else:
+#         return render_template('regist.html')
 
 if __name__ == '__main__':
     app.run(debug=True)
