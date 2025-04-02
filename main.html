@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>Main Page</title>
+    <style>
+        /* 페이지 전체를 중앙 정렬 */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f7f7f7;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+        /* 중앙 박스 스타일 */
+        .container {
+            width: 400px;
+            background: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .btn {
+            margin-top: 20px;
+            padding: 10px;
+            border: none;
+            border-radius: 4px;
+            background-color: #bfd27a;
+            color: #000;
+            font-size: 16px;
+            text-decoration: none;
+            display: inline-block;
+            width: 100%;
+            max-width: 350px;
+        }
+        .btn:hover {
+            background-color: #bfd27a;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Main Page</h1>
+
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+          <ul>
+            {% for message in messages %}
+              <li style="color:red;">{{ message }}</li>
+            {% endfor %}
+          </ul>
+        {% endif %}
+      {% endwith %}
+  
+      {% if 'user_id' in session %}
+          <p><strong>{{ session['user_id'] }}</strong>님 환영합니다!</p>
+          <a class="btn" href="{{ url_for('logout') }}">Logout</a>
+          <a class="btn" href="{{ url_for('edit_profile') }}">정보 수정</a>
+      {% else %}
+          <a class="btn" href="{{ url_for('login') }}">Login</a>
+          <a class="btn" href="{{ url_for('signup') }}">Sign Up</a>
+      {% endif %}
+    </div>
+</body>
+</html>
