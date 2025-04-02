@@ -1,7 +1,7 @@
 DB_CONFIG = {
     'host': 'localhost',
     'user': 'root',
-    'password': '1234',
+    'password': 'Gyfls0203@',
     'database': 'flask_login',
     'charset': 'utf8mb4'
 }

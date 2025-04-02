@@ -58,8 +58,8 @@
   <div class="navbar">
     <div class="title">스마트팜 허브</div>
     <div class="auth-buttons">
-      {% if session.username %}
-        <span>{{ session.username }}님</span>
+      {% if session.user_id %}
+        <span>{{ session.user_id }}님</span>
         <a href="{{ url_for('logout') }}">로그아웃</a>
       {% else %}
         <a href="{{ url_for('login') }}">로그인</a>

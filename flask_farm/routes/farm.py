@@ -16,7 +16,7 @@ def add_farm():
         area = request.form['area']
         location = request.form['location']
         #owner = request.form['owner'] #추후 교체 필요 (직접입력 -> 로그인되어있는 유저로 자동 입력)
-        owner = session.get('name')
+        owner = session.get('user_id')
 
 
         if not owner:

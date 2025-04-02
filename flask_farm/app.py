@@ -7,11 +7,15 @@ app = Flask(__name__)
 app.register_blueprint(farm_bp)
 
 def get_db_connection():
-    return pymysql.connect(**DB_CONFIG)
+    try:
+        return pymysql.connect(**DB_CONFIG)
+    except pymysql.MySQLError as e:
+        print(f"DB 연결 실패: {e}")
+        return None
 
 @app.route('/')
 def home():
-    username = session.get('name')  #로그인한 유저 이름
+    username = session.get('user_id')  #로그인한 유저 이름
 
     farms = []
 
@@ -54,8 +58,9 @@ def login():
                     user = cursor.fetchone()
                     if user:
                         session['user_id'] = user_id
+                        #session['name'] = 
                         flash("로그인 성공!")
-                        return redirect(url_for('index'))
+                        return redirect(url_for('home'))
                     else:
                         flash("아이디 또는 비밀번호가 일치하지 않습니다.")
                         return redirect(url_for('login'))
