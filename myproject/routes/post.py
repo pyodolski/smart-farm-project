@@ -51,10 +51,10 @@ def post():
 # 게시글 상세 페이지
 @post_bp.route('/post/content/<id>')
 def content(id):
-    if 'username' not in session:
+    if 'user_id' not in session:
         return render_template('Error.html')
 
-    username = session['username']
+    username = session['user_id']
 
     # 조회수 증가
     conn = get_db_conn()
@@ -81,10 +81,10 @@ def content(id):
 # 게시글 좋아요 기능
 @post_bp.route('/like/<id>')
 def like(id):
-    if 'username' not in session:
+    if 'user_id' not in session:
         return redirect(url_for('login'))
 
-    username = session['username']
+    username = session['user_id']
     conn = get_db_conn()
     cursor = conn.cursor()
 
@@ -96,15 +96,15 @@ def like(id):
 
     cursor.close()
     conn.close()
-    return redirect(url_for('content', id=id))
+    return redirect(url_for('post.content', id=id))
 
 # 게시글 수정
 @post_bp.route('/post/edit/<id>', methods=['GET', 'POST'])
 def edit(id):
-    if 'username' not in session:
+    if 'user_id' not in session:
         return render_template('Error.html')
 
-    username = session['username']
+    username = session['user_id']
 
     if request.method == 'POST':
         edittitle = request.form['title']
@@ -134,10 +134,10 @@ def edit(id):
 # 게시글 삭제
 @post_bp.route('/post/delete/<id>', methods=['GET', 'POST'])
 def delete(id):
-    if 'username' not in session:
+    if 'user_id' not in session:
         return render_template('Error.html')
 
-    username = session['username']
+    username = session['user_id']
 
     if request.method == 'POST':
         conn = get_db_conn()
@@ -163,10 +163,10 @@ def delete(id):
 # 게시글 삭제 성공 처리
 @post_bp.route('/post/delete/success/<id>')
 def deletesuccess(id):
-    if 'username' not in session:
+    if 'user_id' not in session:
         return render_template('Error.html')
 
-    username = session['username']
+    username = session['user_id']
     conn = get_db_conn()
     cursor = conn.cursor(pymysql.cursors.DictCursor)
     cursor.execute("SELECT name FROM board WHERE id = %s", (id,))
@@ -186,10 +186,10 @@ def deletesuccess(id):
 # 게시글 작성
 @post_bp.route('/write', methods=['GET', 'POST'])
 def write():
-    if 'username' not in session:
+    if 'user_id' not in session:
         return render_template('Error.html')
 
-    username = session['username']
+    username = session['user_id']
 
     if request.method == 'POST':
         usertitle = request.form['title']
@@ -201,17 +201,17 @@ def write():
         conn.commit()
         cursor.close()
         conn.close()
-        return redirect(url_for('post'))
+        return redirect(url_for('post.post'))
 
     return render_template('write.html', logininfo=username)
 
 # 댓글 작성
 @post_bp.route('/comment/<post_id>', methods=['POST'])
 def comment(post_id):
-    if 'username' not in session:
+    if 'user_id' not in session:
         return render_template('Error.html')
 
-    commenter = session['username']
+    commenter = session['user_id']
     content = request.form['content']
 
     conn = get_db_conn()
@@ -220,15 +220,15 @@ def comment(post_id):
     conn.commit()
     cursor.close()
     conn.close()
-    return redirect(url_for('content', id=post_id))
+    return redirect(url_for('post.content', id=post_id))
 
 # 댓글 삭제
 @post_bp.route('/comment/delete/<comment_id>/<post_id>')
 def delete_comment(comment_id, post_id):
-    if 'username' not in session:
+    if 'user_id' not in session:
         return render_template('Error.html')
 
-    username = session['username']
+    username = session['user_id']
     conn = get_db_conn()
     cursor = conn.cursor(pymysql.cursors.DictCursor)
 
@@ -241,15 +241,15 @@ def delete_comment(comment_id, post_id):
 
     cursor.close()
     conn.close()
-    return redirect(url_for('content', id=post_id))
+    return redirect(url_for('post.content', id=post_id))
 
 # 댓글 수정
 @post_bp.route('/comment/edit/<int:comment_id>', methods=['GET', 'POST'])
 def edit_comment(comment_id):
-    if 'username' not in session:
+    if 'user_id' not in session:
         return render_template('Error.html')
 
-    username = session['username']
+    username = session['user_id']
     conn = get_db_conn()
     cursor = conn.cursor(pymysql.cursors.DictCursor)
 
@@ -264,7 +264,7 @@ def edit_comment(comment_id):
             board_id = result['board_id']
             cursor.close()
             conn.close()
-            return redirect(url_for('content', id=board_id))
+            return redirect(url_for('post.content', id=board_id))
         else:
             cursor.close()
             conn.close()
