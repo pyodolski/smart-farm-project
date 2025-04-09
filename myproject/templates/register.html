@@ -82,14 +82,23 @@
             <label for="password">비밀번호 확인:</label>
             <input type="password" id="password_confirm" name="password_confirm" required>
 
+            <label for="name">이름:</label>
+            <input type="text" id="name" name="name" required>
+
             <label for="nickname">닉네임:</label>
             <input type="text" id="nickname" name="nickname" required>
 
-            <label for="email">이메일 (또는 휴대폰):</label>
-            <input type="email" id="email" name="email" required>
+            <label for="email">이메일:</label>
+            <input type="email" id="email" name="email" required style="flex: 1;">
+            <button type="button" onclick="sendCode()">인증</button>
 
-            <label for="name">이름:</label>
-            <input type="text" id="name" name="name" required>
+<!-- 인증번호 입력칸 (처음엔 안 보임) -->
+            <div id="code-section" style="display: none; margin-top: 15px;">
+                <input type="text" id="verify-code" placeholder="인증번호 입력" style="width: 100%; max-width: 350px;">
+                <button type="button" onclick="checkCode()">확인</button>
+                <p id="verify-msg" style="color: green; margin-top: 5px;"></p>
+            </div>
+
 
             <button type="submit">Sign up</button>
         </form>
@@ -104,5 +113,51 @@
           {% endif %}
         {% endwith %}
     </div>
+    <script>
+        function sendCode() {
+            const email = document.getElementById('email').value;
+            if (!email) {
+                alert('이메일을 입력해주세요.');
+                return;
+            }
+        
+            fetch('/send_code', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email })
+            })
+            .then(res => res.json())
+            .then(data => {
+                alert(data.message);
+                document.getElementById('code-section').style.display = 'block';
+            })
+            .catch(err => {
+                alert('이메일 전송 실패');
+                console.error(err);
+            });
+        }
+        
+        function checkCode() {
+            const code = document.getElementById('verify-code').value;
+            fetch('/check_code', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ code })
+            })
+            .then(res => res.json())
+            .then(data => {
+                const msg = document.getElementById('verify-msg');
+                if (data.verified) {
+                    msg.textContent = '✅ 인증 완료되었습니다!';
+                    msg.style.color = 'green';
+                    document.getElementById('email').readOnly = true;
+                } else {
+                    msg.textContent = '❌ 인증번호가 올바르지 않습니다.';
+                    msg.style.color = 'red';
+                }
+            });
+        }
+        </script>
+        
 </body>
 </html>

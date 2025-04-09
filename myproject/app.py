@@ -1,8 +1,13 @@
 import pymysql
-from flask import Flask, render_template, request, redirect, session, url_for, flash
+import random
+import smtplib
+from flask import Flask, render_template, request, redirect, session, url_for, flash, jsonify
 from routes.farm import farm_bp
 from config import DB_CONFIG
 from routes.post import post_bp
+from email.mime.text import MIMEText
+from email.header import Header
+
 app = Flask(__name__)
 app.register_blueprint(farm_bp)
 app.register_blueprint(post_bp)
@@ -30,14 +35,12 @@ def home():
 
     return render_template('my_farms.html', farms=farms)
 
-#임시(로그인/회원가입) --------------------------------------------------------------------
+#--------------------------------------------------------------------
 app.secret_key = 'your_secret_key'  # 세션에 필요한 비밀키 (랜덤한 문자열)
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        # username = request.form['username']
-        # password = request.form['password']
         user_id = request.form.get('id')
         password = request.form.get('password')
 
@@ -45,12 +48,6 @@ def login():
             flash("모든 필드를 입력해주세요.")
             return redirect(url_for('login'))
 
-        # conn = get_db_connection()
-        # cur = conn.cursor()
-        # sql = 'SELECT * FROM users WHERE username=%s AND password=%s'
-        # cur.execute(sql, (username, password))
-        # user = cur.fetchone()
-        # conn.close()
         conn = get_db_connection()
         if conn:
             try:
@@ -60,7 +57,7 @@ def login():
                     if user:
                         session['user_id'] = user_id
                         #session['name'] = 
-                        flash("로그인 성공!")
+                        
                         return redirect(url_for('home'))
                     else:
                         flash("아이디 또는 비밀번호가 일치하지 않습니다.")
@@ -72,24 +69,17 @@ def login():
             return redirect(url_for('login'))
     return render_template('login.html')
 
-    #     if user:
-    #         session['username'] = username
-    #         return redirect(url_for('home'))
-    #     else:
-    #         return '로그인 실패'
-    # return render_template('login.html')
-
+#로그아웃
 @app.route('/logout')
 def logout():
     session.pop('user_id', None)
-    flash("로그아웃 되었습니다.")
+    
     return redirect(url_for('home'))
 
+#회원가입
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
-        # username = request.form['username']
-        # password = request.form['password']
         user_id = request.form.get('id')
         password = request.form.get('password')
         password_confirm = request.form.get('password_confirm')
@@ -104,28 +94,19 @@ def register():
         if password != password_confirm:
             flash("비밀번호가 일치하지 않습니다.")
             return redirect(url_for('register'))
+        
+        if session.get('verify_email') != email or not session.get('email_verified'):
+            flash("이메일 인증이 필요합니다.")
+            return redirect(url_for('register'))
 
-        # try:
-        #     conn = get_db_connection()
-        #     cur = conn.cursor()
-        #     sql = 'INSERT INTO users (username, password) VALUES (%s, %s)'
-        #     cur.execute(sql, (username, password))
-        #     conn.commit()
-        #     conn.close()
-        #     return '회원가입 성공!'
-        # except pymysql.err.IntegrityError:
-        #     return '이미 존재하는 아이디입니다.'
-        # except Exception as e:
-        #     return f'에러 발생: {str(e)}'
         conn = get_db_connection()
         if conn:
             try:
                 with conn.cursor() as cursor:
-                    cursor.execute("SELECT * FROM users WHERE id = %s OR nickname = %s OR email = %s", (user_id, nickname, email))
+                    cursor.execute("SELECT * FROM users WHERE id = %s OR nickname = %s", (user_id, nickname))
                     if cursor.fetchone():
                         flash("이미 등록된 아이디, 닉네임 또는 이메일입니다.")
                         return redirect(url_for('register'))
-
                     cursor.execute("""
                         INSERT INTO users (id, password, nickname, email, name, is_black)
                         VALUES (%s, %s, %s, %s, %s, %s)
@@ -189,7 +170,46 @@ def edit_profile():
             finally:
                 conn.close()
 
+#이메일 전송
+@app.route('/send_code', methods=['POST'])
+def send_code():
+    data = request.get_json()
+    email = data.get('email')
 
+    code = str(random.randint(100000, 999999))
+    session['verify_email'] = email
+    session['verify_code'] = code
+    try:
+        msg = MIMEText(f'인증번호는 {code} 입니다.', _charset='utf-8')
+        msg['Subject'] = Header('이메일 인증번호', 'utf-8')
+        msg['From'] = '4642joung@yu.ac.kr'
+        msg['To'] = email
+
+        s = smtplib.SMTP_SSL('smtp.gmail.com', 465)
+        s.login('4642joung@yu.ac.kr', 'pqvk hxur beny bapi')
+        s.send_message(msg)
+        s.quit()
+
+        return jsonify({'status': 'ok', 'message': '인증번호 전송 완료'})
+    except Exception as e:
+        return jsonify({'message': f'메일 전송 실패: {str(e)}'}), 500
+
+#이메일 코드 일치/불일치 확인
+@app.route('/check_code', methods=['POST'])
+def check_code():
+    data = request.get_json()
+    input_code = data.get('code')
+
+    if not input_code:
+        return jsonify({'verified': False, 'message': '인증번호가 입력되지 않았습니다.'}), 400
+
+    stored_code = session.get('verify_code')
+
+    if input_code == stored_code:
+        session['email_verified'] = True
+        return jsonify({'verified': True, 'message': '인증 성공'})
+    else:
+        return jsonify({'verified': False, 'message': '인증번호가 일치하지 않습니다.'})
 
 
 if __name__ == '__main__':
