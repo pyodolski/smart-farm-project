@@ -7,7 +7,7 @@
 
     
 --------------------------------------------
-                오류 대치 
+                            오류 대처 
             
 npm error code ENOENT
 npm error syscall open
@@ -19,7 +19,8 @@ npm error path C:\Users\\package.json
 
 
 
-**react-router-dom 오류 발생시** npm install react-router-dom --save
+**react-router-dom 오류 발생시** 
+npm install react-router-dom --save
 
 
 
