@@ -80,6 +80,13 @@
 
             <button type="submit">Sign in</button>
         </form>
+        <hr>
+        <p>또는</p>
+        <a href="https://kauth.kakao.com/oauth/authorize?response_type=code&client_id=REST_API_KEY&redirect_uri=http://127.0.0.1:5000/oauth/kakao/callback">
+            <button style="background-color: #FEE500; color: #000; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">
+            카카오 로그인
+            </button>
+        </a>
 
         {% with messages = get_flashed_messages() %}
           {% if messages %}
