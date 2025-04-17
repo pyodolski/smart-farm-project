@@ -1,6 +1,7 @@
 import pymysql
 import random
 import smtplib
+import requests
 from flask import Flask, render_template, request, redirect, session, url_for, flash, jsonify
 from routes.farm import farm_bp
 from config import DB_CONFIG
@@ -210,6 +211,63 @@ def check_code():
         return jsonify({'verified': True, 'message': '인증 성공'})
     else:
         return jsonify({'verified': False, 'message': '인증번호가 일치하지 않습니다.'})
+
+#카카토옥 로그인 정보 DB 저장
+@app.route('/oauth/kakao/callback', methods=['GET'])
+def kakao_callback():
+    code = request.args.get('code')
+
+    token_url = "https://kauth.kakao.com/oauth/token"
+    data = {
+        "grant_type": "authorization_code",
+        "client_id" : "", #REST_API_KEY
+        "redirect_uri": "http://127.0.0.1:5000/oauth/kakao/callback",
+        "code" : code
+    }
+
+    #토큰 받아오는 코드
+    token_res = requests.post(token_url, data=data)
+    token_json = token_res.json()
+    access_token = token_json.get("access_token")
+
+    if not access_token:
+        flash("카카오 로그인 실패: access_token 없음")
+        return redirect(url_for('login'))
+
+    profile_url = "https://kapi.kakao.com/v2/user/me"
+    headers = {
+        "Authorization": f"Bearer {access_token}"
+    }
+    profile_res = requests.get(profile_url, headers=headers)
+    profile_json = profile_res.json()
+
+    #사용자 정보 가져오기
+    kakao_id = profile_json.get("id")
+    nickname = profile_json["kakao_account"]["profile"].get("nickname")
+
+    #사용자 DB 확인 (없으면 회원가입)
+    user_id = f'kakao_{kakao_id}'
+
+    conn = get_db_connection()
+    with conn.cursor() as cursor:
+        cursor.execute("SELECT * FROM users WHERE id = %s", (user_id,))
+        user = cursor.fetchone()
+
+        if not user:
+            dummy_password = 'kakao_login'
+            cursor.execute("""
+                INSERT INTO users (id, password, nickname, email, name, is_black)
+                VALUES (%s, %s, %s, %s, %s, %s)
+            """, (user_id, dummy_password, nickname, '', nickname, False))
+            conn.commit()
+    conn.close()
+
+    session['user_id'] = user_id
+    print("user_id 저장됨:", session.get('user_id'))
+
+
+    return redirect(url_for('home'))
+
 
 
 if __name__ == '__main__':
