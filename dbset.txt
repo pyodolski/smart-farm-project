@@ -37,13 +37,6 @@ CREATE TABLE likes (
   FOREIGN KEY (board_id) REFERENCES board(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
-CREATE TABLE user (
-  user_name VARCHAR(20) NOT NULL,
-  user_password VARCHAR(20) NOT NULL,
-  PRIMARY KEY (user_name)
-) ENGINE=InnoDB;
-
-
 CREATE TABLE farms (
    id int NOT NULL AUTO_INCREMENT,
    owner_username varchar(255) COLLATE utf8mb4_general_ci NOT NULL,

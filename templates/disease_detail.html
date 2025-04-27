@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block title %}{{ disease.sickNameKor }} 세부 정보{% endblock %}
+{% block header %}{{ disease.sickNameKor }} 세부 정보{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>{{ disease.sickNameKor }} 세부 정보</h2>
+
+    <!-- 병해 기본 정보 -->
+    <div class="card mt-3">
+        <div class="card-body">
+            <h5 class="card-title">병해 정보</h5>
+            <p><strong>병명:</strong> {{ disease.sickNameKor }}</p>
+            <p><strong>전파 경로:</strong> {{ disease.developmentCondition }}</p>
+            <p><strong>예방법:</strong> {{ disease.preventionMethod }}</p>
+            <p><strong>증상:</strong> {{ disease.symptoms }}</p>
+        </div>
+    </div>
+
+    <!-- 병해 이미지 -->
+    <div class="card mt-3">
+        <div class="card-body">
+            <h5 class="card-title">병해 이미지</h5>
+            {% for image in disease.imageList %}
+                <img src="{{ image.image }}" alt="{{ image.imageTitle }}" class="img-fluid">
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}
