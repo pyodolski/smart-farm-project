@@ -375,11 +375,10 @@ def get_post(post_id):
     # 조회수 증가
     cursor.execute('UPDATE board SET view = view + 1 WHERE id = %s', (post_id,))
     
-    # 댓글 조회 - cdate 기준으로 최신순 정렬
+    # 댓글 조회
     cursor.execute('''
         SELECT c.*, 
-               c.commenter = %s as is_author,
-               DATE_FORMAT(c.cdate, '%%Y-%%m-%%d %%H:%%i:%%s') as formatted_date
+               c.commenter = %s as is_author
         FROM comments c
         WHERE c.board_id = %s
         ORDER BY c.cdate DESC
@@ -543,11 +542,7 @@ def get_comment(comment_id):
     if 'user_id' not in session:
         return jsonify({'message': '로그인이 필요합니다.'}), 401
 
-    conn = get_db_connection()
-    if not conn:
-        return jsonify({'message': 'DB 연결 실패'}), 500
-        
-    cursor = conn.cursor(pymysql.cursors.DictCursor)
+    cursor = mysql.connection.cursor(pymysql.cursors.DictCursor)
     cursor.execute('''
         SELECT c.*
         FROM comments c
@@ -555,7 +550,6 @@ def get_comment(comment_id):
     ''', (comment_id,))
     comment = cursor.fetchone()
     cursor.close()
-    conn.close()
 
     if not comment:
         return jsonify({'message': '댓글을 찾을 수 없습니다.'}), 404
@@ -567,22 +561,16 @@ def update_comment(comment_id):
     if 'user_id' not in session:
         return jsonify({'message': '로그인이 필요합니다.'}), 401
 
-    conn = get_db_connection()
-    if not conn:
-        return jsonify({'message': 'DB 연결 실패'}), 500
-        
-    cursor = conn.cursor(pymysql.cursors.DictCursor)
+    cursor = mysql.connection.cursor(pymysql.cursors.DictCursor)
     cursor.execute('SELECT commenter FROM comments WHERE id = %s', (comment_id,))
     comment = cursor.fetchone()
 
     if not comment:
         cursor.close()
-        conn.close()
         return jsonify({'message': '댓글을 찾을 수 없습니다.'}), 404
 
     if comment['commenter'] != session['user_id']:
         cursor.close()
-        conn.close()
         return jsonify({'message': '수정 권한이 없습니다.'}), 403
 
     data = request.get_json()
@@ -590,16 +578,14 @@ def update_comment(comment_id):
 
     if not content:
         cursor.close()
-        conn.close()
         return jsonify({'message': '댓글 내용을 입력해주세요.'}), 400
 
     cursor.execute(
         'UPDATE comments SET content = %s WHERE id = %s',
         (content, comment_id)
     )
-    conn.commit()
+    mysql.connection.commit()
     cursor.close()
-    conn.close()
 
     return jsonify({'message': '댓글이 수정되었습니다.'})
 
@@ -608,28 +594,21 @@ def delete_comment(comment_id):
     if 'user_id' not in session:
         return jsonify({'message': '로그인이 필요합니다.'}), 401
 
-    conn = get_db_connection()
-    if not conn:
-        return jsonify({'message': 'DB 연결 실패'}), 500
-        
-    cursor = conn.cursor(pymysql.cursors.DictCursor)
+    cursor = mysql.connection.cursor(pymysql.cursors.DictCursor)
     cursor.execute('SELECT commenter FROM comments WHERE id = %s', (comment_id,))
     comment = cursor.fetchone()
 
     if not comment:
         cursor.close()
-        conn.close()
         return jsonify({'message': '댓글을 찾을 수 없습니다.'}), 404
 
     if comment['commenter'] != session['user_id']:
         cursor.close()
-        conn.close()
         return jsonify({'message': '삭제 권한이 없습니다.'}), 403
 
     cursor.execute('DELETE FROM comments WHERE id = %s', (comment_id,))
-    conn.commit()
+    mysql.connection.commit()
     cursor.close()
-    conn.close()
 
     return jsonify({'message': '댓글이 삭제되었습니다.'})
 

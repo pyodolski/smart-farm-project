@@ -1,7 +1,9 @@
+import pymysql
+
 DB_CONFIG = {
     'host': 'localhost',
     'user': 'root',
-    'password': 'q1w2e3r4^',
-    'database': 'flask_db',
+    'password': '1234',
+    'database': 'smartfarm',
     'charset': 'utf8mb4'
 }
