@@ -1,0 +1,313 @@
+// 더미 데이터
+const cropDetails = {
+  strawberry: {
+    id: 'strawberry',
+    name: '딸기',
+    image: 'https://cdn.pixabay.com/photo/2018/04/29/11/54/strawberries-3359755_1280.jpg',
+    description: '딸기는 장미과에 속하는 다년생 식물로, 달콤한 맛과 향기로 인기 있는 과일.',
+    growingInfo: [
+      { title: '온도', content: '주간 17~20°C, 야간 10°C 내외의 온도 또는 일반 재배의 착과 온도는 20~23°C입니다.' },
+      { title: '습도', content: '상대습도 50~60%가 이상적이며 100% 습도는 피합니다.' },
+      { title: '재배 장소', content: '물빠짐이 좋은 토양이 넓게 보호 받을 기온을 제공하여 잘기 때문에 적당히 축축한 조건은 잘 견디며 토양 PH값은 중성인 딸기 키우는 장소가 좋습니다.' },
+      { title: '재배 방법', content: '서늘한 계절에는 주 모종이 그대로 잘 자라나 여름에 높은 온도를 만나면 300mm에서 500mm 간격으로 심습니다.' }
+    ],
+    pestInfo: [
+      {
+        title: '잿빛곰팡이병',
+        description: '초기에는 작은 갈색반점이 생기다가, 점점 확대되어 병반 주변이 갈색으로 변색되고 병반 중앙에는 잿빛 곰팡이가 생긴다.',
+        image: 'https://cdn.pixabay.com/photo/2019/05/31/16/35/strawberry-4242371_1280.jpg'
+      },
+      {
+        title: '탄저병',
+        description: '주로 잎과 줄기에 발생하며, 감염된 부위는 검은색으로 변하고 점차 확대됩니다. 심한 경우 과실에도 발생합니다.',
+        image: 'https://thumbs.dreamstime.com/b/strawberry-plant-leaf-disease-strawberry-plant-leaf-disease-can-see-some-brown-spots-142424271.jpg'
+      },
+      {
+        title: '흰가루병',
+        description: '잎 표면에 하얀 가루 같은 균사체가 형성되며, 잎이 오그라들고 생육이 저해됩니다.',
+        image: 'https://orchardpests.ncw.wsu.edu/wp-content/uploads/2010/03/PM-straw-leaf.jpg'
+      }
+    ]
+  },
+  tomato: {
+    id: 'tomato',
+    name: '완숙 토마토',
+    image: 'https://cdn.pixabay.com/photo/2016/03/26/16/44/tomatoes-1280859_1280.jpg',
+    description: '토마토는 가지과에 속하는 1년생 식물로, 항산화 성분인 리코펜이 풍부한 건강식품입니다.',
+    growingInfo: [
+      { title: '온도', content: '주간 22~25°C, 야간 15~17°C가 최적 온도이며, 10°C 이하나 30°C 이상에서는 생육이 저해됩니다.' },
+      { title: '습도', content: '상대습도 60~70%가 적합하며, 높은 습도는 병해 발생을 촉진합니다.' },
+      { title: '재배 장소', content: '햇빛이 잘 드는 곳이 좋으며, 배수가 잘되는 토양을 선호합니다.' },
+      { title: '재배 방법', content: '지주를 세워 수직으로 재배하며, 측지는 제거하고 주기적인 수분 공급이 필요합니다.' }
+    ],
+    pestInfo: [
+      {
+        title: '잎마름병',
+        description: '잎에 갈색 또는 검은색 반점이 생기고 점차 확대되어 잎 전체가 마르는 증상을 보입니다.',
+        image: 'https://www.gardeningknowhow.com/wp-content/uploads/2019/05/leaf-spot.jpg'
+      },
+      {
+        title: '역병',
+        description: '잎, 줄기, 과실에 수침상 병반이 생기고, 습도가 높을 때 급속히 번져 식물 전체를 고사시킵니다.',
+        image: 'https://www.gardeningknowhow.com/wp-content/uploads/2021/01/tomato-late-blight.jpg'
+      },
+      {
+        title: '총채벌레',
+        description: '잎과 과실에 피해를 주며, 바이러스를 매개하는 해충입니다. 초기에 방제하지 않으면 심각한 피해를 입힙니다.',
+        image: 'https://www.planetnatural.com/wp-content/uploads/2014/01/thrips-damage.jpg'
+      }
+    ]
+  }
+};
+
+function EncyclopediaDetail() {
+  const { cropId } = useParams();
+  const navigate = useNavigate();
+  const [crop, setCrop] = useState(null);
+
+  useEffect(() => {
+    // 실제로는 API 호출이 필요하지만, 더미 데이터로 대체
+    const fetchedCrop = cropDetails[cropId];
+    if (fetchedCrop) {
+      setCrop(fetchedCrop);
+    } else {
+      // 존재하지 않는 작물 ID일 경우 목록으로 돌아감
+      navigate('/encyclopedia');
+    }
+  }, [cropId, navigate]);
+
+  const handleGoBack = () => {
+    navigate('/encyclopedia');
+  };
+
+  if (!crop) {
+    return <div className="loading">로딩 중...</div>;
+  }
+
+  return (
+    <div className="encyclopedia-detail-container">
+      <button className="back-button" onClick={handleGoBack}>
+        ← 도감목록으로
+      </button>
+
+      <div className="crop-detail-header">
+        <div className="crop-detail-image-container">
+          <img src={crop.image} alt={crop.name} className="crop-detail-image" />
+        </div>
+        <div className="crop-detail-info">
+          <h1>{crop.name}</h1>
+          <p className="crop-description">{crop.description}</p>
+        </div>
+      </div>
+
+      <div className="growing-info-section">
+        <h2>재배 정보</h2>
+        <div className="growing-info-list">
+          {crop.growingInfo.map((info, index) => (
+            <div key={index} className="growing-info-item">
+              <h3>{info.title}</h3>
+              <p>{info.content}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="pest-info-section">
+        <h2>병충해 정보</h2>
+        <div className="pest-info-list">
+          {crop.pestInfo.map((pest, index) => (
+            <div key={index} className="pest-info-item">
+              <div className="pest-info-image-container">
+                <img src={pest.image} alt={pest.title} className="pest-info-image" />
+              </div>
+              <div className="pest-info-content">
+                <h3>{pest.title}</h3>
+                <p>{pest.description}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default EncyclopediaDetail; 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+.encyclopedia-detail-container {
+  max-width: 1000px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+}
+
+.back-button {
+  background-color: transparent;
+  border: none;
+  color: #666;
+  font-size: 1rem;
+  padding: 0.5rem 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  margin-bottom: 2rem;
+  transition: color 0.3s;
+}
+
+.back-button:hover {
+  color: #8BC34A;
+}
+
+.crop-detail-header {
+  display: flex;
+  gap: 2rem;
+  margin-bottom: 3rem;
+  align-items: center;
+}
+
+@media (max-width: 768px) {
+  .crop-detail-header {
+    flex-direction: column;
+  }
+}
+
+.crop-detail-image-container {
+  flex: 0 0 40%;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+}
+
+.crop-detail-image {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.crop-detail-info {
+  flex: 1;
+}
+
+.crop-detail-info h1 {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+  color: #333;
+}
+
+.crop-description {
+  color: #666;
+  font-size: 1.1rem;
+  line-height: 1.6;
+}
+
+.growing-info-section,
+.pest-info-section {
+  margin-bottom: 3rem;
+}
+
+.growing-info-section h2,
+.pest-info-section h2 {
+  font-size: 1.8rem;
+  margin-bottom: 1.5rem;
+  color: #333;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid #8BC34A;
+}
+
+.growing-info-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 1.5rem;
+}
+
+.growing-info-item {
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+.growing-info-item h3 {
+  font-size: 1.2rem;
+  margin-bottom: 0.8rem;
+  color: #555;
+}
+
+.growing-info-item p {
+  color: #666;
+  line-height: 1.5;
+}
+
+.pest-info-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.pest-info-item {
+  display: flex;
+  gap: 1.5rem;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+
+@media (max-width: 768px) {
+  .pest-info-item {
+    flex-direction: column;
+  }
+}
+
+.pest-info-image-container {
+  flex: 0 0 200px;
+  height: 150px;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.pest-info-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.pest-info-content {
+  flex: 1;
+}
+
+.pest-info-content h3 {
+  font-size: 1.3rem;
+  margin-bottom: 0.8rem;
+  color: #555;
+}
+
+.pest-info-content p {
+  color: #666;
+  line-height: 1.5;
+}
+
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 300px;
+  font-size: 1.2rem;
+  color: #666;
+} 

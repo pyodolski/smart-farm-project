@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>게시글 수정</title>
+</head>
+<body>
+    <h1>✏️ 게시글 수정</h1>
+
+    <form method="POST">
+        <p><strong>작성자:</strong> {{ logininfo }}</p>
+        <p><label>제목: <input type="text" name="title" value="{{ data.title }}"></label></p>
+        <p><label>내용:</label><br>
+            <textarea name="content" rows="10" cols="50">{{ data.content }}</textarea>
+        </p>
+        <button type="submit">수정 완료</button>
+    </form>
+
+    <p><a href="/post/content/{{ data.id }}">← 게시글로 돌아가기</a></p>
+</body>
+</html>

@@ -1,54 +1,50 @@
 .login-container {
-    width: 100vw;
-    height: 100vh;
+    min-height: 100vh;
     display: flex;
     justify-content: center;
     align-items: center;
-    background-image: url("./image_with_more_transparency.png");
-    background-size: cover;
-    background-position: center;
-    overflow: hidden;
-  }
+    background: url("./image_with_more_transparency.png") center center / cover no-repeat;
+}
   
-  .login-form-box {
+.login-form-box {
     background: white;
     padding: 2rem;
     border-radius: 8px;
     box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
     width: 350px;
     text-align: center;
-  }
+}
   
-  .login-form-box h2 {
+.login-form-box h2 {
     font-size: 1.8rem;
     margin-bottom: 1.5rem;
     color: #333;
-  }
+}
   
-  .logo {
+.logo {
     text-align: center;
     margin-bottom: 2rem;
-  }
+}
   
-  .logo-image {
+.logo-image {
     width: 50px;
     height: 50px;
-  }
+}
   
-  .input-group {
+.input-group {
     margin-bottom: 1rem;
-  }
+}
   
-  .input-group input {
+.input-group input {
     width: 100%;
     padding: 0.8rem;
     border: 1px solid #ddd;
     border-radius: 4px;
     font-size: 1rem;
     box-sizing: border-box;
-  }
+}
   
-  .login-button {
+.login-button {
     width: 100%;
     padding: 0.8rem;
     margin-bottom: 0.5rem;
@@ -59,9 +55,9 @@
     background-color: #8BC34A;
     color: #fff;
     font-weight: bold;
-  }
+}
   
-  .register-button {
+.register-button {
     width: 100%;
     padding: 0.8rem;
     margin-top: 0.5rem;
@@ -71,18 +67,41 @@
     cursor: pointer;
     background-color: #EEEEEE;
     color: #333;
-  }
+}
   
-  .login-button:hover {
+.login-button:hover {
     background-color: #7CB342;
-  }
+}
   
-  .register-button:hover {
+.register-button:hover {
     background-color: #E0E0E0;
-  }
+}
   
-  .error-message {
+.error-message {
     color: #D32F2F;
     margin-bottom: 1rem;
     font-size: 0.9rem;
-  } 
+}
+
+
+.kakao-login-button {
+  background-color: #FEE500;
+  margin-top: 0.5rem;
+  color: #000000;
+  border: none;
+  border-radius: 5px;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  width: 100%;
+  transition: background-color 0.3s;
+}
+
+.kakao-login-button:hover {
+  background-color: #FFD700;
+}
+
+.kakao-login-button:disabled {
+  background-color: #CCCCCC;
+  cursor: not-allowed;
+} 

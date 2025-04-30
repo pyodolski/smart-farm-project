@@ -46,6 +46,10 @@ function Login() {
     }
   };
 
+  const handleKakaoLogin = () => {
+    window.location.href = 'http://localhost:5000/auth/kakao';
+  };
+
   return (
     <div className="login-container">
       <div className="login-form-box">
@@ -87,6 +91,15 @@ function Login() {
           >
             회원가입
           </button>
+
+          <button 
+            className="kakao-login-button"
+            onClick={handleKakaoLogin}
+            disabled={isLoading}
+          >
+            카카오로 로그인
+          </button>
+
         </form>
       </div>
     </div>

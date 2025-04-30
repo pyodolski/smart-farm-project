@@ -9,6 +9,7 @@ import PostDetail from './PostDetail';
 import WritePost from './WritePost';
 import EditPost from './EditPost';
 import EditComment from './EditComment';
+import Encyclopedia from './Encyclopedia';
 import './App.css';
 import logo from './leaves-growing-from-ground-green-glyph-style_78370-6720.png'
 import { AuthContext } from './contexts/AuthContext';
@@ -53,7 +54,8 @@ function Navigation() {
         {isLoggedIn &&(
           <div className="menu-items">
             <a onClick={()=> navigate('/products')}>Products</a>
-            <a onClick={()=> navigate('/farm')}>Farm</a>
+            <a onClick={()=> navigate('/encyclopedia')}>Encyclopedia</a>
+            <a onClick={()=> navigate('/')}>Farm</a>
             <a onClick={()=> navigate('/crop-condition')}>Crop Condition</a>
             <a onClick={()=> navigate('/community')}>Community</a>
           </div>
@@ -125,6 +127,7 @@ function App() {
             <Route path="/community/post/:postId" element={isLoggedIn ? <PostDetail /> : <Navigate to="/login" />} />
             <Route path="/community/edit/:postId" element={isLoggedIn ? <EditPost /> : <Navigate to="/login" />} />
             <Route path="/community/comment/edit/:commentId" element={isLoggedIn ? <EditComment /> : <Navigate to="/login" />} />
+            <Route path="/encyclopedia" element={isLoggedIn ? <Encyclopedia /> : <Navigate to="/login" />} />
           </Routes>
         </div>
       </Router>
