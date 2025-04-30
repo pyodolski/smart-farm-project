@@ -6,12 +6,16 @@ from flask import Flask, render_template, request, redirect, session, url_for, f
 from routes.farm import farm_bp
 from config import DB_CONFIG
 from routes.post import post_bp
+from routes.weather import weather_bp
+from routes.weather import cities, fetch_weather, fetch_two_day_minmax
 from email.mime.text import MIMEText
 from email.header import Header
 
 app = Flask(__name__)
 app.register_blueprint(farm_bp)
 app.register_blueprint(post_bp)
+app.register_blueprint(weather_bp)
+
 
 def get_db_connection():
     try:
@@ -34,7 +38,18 @@ def home():
         farms = cur.fetchall()
         conn.close()
 
-    return render_template('my_farms.html', farms=farms)
+    selected_city = request.form.get('city','서울특별시')
+    weather = fetch_weather(selected_city)
+    two_day = fetch_two_day_minmax(selected_city)
+
+    return render_template(
+        'my_farms.html',
+        farms=farms,
+        cities=cities,
+        selected_city=selected_city,
+        weather=weather,
+        two_day=two_day
+        )
 
 #--------------------------------------------------------------------
 app.secret_key = 'your_secret_key'  # 세션에 필요한 비밀키 (랜덤한 문자열)
