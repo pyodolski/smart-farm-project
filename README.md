@@ -3,7 +3,16 @@
   http://127.0.0.1:5000 사용X
 
 //2. new Terminal 
-    farm1>에서 cd front 후 npm start
+    cd front 후 npm install
+    **npm start **
+
+  if 9 vulnerabilities (3 moderate, 6 high)
+    To address issues that do not require attention, run:
+    return render_template('my_farms.html', farms=farms)
+
+ ** 오류 발생시 npm audit fix 입력 후 npm start**
+
+    
 
     
 --------------------------------------------
