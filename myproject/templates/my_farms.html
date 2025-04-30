@@ -81,6 +81,43 @@
   </div>
 
     <div class="content">
+      <!--날씨 파트 -->
+      <div class="weather-box">
+        <h2>현재 날씨</h2>
+        <form method="POST" action="{{ url_for('weather.show_weather') }}">
+          <label>시/도:</label>
+          <select name="city" onchange="this.form.submit()">
+            {% for city in cities %}
+              <option value="{{ city }}" {% if city == selected_city %}selected{% endif %}>{{ city }}</option>
+            {% endfor %}
+          </select>
+        </form>
+    
+        {% if weather %}
+          {% if weather.error %}
+            <p>{{ weather.error }}</p>
+          {% else %}
+            <h3>{{ weather.city }}</h3>
+            <p>🌡 온도: {{ weather.temperature }}°C</p>
+            <p>🌤 날씨: {{ weather.description }}</p>
+          {% endif %}
+        {% endif %}
+      </div>
+
+      {% if two_day %}
+        <h2>내일·모레 최고·최저 기온</h2>
+        <ul>
+          {% for f in two_day %}
+            <li>
+              {{ f.date }} — 최저: {{ f.min_temp }}°C, 최고: {{ f.max_temp }}°C, 날씨: {{ f.description }}
+            </li>
+          {% else %}
+            <li>예보 데이터가 없습니다.</li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+      <hr>
+
       {% if farms %}
       <h2>내 농장 목록</h2>
       {% for farm in farms %}
@@ -100,6 +137,7 @@
 
 
         <a class="add-button" href="/add_farm">농장 추가</a>
+
     </div>
 </body>
 </html>
