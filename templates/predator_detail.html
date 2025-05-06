@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}{{ predator.insectSpeciesKor if predator.insectSpeciesKor else '천적 곤충 정보 없음' }} 세부 정보{% endblock %}
+{% block header %}{{ predator.insectSpeciesKor if predator.insectSpeciesKor else '천적 곤충 정보 없음' }} 세부 정보{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>{{ predator.insectSpeciesKor if predator.insectSpeciesKor else '천적 곤충 정보 없음' }} 천적 곤충 세부 정보</h2>
+
+    <div class="card mt-3">
+        <div class="card-body">
+            <h5 class="card-title">천적 곤충 정보</h5>
+            <p><strong>천적 곤충명:</strong> {{ predator.insectSpeciesKor if predator.insectSpeciesKor else '정보 없음' }}</p>
+            <p><strong>국내 분포:</strong> {{ predator.domesticDistribution if predator.domesticDistribution else '정보 없음' }}</p>
+            <p><strong>특징:</strong> {{ predator.feature if predator.feature else '정보 없음' }}</p>
+            <p><strong>생활사:</strong> {{ predator.lifeCycle if predator.lifeCycle else '정보 없음' }}</p>
+            <p><strong>이용방법:</strong> {{ predator.utilizationMethod if predator.utilizationMethod else '정보 없음' }}</p>
+            <p><strong>기타 작물:</strong> {{ predator.etcCrop if predator.etcCrop else '정보 없음' }}</p>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

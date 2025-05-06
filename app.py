@@ -3,12 +3,14 @@ from flask import Flask, render_template, request, redirect, session, url_for, f
 from routes.farm import farm_bp
 from config import DB_CONFIG
 from routes.post import post_bp
+from routes.crop import crop_bp
 from flask_cors import CORS
 
 app = Flask(__name__)
 CORS(app, supports_credentials=True)  # CORS 설정 추가
 app.register_blueprint(farm_bp)
 app.register_blueprint(post_bp)
+app.register_blueprint(crop_bp)
 
 def get_db_connection():
     try:
