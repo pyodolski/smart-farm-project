@@ -188,7 +188,8 @@ function MainPage() {
 
   return (
     <div className="main-container">
-      <h2>내 농장 목록</h2>
+      <h1>내 농장 목록</h1>
+      <p>농장을 추가하거나 관리하세요</p>
       
       {!isLoggedIn ? (
         <div className="empty-farm-message">

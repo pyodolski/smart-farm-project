@@ -10,6 +10,10 @@ import WritePost from './WritePost';
 import EditPost from './EditPost';
 import EditComment from './EditComment';
 import Encyclopedia from './Encyclopedia';
+import EncyclopediaDetail from './EncyclopediaDetail';
+import DiseaseDetail from './DiseaseDetail';
+import InsectDetail from './InsectDetail';
+import EnemyDetail from './EnemyDetail';
 import './App.css';
 import logo from './leaves-growing-from-ground-green-glyph-style_78370-6720.png'
 import { AuthContext } from './contexts/AuthContext';
@@ -128,6 +132,10 @@ function App() {
             <Route path="/community/edit/:postId" element={isLoggedIn ? <EditPost /> : <Navigate to="/login" />} />
             <Route path="/community/comment/edit/:commentId" element={isLoggedIn ? <EditComment /> : <Navigate to="/login" />} />
             <Route path="/encyclopedia" element={isLoggedIn ? <Encyclopedia /> : <Navigate to="/login" />} />
+            <Route path="/encyclopedia/:crop" element={isLoggedIn ? <EncyclopediaDetail /> : <Navigate to="/login" />} />
+            <Route path="/encyclopedia/disease/:diseaseId" element={isLoggedIn ? <DiseaseDetail /> : <Navigate to="/login" />} />
+            <Route path="/encyclopedia/insect/:insectId" element={isLoggedIn ? <InsectDetail /> : <Navigate to="/login" />} />
+            <Route path="/encyclopedia/enemy/:enemyId" element={isLoggedIn ? <EnemyDetail /> : <Navigate to="/login" />} />
           </Routes>
         </div>
       </Router>

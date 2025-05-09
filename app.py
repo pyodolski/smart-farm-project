@@ -3,11 +3,13 @@ from flask import Flask, render_template, request, redirect, session, url_for, f
 from routes.farm import farm_bp
 from config import DB_CONFIG
 from routes.post import post_bp
-from routes.crop import crop_bp
+from routes.crop import crop_bp, fetch_disease_detail, fetch_insect_detail, fetch_predator_detail
 from flask_cors import CORS
 
 app = Flask(__name__)
-CORS(app, supports_credentials=True)  # CORS 설정 추가
+CORS(app, 
+     resources={r"/*": {"origins": "http://localhost:3000"}},
+     supports_credentials=True)
 app.register_blueprint(farm_bp)
 app.register_blueprint(post_bp)
 app.register_blueprint(crop_bp)
@@ -18,6 +20,32 @@ def get_db_connection():
     except pymysql.MySQLError as e:
         print(f"DB 연결 실패: {e}")
         return None
+
+# 리액트 프론트엔드용 API 경로 추가
+@app.route('/api/crops/detail/<crop>')
+def api_crop_detail(crop):
+    from routes.crop import get_crop_info, fetch_disease_data, fetch_insect_data, fetch_predator_data
+    
+    valid_crops = {
+        "strawberry": "딸기",
+        "tomato": "토마토"
+    }
+
+    if crop not in valid_crops:
+        return jsonify({"error": "존재하지 않는 작물입니다."}), 404
+
+    crop_name_kor = valid_crops[crop]
+    info = get_crop_info(crop)
+    items = fetch_disease_data(crop_name_kor)
+    insects = fetch_insect_data(crop_name_kor)
+    enemies = fetch_predator_data(crop_name_kor)
+
+    return jsonify({
+        "info": info,
+        "items": items,
+        "insects": insects,
+        "enemies": enemies
+    })
 
 @app.route('/')
 def home():
@@ -783,6 +811,27 @@ def change_password():
         finally:
             conn.close()
     return jsonify({'success': False, 'message': 'DB 연결 실패'}), 500
+
+@app.route('/api/diseases/<disease_id>')
+def api_disease_detail(disease_id):
+    disease = fetch_disease_detail(disease_id)
+    if not disease:
+        return jsonify({'error': '병해 정보를 찾을 수 없습니다.'}), 404
+    return jsonify(disease)
+
+@app.route('/api/insects/<insect_id>')
+def api_insect_detail(insect_id):
+    insect = fetch_insect_detail(insect_id)
+    if not insect:
+        return jsonify({'error': '해충 정보를 찾을 수 없습니다.'}), 404
+    return jsonify(insect)
+
+@app.route('/api/enemies/<enemy_id>')
+def api_enemy_detail(enemy_id):
+    enemy = fetch_predator_detail(enemy_id)
+    if not enemy:
+        return jsonify({'error': '천적 곤충 정보를 찾을 수 없습니다.'}), 404
+    return jsonify(enemy)
 
 if __name__ == '__main__':
     app.run(debug=True)

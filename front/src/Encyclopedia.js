@@ -38,7 +38,7 @@ function Encyclopedia() {
             onClick={() => handleCropClick(crop.id)}
           >
             <div className="crop-image-container">
-              <img src={crop.image} alt={crop.name} className="crop-image" />
+              <img src={crop.image} alt={crop.name} className="crop-list-image" />
             </div>
             <div className="crop-info">
               <h2>{crop.name}</h2>
