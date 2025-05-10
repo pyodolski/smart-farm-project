@@ -87,12 +87,12 @@ def login():
             conn = get_db_connection()
             if conn:
                 try:
-                    with conn.cursor() as cursor:
+                    with conn.cursor(pymysql.cursors.DictCursor) as cursor:
                         cursor.execute("SELECT * FROM users WHERE id = %s AND password = %s", (user_id, password))
                         user = cursor.fetchone()
                         if user:
                             session['user_id'] = user_id
-                            is_admin = user[6]  # is_admin 컬럼의 인덱스 (필요시 수정)
+                            is_admin = user['is_admin']
 
                             response = {
                                 "success": True,
