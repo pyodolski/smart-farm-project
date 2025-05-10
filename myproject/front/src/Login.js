@@ -17,7 +17,7 @@ function Login() {
     setIsLoading(true);
 
     try {
-      const response = await fetch('http://localhost:5000/login', {
+      const response = await fetch('http://localhost:5001/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -33,7 +33,12 @@ function Login() {
         sessionStorage.setItem('isLoggedIn', 'true');
         sessionStorage.setItem('userId', data.user_id);
         setIsLoggedIn(true);
-        navigate('/');
+
+        if (data.admin) {
+          window.location.href = 'http://localhost:5001/admin.html';  // 관리자일 경우 정적 페이지 이동
+        } else {
+          navigate('/');  // 일반 유저는 홈으로 이동
+        }
       } else {
         console.error('로그인 실패:', data);
         setError(data.message || '로그인에 실패했습니다.');
@@ -46,6 +51,10 @@ function Login() {
     }
   };
 
+  const handleKakaoLogin = () => {
+    window.location.href = 'http://localhost:5001/auth/kakao';
+  };
+
   return (
     <div className="login-container">
       <div className="login-form-box">
@@ -53,40 +62,49 @@ function Login() {
         {error && <div className="error-message">{error}</div>}
         <form onSubmit={handleLogin}>
           <div className="input-group">
-            <input 
-              type="text" 
-              placeholder="ID" 
-              value={id} 
-              onChange={(e) => setId(e.target.value)} 
+            <input
+              type="text"
+              placeholder="ID"
+              value={id}
+              onChange={(e) => setId(e.target.value)}
               required
               disabled={isLoading}
             />
           </div>
           <div className="input-group">
-            <input 
-              type="password" 
-              placeholder="Password" 
-              value={password} 
-              onChange={(e) => setPassword(e.target.value)} 
+            <input
+              type="password"
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
               required
               disabled={isLoading}
             />
           </div>
-          <button 
-            type="submit" 
+          <button
+            type="submit"
             className="login-button"
             disabled={isLoading}
           >
             {isLoading ? '로그인 중...' : '로그인'}
           </button>
-          <button 
-            type="button" 
-            className="register-button" 
+          <button
+            type="button"
+            className="register-button"
             onClick={() => navigate('/register')}
             disabled={isLoading}
           >
             회원가입
           </button>
+
+          <button
+            className="kakao-login-button"
+            onClick={handleKakaoLogin}
+            disabled={isLoading}
+          >
+            카카오로 로그인
+          </button>
+
         </form>
       </div>
     </div>

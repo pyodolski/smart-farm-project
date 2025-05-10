@@ -27,7 +27,7 @@ function UserProfile() {
 
   const fetchUserProfile = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/user/profile', {
+      const response = await fetch('http://localhost:5001/api/user/profile', {
         credentials: 'include'
       });
       if (response.ok) {
@@ -72,7 +72,7 @@ function UserProfile() {
     setSuccess('');
 
     try {
-      const response = await fetch('http://localhost:5000/api/user/profile', {
+      const response = await fetch('http://localhost:5001/api/user/profile', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -106,7 +106,7 @@ function UserProfile() {
     }
 
     try {
-      const response = await fetch('http://localhost:5000/api/user/password', {
+      const response = await fetch('http://localhost:5001/api/user/password', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

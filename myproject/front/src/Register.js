@@ -8,11 +8,13 @@ const Register = () => {
     password_confirm: '',
     nickname: '',
     email: '',
-    name: ''
+    name: '',
+    verificationCode: ''
   });
 
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [isEmailVerified, setIsEmailVerified] = useState(false);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -22,6 +24,57 @@ const Register = () => {
     }));
     setError('');
   };
+
+  /** 코드 인증증
+  const handleEmailVerification = async () => {
+    try {
+      const response = await fetch('http://localhost:5001/send-verification-code', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email: formData.email })
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.message || '인증 코드 전송 실패');
+      }
+      
+      setSuccess('인증 코드가 이메일로 전송되었습니다.');
+    } catch (error) {
+      setError(error.message);
+    }
+  };
+  
+
+  const handleVerifyCode = async () => {
+    try {
+      const response = await fetch('http://localhost:5001/verify-code', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          code: formData.verificationCode
+        })
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.message || '인증 코드가 일치하지 않습니다.');
+      }
+      
+      setIsEmailVerified(true);
+      setSuccess('이메일 인증이 완료되었습니다.');
+    } catch (error) {
+      setError(error.message);
+    }
+  };
+  */
 
   const validateForm = () => {
     // 모든 필드가 채워져 있는지 확인
@@ -49,6 +102,12 @@ const Register = () => {
       return false;
     }
 
+    // 이메일 인증 확인
+    if (!isEmailVerified) {
+      setError('이메일 인증이 필요합니다.');
+      return false;
+    }
+
     return true;
   };
 
@@ -60,7 +119,7 @@ const Register = () => {
     }
 
     try {
-      const response = await fetch('http://localhost:5000/register', {
+      const response = await fetch('http://localhost:5001/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -89,65 +148,112 @@ const Register = () => {
     <div className="container">
       <h1>Sign up</h1>
       <form onSubmit={handleSubmit}>
-        <label htmlFor="id">아이디 (3글자 이상):</label>
-        <input
-          type="text"
-          id="id"
-          name="id"
-          value={formData.id}
-          onChange={handleChange}
-          required
-        />
+        <div className="form-row">
+          <label htmlFor="id">아이디 (3글자 이상):</label>
+          <input
+            type="text"
+            id="id"
+            name="id"
+            value={formData.id}
+            onChange={handleChange}
+            required
+          />
+        </div>
 
-        <label htmlFor="password">비밀번호 (4글자 이상):</label>
-        <input
-          type="password"
-          id="password"
-          name="password"
-          value={formData.password}
-          onChange={handleChange}
-          required
-        />
+        <div className="form-row">
+          <label htmlFor="password">비밀번호 (4글자 이상):</label>
+          <input
+            type="password"
+            id="password"
+            name="password"
+            value={formData.password}
+            onChange={handleChange}
+            required
+          />
+        </div>
 
-        <label htmlFor="password_confirm">비밀번호 확인:</label>
-        <input
-          type="password"
-          id="password_confirm"
-          name="password_confirm"
-          value={formData.password_confirm}
-          onChange={handleChange}
-          required
-        />
+        <div className="form-row">
+          <label htmlFor="password_confirm">비밀번호 확인:</label>
+          <input
+            type="password"
+            id="password_confirm"
+            name="password_confirm"
+            value={formData.password_confirm}
+            onChange={handleChange}
+            required
+          />
+        </div>
 
-        <label htmlFor="nickname">닉네임:</label>
-        <input
-          type="text"
-          id="nickname"
-          name="nickname"
-          value={formData.nickname}
-          onChange={handleChange}
-          required
-        />
+        <div className="form-row">
+          <label htmlFor="nickname">닉네임:</label>
+          <input
+            type="text"
+            id="nickname"
+            name="nickname"
+            value={formData.nickname}
+            onChange={handleChange}
+            required
+          />
+        </div>
 
-        <label htmlFor="email">이메일 (또는 휴대폰):</label>
-        <input
-          type="email"
-          id="email"
-          name="email"
-          value={formData.email}
-          onChange={handleChange}
-          required
-        />
+        <div className="form-row">
+          <label htmlFor="email">이메일:</label>
+          <div className="email-verification">
+            <input
+              type="email"
+              id="email"
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              required
+              disabled={isEmailVerified}
+            />
+            {!isEmailVerified && (
+              <button 
+                type="button" 
+                //onClick={handleEmailVerification}
+                className="verification-button"
+              >
+                코드인증
+              </button>
+            )}
+          </div>
+        </div>
 
-        <label htmlFor="name">이름:</label>
-        <input
-          type="text"
-          id="name"
-          name="name"
-          value={formData.name}
-          onChange={handleChange}
-          required
-        />
+        {!isEmailVerified && (
+          <div className="form-row verification-code">
+            <label htmlFor="verificationCode">인증 코드:</label>
+            <div className="verification-input">
+              <input
+                type="text"
+                id="verificationCode"
+                name="verificationCode"
+                value={formData.verificationCode}
+                onChange={handleChange}
+                required
+              />
+              <button 
+                type="button" 
+                //onClick={handleVerifyCode}
+                className="verify-button"
+              >
+                확인
+              </button>
+            </div>
+          </div>
+        )}
+
+        <div className="form-row">
+          <label htmlFor="name">이름:</label>
+          <input
+            type="text"
+            id="name"
+            name="name"
+            value={formData.name}
+            onChange={handleChange}
+            required
+          />
+        </div>
 
         {error && <div className="error-message">{error}</div>}
         {success && <div className="success-message">{success}</div>}

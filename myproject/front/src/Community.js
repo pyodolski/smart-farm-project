@@ -16,7 +16,7 @@ function Community() {
 
   const fetchPosts = async () => {
     try {
-      const response = await fetch(`http://localhost:5000/api/posts?sort=${sortBy}&search=${searchTerm}`, {
+      const response = await fetch(`http://localhost:5001/api/posts?sort=${sortBy}&search=${searchTerm}`, {
         credentials: 'include'
       });
       if (response.ok) {
