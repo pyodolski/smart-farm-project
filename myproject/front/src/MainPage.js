@@ -22,11 +22,22 @@ function FarmModal({ show, onClose, title, onSubmit, initialData }) {
       [name]: value
     });
   };
-
+  //첨부파일용 변경버전
   const handleFormSubmit = (e) => {
     e.preventDefault();
-    onSubmit(localFormData);
+    const formData = new FormData();
+    formData.append('name', localFormData.name);
+    formData.append('location', localFormData.location);
+    formData.append('area', localFormData.area);
+    formData.append('document', localFormData.document); // ← 핵심
+  
+    onSubmit(formData); // ← FormData 객체로 넘김
   };
+
+  //const handleFormSubmit = (e) => {
+  //  e.preventDefault();
+  //  onSubmit(localFormData);
+  //};
 
   if (!show) return null;
 
@@ -69,6 +80,23 @@ function FarmModal({ show, onClose, title, onSubmit, initialData }) {
               required
             />
           </div>
+          {!initialData && ( //변경사항
+            <div className="form-group">
+              <label htmlFor="document">농장주 증명 서류:</label>
+              <input
+                id="document"
+                name="document"
+                type="file"
+                onChange={(e) =>
+                  setLocalFormData({
+                    ...localFormData,
+                    document: e.target.files[0],
+                  })
+                }
+                required
+              />
+            </div>
+          )}
           <div className="modal-buttons">
             <button type="submit" className="submit-button">저장</button>
             <button type="button" onClick={onClose} className="cancel-button">취소</button>
@@ -112,11 +140,14 @@ function MainPage() {
     try {
       const response = await fetch('http://localhost:5001/api/farms', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        //headers: {
+        //  'Content-Type': 'application/json',
+        //},
+        //credentials: 'include',
+        //body: JSON.stringify(formData)
+        //변경 내용 >
         credentials: 'include',
-        body: JSON.stringify(formData)
+        body: formData  // ← FormData 그대로 사용!
       });
 
       if (response.ok) {
