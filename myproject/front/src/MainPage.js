@@ -95,7 +95,7 @@ function MainPage() {
 
   const fetchFarms = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/farms', {
+      const response = await fetch('http://localhost:5001/api/farms', {
         credentials: 'include'
       });
       if (response.ok) {
@@ -110,7 +110,7 @@ function MainPage() {
   // 농장 추가
   const handleAddFarm = async (formData) => {
     try {
-      const response = await fetch('http://localhost:5000/api/farms', {
+      const response = await fetch('http://localhost:5001/api/farms', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -131,7 +131,7 @@ function MainPage() {
   // 농장 수정
   const handleEditFarm = async (formData) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/farms/${selectedFarm.id}`, {
+      const response = await fetch(`http://localhost:5001/api/farms/${selectedFarm.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -154,7 +154,7 @@ function MainPage() {
   const handleDeleteFarm = async (farmId) => {
     if (window.confirm('정말 삭제하시겠습니까?')) {
       try {
-        const response = await fetch(`http://localhost:5000/api/farms/${farmId}`, {
+        const response = await fetch(`http://localhost:5001/api/farms/${farmId}`, {
           method: 'DELETE',
           credentials: 'include'
         });
@@ -188,7 +188,8 @@ function MainPage() {
 
   return (
     <div className="main-container">
-      <h2>내 농장 목록</h2>
+      <h1>내 농장 목록</h1>
+      <p>농장을 추가하거나 관리하세요</p>
       
       {!isLoggedIn ? (
         <div className="empty-farm-message">

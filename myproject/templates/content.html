@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>게시글 내용</title>
+</head>
+<body>
+    <h1>📄 게시글 보기</h1>
+
+    {% if username %}
+        <p><strong>{{ username }}</strong> 님이 로그인 중입니다.</p>
+        <a href="/post">← 글 목록으로</a> |
+        <a href="/logout">로그아웃</a>
+    {% else %}
+        <p>로그인 후 이용해 주세요.</p>
+    {% endif %}
+
+    <hr>
+
+    {% if data %}
+        <h2>{{ data.title }}</h2>
+        <div style="border:1px solid #ccc; padding:10px; margin-top:10px;">
+            <pre>{{ data.content }}</pre> <!-- 줄바꿈 유지 -->
+        </div>
+
+        <!-- ❤️ 좋아요 수 및 버튼 -->
+        <p>❤️ 좋아요 수: {{ like_count }}</p>
+        <form method="get" action="/like/{{ data.id }}">
+            <button type="submit">❤️ 좋아요 누르기</button>
+        </form>
+
+        <hr>
+
+        <!-- 글 수정 및 삭제 버튼 -->
+        {% if username == data.name %}
+            <p>
+                <a href="/post/edit/{{ data.id }}">✏️ 수정</a> |
+                <a href="/post/delete/{{ data.id }}" onclick="return confirm('정말 삭제하시겠습니까?');">🗑️ 삭제</a>
+            </p>
+        {% endif %}
+
+        <!-- 💬 댓글 영역 -->
+        <h3>💬 댓글</h3>
+        {% if comments %}
+            <ul>
+                {% for c in comments %}
+                    <li>
+                        <strong>{{ c.commenter }}</strong> ({{ c.cdate }}): {{ c.content }}
+                        {% if username == c.commenter %}
+                            | <a href="/comment/edit/{{ c.id }}">✏️ 수정</a>
+                            | <a href="/comment/delete/{{ c.id }}/{{ data.id }}" onclick="return confirm('정말 삭제하시겠습니까?');">🗑️ 삭제</a>
+                        {% endif %}
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p>아직 댓글이 없습니다.</p>
+        {% endif %}
+
+        {% if username %}
+            <form method="POST" action="/comment/{{ data.id }}">
+                <textarea name="content" rows="3" cols="50" required></textarea><br>
+                <button type="submit">댓글 달기</button>
+            </form>
+        {% else %}
+            <p>댓글을 작성하려면 <a href="/login">로그인</a>하세요.</p>
+        {% endif %}
+
+    {% else %}
+        <p>해당 게시글을 찾을 수 없습니다.</p>
+    {% endif %}
+
+    <hr>
+    <p><a href="/post">← 게시글 목록으로 돌아가기</a></p>
+</body>
+</html>

@@ -13,11 +13,6 @@ body {
   background-color: #f7f7f7;
   margin: 0;
   padding: 0;
-  overflow: hidden;
-}
-
-html {
-  overflow: hidden;
 }
 
 .App {
@@ -75,6 +70,7 @@ html {
   background-color: #ffffff;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
   position: fixed;
+  height: 80px;
   top: 0;
   left: 0;
   right: 0;
@@ -120,7 +116,6 @@ html {
   font-weight: 500;
   cursor: pointer;
   transition: color 0.3s;
-  height: 0.5rem;
   font-size: 1rem
 }
 
@@ -131,7 +126,6 @@ html {
 .login-btn {
   white-space: nowrap;
   position: relative;
-  padding: 0.4rem 1.5rem;
   height: 36px;
   font-size: 1rem;
   font-weight: 500;
