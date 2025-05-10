@@ -1,10 +1,19 @@
 import pymysql
+import os
+from werkzeug.utils import secure_filename
 from flask import Flask, render_template, request, redirect, session, url_for, flash, jsonify
 from routes.farm import farm_bp
 from config import DB_CONFIG
 from routes.post import post_bp
 from routes.crop import crop_bp, fetch_disease_detail, fetch_insect_detail, fetch_predator_detail
 from flask_cors import CORS
+
+def get_db_conn():
+    return pymysql.connect(**DB_CONFIG)
+conn = get_db_conn()
+cur = conn.cursor()
+UPLOAD_FOLDER = 'static/uploads/farms'
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 app = Flask(__name__)
 CORS(app, 
@@ -225,7 +234,7 @@ def get_farms():
     if conn:
         try:
             with conn.cursor(pymysql.cursors.DictCursor) as cursor:
-                cursor.execute("SELECT * FROM farms WHERE owner_username = %s", (user_id,))
+                cur.execute("SELECT * FROM farms WHERE id = %s AND approved = 1", (farm_id,))
                 farms = cursor.fetchall()
                 return jsonify({'success': True, 'farms': farms}), 200
         finally:
@@ -234,32 +243,37 @@ def get_farms():
 
 @app.route('/api/farms', methods=['POST'])
 def add_farm():
-    user_id = session.get('user_id')
-    if not user_id:
-        return jsonify({'success': False, 'message': '로그인이 필요합니다.'}), 401
+    if request.method == 'POST':
+        name = request.form['name']
+        area = request.form['area']
+        location = request.form['location']
+        #owner = request.form['owner'] #추후 교체 필요 (직접입력 -> 로그인되어있는 유저로 자동 입력)
+        owner = session.get('user_id')
+        document = request.files.get('document') #농장주 증명 첨부 파일
 
-    data = request.get_json()
-    name = data.get('name')
-    location = data.get('location')
-    area = data.get('area')
+        if not owner:
+            return '로그인 후 이용해주세요.', 403
+        if not document:
+            return '첨부파일이 첨부하세요.', 400
+        
+        filename = secure_filename(document.filename)
+        filepath = os.path.join(UPLOAD_FOLDER, filename)
+        document.save(filepath)
 
-    if not all([name, location, area]):
-        return jsonify({'success': False, 'message': '모든 필드를 입력해주세요.'}), 400
+        conn = get_db_conn()
+        cur = conn.cursor()
 
-    conn = get_db_connection()
-    if conn:
-        try:
-            with conn.cursor() as cursor:
-                sql = """
-                    INSERT INTO farms (name, location, area, owner_username)
-                    VALUES (%s, %s, %s, %s)
-                """
-                cursor.execute(sql, (name, location, area, user_id))
-                conn.commit()
-                return jsonify({'success': True, 'message': '농장이 추가되었습니다.'}), 200
-        finally:
-            conn.close()
-    return jsonify({'success': False, 'message': 'DB 연결 실패'}), 500
+        sql = """
+            INSERT INTO farms (name, area, location, owner_username, document_path)
+            VALUES (%s, %s, %s, %s, %s)
+        """
+        cur.execute(sql, (name, area, location, owner, filepath))
+        conn.commit()
+        conn.close()
+
+        return redirect(url_for('home'))
+
+    return render_template('add_farm.html')
 
 @app.route('/api/farms/<int:farm_id>', methods=['PUT'])
 def update_farm(farm_id):
