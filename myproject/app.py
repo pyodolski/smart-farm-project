@@ -2,6 +2,8 @@ import pymysql
 import os
 from werkzeug.utils import secure_filename
 from flask import Flask, render_template, request, redirect, session, url_for, flash, jsonify
+
+from routes.admin import admin_bp
 from routes.farm import farm_bp
 from config import DB_CONFIG
 from routes.post import post_bp
@@ -22,6 +24,7 @@ CORS(app,
 app.register_blueprint(farm_bp)
 app.register_blueprint(post_bp)
 app.register_blueprint(crop_bp)
+app.register_blueprint(admin_bp)
 
 def get_db_connection():
     try:
@@ -125,9 +128,7 @@ def login():
     # GET 요청 처리 - React는 API만 사용하므로 JSON 응답만 필요
     return jsonify({"success": True, "message": "로그인 API가 정상 작동 중입니다."}), 200
 
-@app.route('/admin.html')
-def admin_page():
-    return render_template('admin.html')
+
 
 @app.route('/logout', methods=['POST'])
 def logout():

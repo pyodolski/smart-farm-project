@@ -4,12 +4,41 @@
     <meta charset="UTF-8">
     <title>관리자 페이지</title>
     <style>
-        body { font-family: Arial, sans-serif; background-color: #f6f6f6; margin: 0; padding: 0; }
-        header { background-color: #2c3e50; color: white; padding: 1rem; text-align: center; }
-        main { max-width: 800px; margin: 2rem auto; background: white; padding: 2rem; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-        h2 { color: #34495e; }
-        ul { list-style: none; padding: 0; }
-        li { margin: 1rem 0; padding: 1rem; background: #ecf0f1; border-radius: 5px; }
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f6f6f6;
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            background-color: #2c3e50;
+            color: white;
+            padding: 1rem;
+            text-align: center;
+        }
+        main {
+            max-width: 800px;
+            margin: 2rem auto;
+            background: white;
+            padding: 2rem;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h2 {
+            color: #34495e;
+        }
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+        li {
+            margin: 1rem 0;
+            padding: 1rem;
+            background: #ecf0f1;
+            border-radius: 5px;
+        }
+        .section-title {
+            margin-top: 2rem;
+        }
     </style>
 </head>
 <body>
@@ -18,14 +47,40 @@
     </header>
     <main>
         <section>
-            <h2>포스팅 / 게시판 관리</h2>
+            <h2>🚨 신고된 게시글</h2>
             <ul>
-                <li>신고된 게시글 목록 보기 / 삭제</li>
-                <li>신고된 댓글 목록 보기 / 삭제</li>
+                {% for board in reported_boards %}
+                    <li>
+                        <strong>게시글 제목: {{ board.title }}</strong><br>
+                        게시글 내용: {{ board.content }}<br>
+                        게시글 신고 수: {{ board.report }}<br>
+                        게시글 작성자: {{ board.author }}
+                    </li>
+                {% else %}
+                    <li>신고된 게시글이 없습니다.</li>
+                {% endfor %}
             </ul>
         </section>
-        <section>
-            <h2>농장 추가 승인</h2>
+
+        <section class="section-title">
+            <h2>💬 신고된 댓글</h2>
+            <ul>
+                {% for comment in reported_comments %}
+                    <li>
+                    <strong>게시글 제목: {{ comment.board_title }}</strong><br>
+                        게시글 작성자: {{ comment.board_author }}<br>
+                        댓글 내용: {{ comment.content }}<br>
+                        댓글 신고 수: {{ comment.report }}<br>
+                        댓글 작성자: {{ comment.author }}
+                    </li>
+                {% else %}
+                    <li>신고된 댓글이 없습니다.</li>
+                {% endfor %}
+            </ul>
+        </section>
+
+        <section class="section-title">
+            <h2>🌱 농장 추가 승인</h2>
             <ul>
                 <li>농장 추가 신청 목록 보기</li>
                 <li>승인 / 거부 선택</li>
