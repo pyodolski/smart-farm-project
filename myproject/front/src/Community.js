@@ -105,6 +105,7 @@ function Community() {
               <th>작성일</th>
               <th>조회수</th>
               <th>좋아요</th>
+              <th>신고수</th>
             </tr>
           </thead>
           <tbody>
@@ -117,11 +118,12 @@ function Community() {
                   <td>{formatDate(post.wdate)}</td>
                   <td>{post.view}</td>
                   <td>{post.like_count}</td>
+                  <td>{post.report}</td>
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan="6" className="no-posts">
+                <td colSpan="7" className="no-posts">
                   게시글이 없습니다.
                 </td>
               </tr>
