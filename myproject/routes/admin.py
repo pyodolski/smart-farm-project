@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template
+from flask import Blueprint, render_template, request, redirect,url_for
 import pymysql
 from config import DB_CONFIG
 
@@ -52,3 +52,19 @@ def admin_page():
         reported_boards=reported_boards,
         reported_comments=reported_comments
     )
+
+@admin_bp.route('/admin/delete_post/<int:post_id>', methods=['POST'])
+def delete_post(post_id):
+    conn = get_db_conn()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("DELETE FROM board WHERE id = %s", (post_id,))
+        conn.commit()
+    except Exception as e:
+        print(f"게시글 삭제 오류: {e}")
+        return "삭제 중 오류 발생", 500
+    finally:
+        cursor.close()
+        conn.close()
+    return redirect(url_for('admin.admin_page'))
+

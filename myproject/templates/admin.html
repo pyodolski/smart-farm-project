@@ -15,6 +15,7 @@
             color: white;
             padding: 1rem;
             text-align: center;
+            position: relative;
         }
         main {
             max-width: 800px;
@@ -44,6 +45,9 @@
 <body>
     <header>
         <h1>관리자 대시보드</h1>
+        <button onclick="logout()" style="position: absolute; top: 1rem; right: 1rem; background-color: #e74c3c; color: white; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer;">
+            로그아웃
+        </button>
     </header>
     <main>
         <section>
@@ -55,6 +59,9 @@
                         게시글 내용: {{ board.content }}<br>
                         게시글 신고 수: {{ board.report }}<br>
                         게시글 작성자: {{ board.author }}
+                        <form action="{{ url_for('admin.delete_post', post_id=board.id) }}" method="post" onsubmit="return confirm('정말 삭제하시겠습니까?');">
+                            <button type="submit">❌ 게시글 삭제</button>
+                        </form>
                     </li>
                 {% else %}
                     <li>신고된 게시글이 없습니다.</li>
@@ -67,7 +74,7 @@
             <ul>
                 {% for comment in reported_comments %}
                     <li>
-                    <strong>게시글 제목: {{ comment.board_title }}</strong><br>
+                        <strong>게시글 제목: {{ comment.board_title }}</strong><br>
                         게시글 작성자: {{ comment.board_author }}<br>
                         댓글 내용: {{ comment.content }}<br>
                         댓글 신고 수: {{ comment.report }}<br>
@@ -87,5 +94,26 @@
             </ul>
         </section>
     </main>
+
+    <script>
+    function logout() {
+        fetch("/logout", {
+            method: "POST",
+            credentials: "include"
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message);
+                window.location.href = "http://localhost:3000/login";  // 로그인 페이지 경로에 맞게 수정
+            } else {
+                alert("로그아웃 실패");
+            }
+        })
+        .catch(err => {
+            alert("에러 발생");
+        });
+    }
+    </script>
 </body>
 </html>
