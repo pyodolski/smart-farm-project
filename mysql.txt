@@ -41,13 +41,14 @@ CREATE TABLE likes (
 ) ENGINE=InnoDB;
 
 CREATE TABLE farms (
-   id int NOT NULL AUTO_INCREMENT,
-   owner_username varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
-   name varchar(255) COLLATE utf8mb4_general_ci NOT NULL,
-   area float NOT NULL,
-   location text COLLATE utf8mb4_general_ci NOT NULL,
-   PRIMARY KEY (`id`)
- ) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100),
+    area FLOAT,
+    location VARCHAR(255),
+    owner_username VARCHAR(100),
+    document_path VARCHAR(255),
+    is_approved TINYINT(1) DEFAULT 0
+);
 
 CREATE TABLE report_log (
   id INT AUTO_INCREMENT PRIMARY KEY,
