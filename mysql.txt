@@ -16,7 +16,8 @@ CREATE TABLE board (
   title VARCHAR(70) NOT NULL,       
   content TEXT NOT NULL,             
   wdate TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, 
-  view INT(11) NOT NULL DEFAULT 0,   
+  view INT(11) NOT NULL DEFAULT 0,
+  report INT(10) NoT NULL DEFAULT 0,
   PRIMARY KEY (id)
 );
 
@@ -25,6 +26,7 @@ CREATE TABLE comments (
   board_id INT UNSIGNED NOT NULL,
   commenter VARCHAR(20) NOT NULL,
   content TEXT NOT NULL,
+  report INT(10) NoT NULL DEFAULT 0,
   cdate TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (board_id) REFERENCES board(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
@@ -46,3 +48,12 @@ CREATE TABLE farms (
    location text COLLATE utf8mb4_general_ci NOT NULL,
    PRIMARY KEY (`id`)
  ) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci
+
+CREATE TABLE report_log (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id VARCHAR(50) NOT NULL,
+  target_type ENUM('post', 'comment') NOT NULL,
+  target_id INT NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY unique_report (user_id, target_type, target_id)
+);
