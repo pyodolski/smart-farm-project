@@ -29,7 +29,7 @@ def add_farm():
             return '첨부파일이 첨부하세요.', 400
         
         filename = secure_filename(document.filename)
-        filepath = os.path.join(UPLOAD_FOLDER, filename)
+        filepath = os.path.join(UPLOAD_FOLDER, filename).replace('\\', '/')
         document.save(filepath)
 
         conn = get_db_conn()
