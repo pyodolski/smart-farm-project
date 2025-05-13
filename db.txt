@@ -16,3 +16,5 @@ CREATE TABLE `users` (
    PRIMARY KEY (`id`),
    UNIQUE KEY `username` (`username`)
  ) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci
+
+ ALTER TABLE users ADD COLUMN is_admin TINYINT(1) DEFAULT 0;

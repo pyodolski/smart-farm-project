@@ -1,15 +1,33 @@
 import pymysql
+import os
+import random
+import smtplib
+import requests
+from werkzeug.utils import secure_filename
 from flask import Flask, render_template, request, redirect, session, url_for, flash, jsonify
 from routes.farm import farm_bp
 from config import DB_CONFIG
 from routes.post import post_bp
 from routes.crop import crop_bp, fetch_disease_detail, fetch_insect_detail, fetch_predator_detail
 from flask_cors import CORS
+from email.mime.text import MIMEText
+from email.header import Header
+from routes.weather import weather_bp
+from routes.weather import cities, fetch_weather, fetch_two_day_minmax
+
+def get_db_conn():
+    return pymysql.connect(**DB_CONFIG)
+conn = get_db_conn()
+cur = conn.cursor()
+UPLOAD_FOLDER = 'static/uploads/farms'
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 app = Flask(__name__)
-CORS(app, 
-     resources={r"/*": {"origins": "http://localhost:3000"}},
+
+CORS(app,
+     resources={r"/*": {"origins": ["http://localhost:3000", "http://127.0.0.1:3000", "http://localhost:5001", "http://127.0.0.1:5001"]}},
      supports_credentials=True)
+
 app.register_blueprint(farm_bp)
 app.register_blueprint(post_bp)
 app.register_blueprint(crop_bp)
@@ -60,8 +78,19 @@ def home():
         cur.execute(sql, (username,))
         farms = cur.fetchall()
         conn.close()
+    
+    selected_city = request.form.get('city','서울특별시')
+    weather = fetch_weather(selected_city)
+    two_day = fetch_two_day_minmax(selected_city)
 
-    return render_template('my_farms.html', farms=farms)
+    return render_template(
+        'my_farms.html',
+        farms=farms,
+        cities=cities,
+        selected_city=selected_city,
+        weather=weather,
+        two_day=two_day
+    )
 
 #임시(로그인/회원가입) --------------------------------------------------------------------
 app.secret_key = 'your_secret_key'  # 세션에 필요한 비밀키 (랜덤한 문자열)
@@ -69,29 +98,38 @@ app.secret_key = 'your_secret_key'  # 세션에 필요한 비밀키 (랜덤한 �
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        # JSON 요청 처리
         try:
             if request.is_json:
                 data = request.get_json()
                 user_id = data.get('id')
                 password = data.get('password')
             else:
-                # 폼 데이터도 처리 가능하도록 유지
                 user_id = request.form.get('id')
                 password = request.form.get('password')
-                
+
             if not user_id or not password:
                 return jsonify({"success": False, "message": "모든 필드를 입력해주세요."}), 400
 
             conn = get_db_connection()
             if conn:
                 try:
-                    with conn.cursor() as cursor:
+                    with conn.cursor(pymysql.cursors.DictCursor) as cursor:
                         cursor.execute("SELECT * FROM users WHERE id = %s AND password = %s", (user_id, password))
                         user = cursor.fetchone()
                         if user:
                             session['user_id'] = user_id
-                            return jsonify({"success": True, "message": "로그인 성공!", "user_id": user_id}), 200
+                            is_admin = user['is_admin']
+
+                            response = {
+                                "success": True,
+                                "message": "로그인 성공!",
+                                "user_id": user_id
+                            }
+
+                            if is_admin == 1:
+                                response["admin"] = True
+
+                            return jsonify(response), 200
                         else:
                             return jsonify({"success": False, "message": "아이디 또는 비밀번호가 일치하지 않습니다."}), 401
                 finally:
@@ -100,11 +138,12 @@ def login():
                 return jsonify({"success": False, "message": "DB 연결 실패"}), 500
         except Exception as e:
             return jsonify({"success": False, "message": f"오류가 발생했습니다: {str(e)}"}), 500
-    
-    # GET 요청 처리 - React는 API만 사용하므로 JSON 응답만 필요
+
     return jsonify({"success": True, "message": "로그인 API가 정상 작동 중입니다."}), 200
 
-
+@app.route('/admin.html')
+def admin_page():
+    return render_template('admin.html')
 
 @app.route('/logout', methods=['POST'])
 def logout():
@@ -152,7 +191,6 @@ def register():
 
     # GET 요청에 대한 응답 (React 앱을 제공하는 경우)
     return jsonify({'success': True, 'message': 'API is running'}), 200
-
 
 #정보 수정
 @app.route('/edit', methods=['GET', 'POST'])
@@ -220,32 +258,37 @@ def get_farms():
 
 @app.route('/api/farms', methods=['POST'])
 def add_farm():
-    user_id = session.get('user_id')
-    if not user_id:
-        return jsonify({'success': False, 'message': '로그인이 필요합니다.'}), 401
+    if request.method == 'POST':
+        name = request.form['name']
+        area = request.form['area']
+        location = request.form['location']
+        #owner = request.form['owner'] #추후 교체 필요 (직접입력 -> 로그인되어있는 유저로 자동 입력)
+        owner = session.get('user_id')
+        document = request.files.get('document') #농장주 증명 첨부 파일
 
-    data = request.get_json()
-    name = data.get('name')
-    location = data.get('location')
-    area = data.get('area')
+        if not owner:
+            return '로그인 후 이용해주세요.', 403
+        if not document:
+            return '첨부파일이 첨부하세요.', 400
+        
+        filename = secure_filename(document.filename)
+        filepath = os.path.join(UPLOAD_FOLDER, filename)
+        document.save(filepath)
 
-    if not all([name, location, area]):
-        return jsonify({'success': False, 'message': '모든 필드를 입력해주세요.'}), 400
+    conn = get_db_conn()
+    cur = conn.cursor()
 
-    conn = get_db_connection()
-    if conn:
-        try:
-            with conn.cursor() as cursor:
-                sql = """
-                    INSERT INTO farms (name, location, area, owner_username)
-                    VALUES (%s, %s, %s, %s)
-                """
-                cursor.execute(sql, (name, location, area, user_id))
-                conn.commit()
-                return jsonify({'success': True, 'message': '농장이 추가되었습니다.'}), 200
-        finally:
-            conn.close()
-    return jsonify({'success': False, 'message': 'DB 연결 실패'}), 500
+    sql = """
+        INSERT INTO farms (name, area, location, owner_username, document_path)
+        VALUES (%s, %s, %s, %s, %s)
+    """
+    cur.execute(sql, (name, area, location, owner, filepath))
+    conn.commit()
+    conn.close()
+
+    return jsonify({'success': True, 'message': '농장이 추가되었습니다.'}), 200
+
+    return render_template('add_farm.html')
 
 @app.route('/api/farms/<int:farm_id>', methods=['PUT'])
 def update_farm(farm_id):
@@ -833,5 +876,13 @@ def api_enemy_detail(enemy_id):
         return jsonify({'error': '천적 곤충 정보를 찾을 수 없습니다.'}), 404
     return jsonify(enemy)
 
+@app.route('/api/weather')
+def api_weather():
+    city = request.args.get('city', '서울특별시')
+    from routes.weather import fetch_weather, fetch_two_day_minmax
+    weather = fetch_weather(city)
+    two_day = fetch_two_day_minmax(city)
+    return jsonify({'weather': weather, 'two_day': two_day})
+
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(port=5001, debug=True)

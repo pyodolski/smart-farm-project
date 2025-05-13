@@ -13,7 +13,7 @@ function EditPost() {
 
   const fetchPost = async () => {
     try {
-      const response = await fetch(`http://localhost:5000/api/posts/${postId}`, {
+      const response = await fetch(`http://localhost:5001/api/posts/${postId}`, {
         credentials: 'include'
       });
       if (response.ok) {
@@ -33,7 +33,7 @@ function EditPost() {
     e.preventDefault();
     
     try {
-      const response = await fetch(`http://localhost:5000/api/posts/${postId}`, {
+      const response = await fetch(`http://localhost:5001/api/posts/${postId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

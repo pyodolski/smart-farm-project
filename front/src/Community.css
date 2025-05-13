@@ -223,6 +223,10 @@
   width: 11%;
 }
 
+.posts-table th:nth-child(7) {
+  width: 10%;
+}
+
 .posts-table th {
   background-color: #f0f0f0;
   font-weight: 500;

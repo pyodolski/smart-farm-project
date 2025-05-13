@@ -28,7 +28,7 @@ function Navigation() {
 
   const handleLogout = async () => {
     try {
-      const response = await fetch('http://localhost:5000/logout', {
+      const response = await fetch('http://localhost:5001/logout', {
         method: 'POST',
         credentials: 'include'
       });
@@ -91,7 +91,7 @@ function App() {
   useEffect(() => {
     const checkLoginStatus = async () => {
       try {
-        const response = await fetch('http://localhost:5000/check_login', {
+        const response = await fetch('http://localhost:5001/check_login', {
           credentials: 'include'
         });
         const data = await response.json();
