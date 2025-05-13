@@ -34,7 +34,8 @@
 
 .post-actions {
   display: flex;
-  gap: 1rem;
+  flex-wrap: nowrap;
+  gap: 0.5rem;
   padding: 1rem 0;
   border-top: 1px solid #eee;
   border-bottom: 1px solid #eee;
@@ -47,10 +48,19 @@
   background-color: #f0f0f0;
   cursor: pointer;
   transition: background-color 0.2s;
+  font-size: 0.9rem;
 }
 
 .post-actions button:hover {
   background-color: #e0e0e0;
+}
+
+/* 신고 버튼 강조 색상 */
+.post-actions button:nth-child(4) {
+  background-color: #ffdddd;
+}
+.post-actions button:nth-child(4):hover {
+  background-color: #ffbbbb;
 }
 
 .comments-section {
@@ -113,18 +123,27 @@
 .comment-actions {
   margin-top: 0.5rem;
   display: flex;
+  flex-wrap: nowrap;
   gap: 0.5rem;
   justify-content: flex-end;
 }
 
 .comment-actions button {
-  padding: 0.25rem 0.5rem;
+  padding: 0.25rem 0.75rem;
   font-size: 0.8rem;
   background-color: #f0f0f0;
   border: none;
   border-radius: 4px;
   cursor: pointer;
   transition: background-color 0.2s;
+}
+
+/* 댓글 신고 버튼 강조 색상 */
+.comment-actions button:last-child {
+  background-color: #ffe0e0;
+}
+.comment-actions button:last-child:hover {
+  background-color: #ffbdbd;
 }
 
 .comment-actions button:hover {
@@ -144,4 +163,4 @@
 
 .back-button:hover {
   background-color: #5a6268;
-} 
+}

@@ -7,6 +7,7 @@ function PostDetail() {
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState('');
   const [likeCount, setLikeCount] = useState(0);
+  const [reportCount, setReportCount] = useState(0);
   const { postId } = useParams();
   const navigate = useNavigate();
 
@@ -24,6 +25,7 @@ function PostDetail() {
         setPost(data.post);
         setComments(data.comments);
         setLikeCount(data.like_count);
+        setReportCount(data.post.report || 0);
       }
     } catch (error) {
       console.error('게시글 로딩 실패:', error);
@@ -57,6 +59,46 @@ function PostDetail() {
         }
       } catch (error) {
         console.error('게시글 삭제 실패:', error);
+      }
+    }
+  };
+
+  const handleReportPost = async () => {
+    if (window.confirm('이 게시글을 신고하시겠습니까?')) {
+      try {
+        const response = await fetch(`http://localhost:5001/report/post/${postId}`, {
+          method: 'POST',
+          credentials: 'include'
+        });
+        const data = await response.json();
+        if (response.ok) {
+          alert(data.message);
+          setReportCount(prev => prev + 1);
+        } else {
+          alert(`신고 실패: ${data.message}`);
+        }
+      } catch (error) {
+        alert('신고 중 오류 발생');
+      }
+    }
+  };
+
+  const handleReportComment = async (commentId) => {
+    if (window.confirm('이 댓글을 신고하시겠습니까?')) {
+      try {
+        const response = await fetch(`http://localhost:5001/report/comment/${commentId}`, {
+          method: 'POST',
+          credentials: 'include'
+        });
+        const data = await response.json();
+        if (response.ok) {
+          alert(data.message);
+          fetchPostDetail(); // 댓글 수 갱신
+        } else {
+          alert(`신고 실패: ${data.message}`);
+        }
+      } catch (error) {
+        alert('댓글 신고 중 오류 발생');
       }
     }
   };
@@ -117,10 +159,9 @@ function PostDetail() {
         <button onClick={handleLike}>❤️ 좋아요 ({likeCount})</button>
         {post.is_author && (
           <>
-            <button onClick={() => navigate(`/community/edit/${postId}`)}>
-              ✏️ 수정
-            </button>
+            <button onClick={() => navigate(`/community/edit/${postId}`)}>✏️ 수정</button>
             <button onClick={handleDelete}>🗑️ 삭제</button>
+            <button onClick={handleReportPost}>🚨 신고 ({reportCount})</button>
           </>
         )}
       </div>
@@ -145,29 +186,25 @@ function PostDetail() {
                 <span>{new Date(comment.cdate).toLocaleDateString()}</span>
               </div>
               <p>{comment.content}</p>
-              {comment.is_author && (
-                <div className="comment-actions">
-                  <button onClick={() => navigate(`/community/comment/edit/${comment.id}`)}>
-                    ✏️ 수정
-                  </button>
-                  <button onClick={() => handleCommentDelete(comment.id)}>
-                    🗑️ 삭제
-                  </button>
-                </div>
-              )}
+              <div className="comment-actions">
+                {comment.is_author && (
+                  <>
+                    <button onClick={() => navigate(`/community/comment/edit/${comment.id}`)}>✏️ 수정</button>
+                    <button onClick={() => handleCommentDelete(comment.id)}>🗑️ 삭제</button>
+                    <button onClick={() => handleReportComment(comment.id)}>🚨 댓글 신고 ({comment.report || 0})</button>
+                  </>
+                )}
+              </div>
             </div>
           ))}
         </div>
       </div>
 
-      <button 
-        className="back-button"
-        onClick={() => navigate('/community')}
-      >
+      <button className="back-button" onClick={() => navigate('/community')}>
         ← 목록으로
       </button>
     </div>
   );
 }
 
-export default PostDetail; 
+export default PostDetail;

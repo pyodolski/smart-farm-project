@@ -280,3 +280,85 @@ def edit_comment(comment_id):
             return render_template('editComment.html', comment=comment)
         else:
             return render_template('editError.html')
+
+
+# 게시물 신고 기능
+from flask import jsonify
+
+@post_bp.route('/report/post/<int:post_id>', methods=['POST'])
+def report_post(post_id):
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'message': '로그인이 필요합니다.'}), 401
+
+    user_id = session['user_id']
+    conn = get_db_conn()
+    cursor = conn.cursor()
+
+    try:
+        # 중복 신고 확인
+        cursor.execute("""
+            SELECT 1 FROM report_log
+            WHERE user_id=%s AND target_type='post' AND target_id=%s
+        """, (user_id, post_id))
+        if cursor.fetchone():
+            return jsonify({'success': False, 'message': '이미 신고한 게시글입니다.'}), 400
+
+        # 신고 수 증가
+        cursor.execute("UPDATE board SET report = report + 1 WHERE id = %s", (post_id,))
+        # 신고 로그 기록
+        cursor.execute("""
+            INSERT INTO report_log (user_id, target_type, target_id)
+            VALUES (%s, 'post', %s)
+        """, (user_id, post_id))
+
+        conn.commit()
+        return jsonify({'success': True, 'message': '신고 완료'}), 200
+
+    except Exception as e:
+        conn.rollback()
+        print("신고 실패:", e)
+        return jsonify({'success': False, 'message': '서버 오류가 발생했습니다.'}), 500
+
+    finally:
+        cursor.close()
+        conn.close()
+
+
+# 댓글 신고 기능
+@post_bp.route('/report/comment/<int:comment_id>', methods=['POST'])
+def report_comment(comment_id):
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'message': '로그인이 필요합니다.'}), 401
+
+    user_id = session['user_id']
+    conn = get_db_conn()
+    cursor = conn.cursor()
+
+    try:
+        # 중복 신고 확인
+        cursor.execute("""
+            SELECT 1 FROM report_log
+            WHERE user_id=%s AND target_type='comment' AND target_id=%s
+        """, (user_id, comment_id))
+        if cursor.fetchone():
+            return jsonify({'success': False, 'message': '이미 신고한 댓글입니다.'}), 400
+
+        # 신고 수 증가
+        cursor.execute("UPDATE comments SET report = report + 1 WHERE id = %s", (comment_id,))
+        # 로그 기록
+        cursor.execute("""
+            INSERT INTO report_log (user_id, target_type, target_id)
+            VALUES (%s, 'comment', %s)
+        """, (user_id, comment_id))
+
+        conn.commit()
+        return jsonify({'success': True, 'message': '댓글 신고 완료'}), 200
+
+    except Exception as e:
+        conn.rollback()
+        print("댓글 신고 실패:", e)
+        return jsonify({'success': False, 'message': '댓글 신고 실패'}), 500
+
+    finally:
+        cursor.close()
+        conn.close()
