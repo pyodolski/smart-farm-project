@@ -93,6 +93,30 @@
                 <li>승인 / 거부 선택</li>
             </ul>
         </section>
+        
+        <section class="pending-farms">
+            {% if pending_farms %}
+                {% for farm in pending_farms %}
+                    <div class="farm-card">
+                        <p><strong>농장 이름:</strong> {{ farm.name }}</p>
+                        <p><strong>위치:</strong> {{ farm.location }}</p>
+                        <p><strong>면적:</strong> {{ farm.area }} ㎡</p>
+                        <p><strong>소유자:</strong> {{ farm.owner_username }}</p>
+                        <p><strong>증명 서류:</strong> 
+                            <a href="{{ url_for('static', filename=farm.document_url) }}" target="_blank">[문서 보기]</a>
+                        </p>
+                        <form action="{{ url_for('admin.approve_farm', farm_id=farm.id) }}" method="post" style="display:inline;">
+                            <button type="submit" class="approve-btn">✅ 승인</button>
+                        </form>
+                        <form action="{{ url_for('admin.reject_farm', farm_id=farm.id) }}" method="post" style="display:inline;">
+                            <button type="submit" class="reject-btn">❌ 거부</button>
+                        </form>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p>현재 승인 대기 중인 농장이 없습니다.</p>
+            {% endif %}
+        </section>
     </main>
 
     <script>
