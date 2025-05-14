@@ -161,9 +161,9 @@ function PostDetail() {
           <>
             <button onClick={() => navigate(`/community/edit/${postId}`)}>✏️ 수정</button>
             <button onClick={handleDelete}>🗑️ 삭제</button>
-            <button onClick={handleReportPost}>🚨 신고 ({reportCount})</button>
           </>
         )}
+        <button onClick={handleReportPost}>🚨 신고 ({reportCount})</button>
       </div>
 
       <div className="comments-section">
@@ -191,9 +191,9 @@ function PostDetail() {
                   <>
                     <button onClick={() => navigate(`/community/comment/edit/${comment.id}`)}>✏️ 수정</button>
                     <button onClick={() => handleCommentDelete(comment.id)}>🗑️ 삭제</button>
-                    <button onClick={() => handleReportComment(comment.id)}>🚨 댓글 신고 ({comment.report || 0})</button>
                   </>
                 )}
+                 <button onClick={() => handleReportComment(comment.id)}>🚨 댓글 신고 ({comment.report ?? 0})</button>
               </div>
             </div>
           ))}
