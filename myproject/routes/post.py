@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, redirect, url_for, session
+from flask import Blueprint, request, session
 import pymysql
 from config import DB_CONFIG
 
