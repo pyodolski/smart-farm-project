@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>관리자 페이지</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f6f6f6;
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            background-color: #2c3e50;
+            color: white;
+            padding: 1rem;
+            text-align: center;
+            position: relative;
+        }
+        main {
+            max-width: 800px;
+            margin: 2rem auto;
+            background: white;
+            padding: 2rem;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h2 {
+            color: #34495e;
+        }
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+        li {
+            margin: 1rem 0;
+            padding: 1rem;
+            background: #ecf0f1;
+            border-radius: 5px;
+        }
+        .section-title {
+            margin-top: 2rem;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>관리자 대시보드</h1>
+        <button onclick="logout()" style="position: absolute; top: 1rem; right: 1rem; background-color: #e74c3c; color: white; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer;">
+            로그아웃
+        </button>
+    </header>
+    <main>
+        <section>
+            <h2>🚨 신고된 게시글</h2>
+            <ul>
+                {% for board in reported_boards %}
+                    <li>
+                        <strong>게시글 제목: {{ board.title }}</strong><br>
+                        게시글 내용: {{ board.content }}<br>
+                        게시글 신고 수: {{ board.report }}<br>
+                        게시글 작성자: {{ board.author }}
+                        <form action="{{ url_for('admin.delete_post', post_id=board.id) }}" method="post" onsubmit="return confirm('정말 삭제하시겠습니까?');">
+                            <button type="submit">❌ 게시글 삭제</button>
+                        </form>
+                    </li>
+                {% else %}
+                    <li>신고된 게시글이 없습니다.</li>
+                {% endfor %}
+            </ul>
+        </section>
+
+        <section class="section-title">
+            <h2>💬 신고된 댓글</h2>
+            <ul>
+                {% for comment in reported_comments %}
+                    <li>
+                        <strong>게시글 제목: {{ comment.board_title }}</strong><br>
+                        게시글 작성자: {{ comment.board_author }}<br>
+                        댓글 내용: {{ comment.content }}<br>
+                        댓글 신고 수: {{ comment.report }}<br>
+                        댓글 작성자: {{ comment.author }}
+                    </li>
+                {% else %}
+                    <li>신고된 댓글이 없습니다.</li>
+                {% endfor %}
+            </ul>
+        </section>
+
+        <section class="section-title">
+            <h2>🌱 농장 추가 승인</h2>
+            <ul>
+                <li>농장 추가 신청 목록 보기</li>
+                <li>승인 / 거부 선택</li>
+            </ul>
+        </section>
+        
+        <section class="pending-farms">
+            {% if pending_farms %}
+                {% for farm in pending_farms %}
+                    <div class="farm-card">
+                        <p><strong>농장 이름:</strong> {{ farm.name }}</p>
+                        <p><strong>위치:</strong> {{ farm.location }}</p>
+                        <p><strong>면적:</strong> {{ farm.area }} ㎡</p>
+                        <p><strong>소유자:</strong> {{ farm.owner_username }}</p>
+                        <p><strong>증명 서류:</strong> 
+                            <a href="{{ url_for('static', filename=farm.document_url) }}" target="_blank">[문서 보기]</a>
+                        </p>
+                        <form action="{{ url_for('admin.approve_farm', farm_id=farm.id) }}" method="post" style="display:inline;">
+                            <button type="submit" class="approve-btn">✅ 승인</button>
+                        </form>
+                        <form action="{{ url_for('admin.reject_farm', farm_id=farm.id) }}" method="post" style="display:inline;">
+                            <button type="submit" class="reject-btn">❌ 거부</button>
+                        </form>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p>현재 승인 대기 중인 농장이 없습니다.</p>
+            {% endif %}
+        </section>
+    </main>
+
+    <script>
+    function logout() {
+        fetch("/logout", {
+            method: "POST",
+            credentials: "include"
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message);
+                window.location.href = "http://localhost:3000/login";  // 로그인 페이지 경로에 맞게 수정
+            } else {
+                alert("로그아웃 실패");
+            }
+        })
+        .catch(err => {
+            alert("에러 발생");
+        });
+    }
+    </script>
+</body>
+</html>

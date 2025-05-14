@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>댓글 수정</title>
+</head>
+<body>
+    <h1>💬 댓글 수정</h1>
+
+    <form method="POST">
+        <textarea name="content" rows="4" cols="60" required>{{ comment.content }}</textarea><br>
+        <button type="submit">수정 완료</button>
+    </form>
+
+    <p><a href="/post/content/{{ comment.board_id }}">← 게시글로 돌아가기</a></p>
+</body>
+</html>
