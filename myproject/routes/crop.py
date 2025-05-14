@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, jsonify
+from flask import Blueprint, jsonify
 import requests
 
 crop_bp = Blueprint('crop', __name__, url_prefix='/api')
