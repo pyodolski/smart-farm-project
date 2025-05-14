@@ -25,56 +25,38 @@ const Register = () => {
     setError('');
   };
 
-  /** 코드 인증증
   const handleEmailVerification = async () => {
     try {
-      const response = await fetch('http://localhost:5001/send-verification-code', {
+      const response = await fetch('http://localhost:5001/send_code', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
         body: JSON.stringify({ email: formData.email })
       });
-      
       const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.message || '인증 코드 전송 실패');
-      }
-      
+      if (!response.ok) throw new Error(data.message || '인증 코드 전송 실패');
       setSuccess('인증 코드가 이메일로 전송되었습니다.');
     } catch (error) {
       setError(error.message);
     }
   };
-  
 
   const handleVerifyCode = async () => {
     try {
-      const response = await fetch('http://localhost:5001/verify-code', {
+      const response = await fetch('http://localhost:5001/check_code', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: formData.email,
-          code: formData.verificationCode
-        })
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ code: formData.verificationCode })
       });
-      
       const data = await response.json();
-      
-      if (!response.ok) {
-        throw new Error(data.message || '인증 코드가 일치하지 않습니다.');
-      }
-      
+      if (!response.ok || !data.verified) throw new Error(data.message || '인증 코드가 일치하지 않습니다.');
       setIsEmailVerified(true);
       setSuccess('이메일 인증이 완료되었습니다.');
     } catch (error) {
       setError(error.message);
     }
   };
-  */
 
   const validateForm = () => {
     // 모든 필드가 채워져 있는지 확인
@@ -198,48 +180,28 @@ const Register = () => {
 
         <div className="form-row">
           <label htmlFor="email">이메일:</label>
-          <div className="email-verification">
-            <input
-              type="email"
-              id="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              required
-              disabled={isEmailVerified}
-            />
-            {!isEmailVerified && (
-              <button 
-                type="button" 
-                //onClick={handleEmailVerification}
-                className="verification-button"
-              >
-                코드인증
-              </button>
-            )}
-          </div>
+          <input
+            type="email"
+            id="email"
+            name="email"
+            value={formData.email}
+            onChange={handleChange}
+            required
+          />
+          <button type="button" onClick={handleEmailVerification}>이메일 인증코드 전송</button>
         </div>
 
         {!isEmailVerified && (
-          <div className="form-row verification-code">
-            <label htmlFor="verificationCode">인증 코드:</label>
-            <div className="verification-input">
-              <input
-                type="text"
-                id="verificationCode"
-                name="verificationCode"
-                value={formData.verificationCode}
-                onChange={handleChange}
-                required
-              />
-              <button 
-                type="button" 
-                //onClick={handleVerifyCode}
-                className="verify-button"
-              >
-                확인
-              </button>
-            </div>
+          <div className="form-row">
+            <label htmlFor="verificationCode">인증코드:</label>
+            <input
+              type="text"
+              id="verificationCode"
+              name="verificationCode"
+              value={formData.verificationCode}
+              onChange={handleChange}
+            />
+            <button type="button" onClick={handleVerifyCode}>인증코드 확인</button>
           </div>
         )}
 

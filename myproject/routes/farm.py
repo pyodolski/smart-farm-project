@@ -18,13 +18,9 @@ def get_db_conn():
 @farm_bp.route('/', methods=['GET', 'POST'])
 def farms_api():
     if request.method == 'GET':
-        owner = session.get('user_id')
-        if not owner:
-            return jsonify({'error': '로그인이 필요합니다.'}), 403
-
         conn = get_db_conn()
         cur = conn.cursor(pymysql.cursors.DictCursor)
-        cur.execute("SELECT * FROM farms WHERE is_approved = 1 AND owner_username = %s", (owner,))
+        cur.execute("SELECT * FROM farms WHERE approved = 1")
         farms = cur.fetchall()
         conn.close()
         return jsonify({'farms': farms})
@@ -101,8 +97,7 @@ def farm_detail(farm_id):
 
     conn = get_db_conn()
     cur = conn.cursor(pymysql.cursors.DictCursor)
-    cur.execute("SELECT * FROM farms WHERE id = %s AND is_approved = 1", (farm_id,))
-    
+    cur.execute("SELECT * FROM farms WHERE id = %s AND approved = 1", (farm_id,))
     farm = cur.fetchone()
     conn.close()
 
@@ -151,7 +146,7 @@ def edit_farm(farm_id):
 
 
 # ✅ 농장 삭제
-@farm_bp.route('/<int:farm_id>', methods=['DELETE'])
+@farm_bp.route('/farm/<int:farm_id>/delete', methods=['POST'])
 def delete_farm(farm_id):
     username = session.get('user_id')
     if not username:
@@ -169,5 +164,4 @@ def delete_farm(farm_id):
     cur.execute("DELETE FROM farms WHERE id = %s", (farm_id,))
     conn.commit()
     conn.close()
-    return jsonify({'message': '삭제 완료'}), 200
-
+    return redirect(url_for('home'))

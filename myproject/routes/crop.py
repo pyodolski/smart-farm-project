@@ -1,10 +1,14 @@
-from flask import Blueprint, jsonify
+from flask import Blueprint, render_template, jsonify
 import requests
 
 crop_bp = Blueprint('crop', __name__, url_prefix='/api')
 
 API_KEY = "20253105e956e7f172ff09e237ed92508153"
 BASE_URL = "http://ncpms.rda.go.kr/npmsAPI/service"
+
+@crop_bp.route('/')
+def select_crop():
+    return render_template("crops.html")
 
 def fetch_disease_data(crop_name):
     params = {

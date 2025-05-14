@@ -113,6 +113,14 @@ function MainPage() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedFarm, setSelectedFarm] = useState(null);
   const [isLoggedIn] = useContext(AuthContext);
+  const [weather, setWeather] = useState(null);
+  const [twoDay, setTwoDay] = useState([]);
+  const [selectedCity, setSelectedCity] = useState('서울특별시');
+  const cities = [
+    '서울특별시', '부산광역시', '대구광역시', '인천광역시', '광주광역시',
+    '대전광역시', '울산광역시', '세종특별자치시', '경기도', '강원특별자치도',
+    '충청북도', '충청남도', '전라북도', '전라남도', '경상북도', '경상남도', '제주특별자치도'
+  ];
 
   // 농장 목록 불러오기
   useEffect(() => {
@@ -120,6 +128,15 @@ function MainPage() {
       fetchFarms();
     }
   }, [isLoggedIn]);
+
+  useEffect(() => {
+    fetch('/api/weather?city=${selectedCity}')
+      .then(res => res.json())
+      .then(data => {
+        setWeather(data.weather);
+        setTwoDay(data.two_day);
+      });
+  }, [selectedCity]);
 
   const fetchFarms = async () => {
     try {
@@ -217,61 +234,108 @@ function MainPage() {
     setSelectedFarm(null);
   };
 
+  function weatherIcon(description) {
+    if (!description) return '🌤️';
+    const desc = description.toLowerCase();
+    if (desc.includes('비')) return '🌧️';
+    if (desc.includes('눈')) return '❄️';
+    if (desc.includes('구름')) return '☁️';
+    if (desc.includes('맑')) return '☀️';
+    if (desc.includes('흐림')) return '🌥️';
+    if (desc.includes('번개')) return '⛈️';
+    if (desc.includes('안개')) return '🌫️';
+  }
+
   return (
-    <div className="main-container">
-      <h1>내 농장 목록</h1>
-      <p>농장을 추가하거나 관리하세요</p>
-      
-      {!isLoggedIn ? (
-        <div className="empty-farm-message">
-          <p>등록된 농장이 없습니다.</p>
-        </div>
-      ) : (
-        <div className="farm-list">
-          {farms.length === 0 ? (
-            <div className="empty-farm-box" onClick={openAddModal}>
-              <span className="plus-icon">+</span>
-              <p>등록된 농장이 없습니다.</p>
-            </div>
-          ) : (
-            <div className="farms-grid">
-              {farms.map((farm) => (
-                <div key={farm.id} className="farm-card">
-                  <h3>{farm.name}</h3>
-                  <p>위치: {farm.location}</p>
-                  <p>면적: {farm.area} ㎡</p>
-                  <div className="farm-buttons">
-                    <button onClick={() => openEditModal(farm)}>수정</button>
-                    <button onClick={() => handleDeleteFarm(farm.id)}>삭제</button>
-                  </div>
-                </div>
+    <div className="mainpage-layout">
+      <aside className="weather-aside">
+        <div className="weather-card">
+          <div className="weather-header">
+            <h3>오늘의 날씨</h3>
+            <select
+              className="city-select"
+              value={selectedCity}
+              onChange={e => setSelectedCity(e.target.value)}
+            >
+              {cities.map(city => (
+                <option key={city} value={city}>{city}</option>
               ))}
-              <div className="add-farm-card" onClick={openAddModal}>
-                <span className="plus-icon">+</span>
-                <p>농장 추가</p>
+            </select>
+          </div>
+          {weather && (
+            <div className="weather-today">
+              <div className="weather-icon">{weatherIcon(weather.description)}</div>
+              <div className="weather-info">
+                <div className="weather-temp">{weather.temperature}°C</div>
+                <div className="weather-desc">{weather.description}</div>
               </div>
             </div>
           )}
+          <div className="weather-forecast-title">내일/모레 예보</div>
+          <div className="weather-forecast-row">
+            {twoDay.map(day => (
+              <div className="forecast-card" key={day.date}>
+                <div className="forecast-date">{day.date}</div>
+                <div className="forecast-temp">{day.min_temp}°C ~ {day.max_temp}°C</div>
+                <div className="forecast-desc">{day.description} {weatherIcon(day.description)}</div>
+              </div>
+            ))}
+          </div>
         </div>
-      )}
+      </aside>
+      
 
-      {/* 추가 모달 */}
-      <FarmModal 
-        show={showAddModal}
-        onClose={closeAddModal}
-        title="농장 추가"
-        onSubmit={handleAddFarm}
-        initialData={null}
-      />
-
-      {/* 수정 모달 */}
-      <FarmModal
-        show={showEditModal}
-        onClose={closeEditModal}
-        title="농장 수정"
-        onSubmit={handleEditFarm}
-        initialData={selectedFarm}
-      />
+      <main className="main-content">
+        <h1>내 농장 목록</h1>
+        <p>농장을 추가하거나 관리하세요</p>
+        {!isLoggedIn ? (
+          <div className="empty-farm-message">
+            <p>등록된 농장이 없습니다.</p>
+          </div>
+        ) : (
+          <div className="farm-list">
+            {farms.length === 0 ? (
+              <div className="empty-farm-box" onClick={openAddModal}>
+                <span className="plus-icon">+</span>
+                <p>등록된 농장이 없습니다.</p>
+              </div>
+            ) : (
+              <div className="farms-grid">
+                {farms.map((farm) => (
+                  <div key={farm.id} className="farm-card">
+                    <h3>{farm.name}</h3>
+                    <p>위치: {farm.location}</p>
+                    <p>면적: {farm.area} ㎡</p>
+                    <div className="farm-buttons">
+                      <button onClick={() => openEditModal(farm)}>수정</button>
+                      <button onClick={() => handleDeleteFarm(farm.id)}>삭제</button>
+                    </div>
+                  </div>
+                ))}
+                <div className="add-farm-card" onClick={openAddModal}>
+                  <span className="plus-icon">+</span>
+                  <p>농장 추가</p>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+        {/* 추가/수정 모달 */}
+        <FarmModal 
+          show={showAddModal}
+          onClose={closeAddModal}
+          title="농장 추가"
+          onSubmit={handleAddFarm}
+          initialData={null}
+        />
+        <FarmModal
+          show={showEditModal}
+          onClose={closeEditModal}
+          title="농장 수정"
+          onSubmit={handleEditFarm}
+          initialData={selectedFarm}
+        />
+      </main>
     </div>
   );
 }

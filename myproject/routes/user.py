@@ -1,7 +1,11 @@
 import pymysql
+import random
+import smtplib
 from flask import Blueprint, Flask, render_template, request, redirect, session, url_for, flash, jsonify
 from config import DB_CONFIG
 from flask_cors import CORS
+from email.mime.text import MIMEText
+from email.header import Header
 
 user_bp = Blueprint('user', __name__)
 
@@ -57,6 +61,46 @@ def login():
     # GET 요청 처리 - React는 API만 사용하므로 JSON 응답만 필요
     return jsonify({"success": True, "message": "로그인 API가 정상 작동 중입니다."}), 200
 
+@user_bp.route('/send_code', methods=['POST'])
+def send_code():
+    data = request.get_json()
+    email = data.get('email')
+
+    code = str(random.randint(100000, 999999))
+    session['verify_email'] = email
+    session['verify_code'] = code
+    try:
+        msg = MIMEText(f'인증번호는 {code} 입니다.', _charset='utf-8')
+        msg['Subject'] = Header('이메일 인증번호', 'utf-8')
+        msg['From'] = '4642joung@yu.ac.kr'
+        msg['To'] = email
+
+        s = smtplib.SMTP_SSL('smtp.gmail.com', 465)
+        s.login('4642joung@yu.ac.kr', 'pqvk hxur beny bapi')
+        s.send_message(msg)
+        s.quit()
+
+        return jsonify({'status': 'ok', 'message': '인증번호 전송 완료'})
+    except Exception as e:
+        return jsonify({'message': f'메일 전송 실패: {str(e)}'}), 500
+
+#이메일 코드 일치/불일치 확인
+@user_bp.route('/check_code', methods=['POST'])
+def check_code():
+    data = request.get_json()
+    input_code = data.get('code')
+
+    if not input_code:
+        return jsonify({'verified': False, 'message': '인증번호가 입력되지 않았습니다.'}), 400
+
+    stored_code = session.get('verify_code')
+
+    if input_code == stored_code:
+        session['email_verified'] = True
+        return jsonify({'verified': True, 'message': '인증 성공'})
+    else:
+        return jsonify({'verified': False, 'message': '인증번호가 일치하지 않습니다.'})
+
 @user_bp.route('/logout', methods=['POST'])
 def logout():
     session.pop('user_id', None)
@@ -104,6 +148,53 @@ def register():
     # GET 요청에 대한 응답 (React 앱을 제공하는 경우)
     return jsonify({'success': True, 'message': 'API is running'}), 200
 
+
+#정보 수정
+@user_bp.route('/edit', methods=['GET', 'POST'])
+def edit_profile():
+    user_id = session['user_id']
+    conn = get_db_conn()
+
+    if request.method == 'POST':
+        new_nickname = request.form.get('nickname')
+        new_email = request.form.get('email')
+        new_name = request.form.get('name')
+        current_password = request.form.get('current_password')
+
+        if conn:
+            try:
+                with conn.cursor() as cursor:
+                    cursor.execute("SELECT password FROM users WHERE id = %s", (user_id,))
+                    user = cursor.fetchone()
+                    if not user or user[0] != current_password:
+                        flash("현재 비밀번호가 일치하지 않습니다.")
+                        return render_template('edit.html', nickname=new_nickname, email=new_email, name=new_name)
+
+                    update_query = """
+                        UPDATE users
+                        SET nickname = %s, email = %s, name = %s
+                        WHERE id = %s
+                    """
+                    cursor.execute(update_query, (new_nickname, new_email, new_name, user_id))
+                    conn.commit()
+                    flash("정보가 성공적으로 수정되었습니다.")
+                    return redirect(url_for('edit_profile'))
+            finally:
+                conn.close()
+
+    else:
+        if conn:
+            try:
+                with conn.cursor() as cursor:
+                    cursor.execute("SELECT nickname, email, name FROM users WHERE id = %s", (user_id,))
+                    user = cursor.fetchone()
+                    if user:
+                        return render_template('edit.html', nickname=user[0], email=user[1], name=user[2])
+                    else:
+                        flash("사용자 정보를 찾을 수 없습니다.")
+                        return redirect(url_for('index'))
+            finally:
+                conn.close()
 
 # 사용자 정보 조회
 @user_bp.route('/api/user/profile', methods=['GET'])
