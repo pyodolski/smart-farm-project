@@ -1,7 +1,7 @@
-from flask import Blueprint, render_template
+from flask import Blueprint, render_template, jsonify
 import requests
 
-crop_bp = Blueprint('crop', __name__, url_prefix='/crops')
+crop_bp = Blueprint('crop', __name__, url_prefix='/api')
 
 API_KEY = "20253105e956e7f172ff09e237ed92508153"
 BASE_URL = "http://ncpms.rda.go.kr/npmsAPI/service"
@@ -121,65 +121,52 @@ def fetch_insect_data(crop_name):
     data = response.json()
     return data.get("service", {}).get("list", [])
 
-#작물 상세 페이지
-@crop_bp.route('/detail/<crop>')
-def show_crop_detail(crop):
+## 리액트 프론트엔드용 API 경로 추가
+@crop_bp.route('crops/detail/<crop>')
+def api_crop_detail(crop):
+    from routes.crop import get_crop_info, fetch_disease_data, fetch_insect_data, fetch_predator_data
+    
     valid_crops = {
         "strawberry": "딸기",
         "tomato": "토마토"
     }
 
     if crop not in valid_crops:
-        return "존재하지 않는 작물입니다.", 404
+        return jsonify({"error": "존재하지 않는 작물입니다."}), 404
 
     crop_name_kor = valid_crops[crop]
     info = get_crop_info(crop)
     items = fetch_disease_data(crop_name_kor)
-
     insects = fetch_insect_data(crop_name_kor)
     enemies = fetch_predator_data(crop_name_kor)
 
-    return render_template("crop_detail.html", crop_name=crop_name_kor, info=info, items=items, insects=insects, enemies=enemies)
+    return jsonify({
+        "info": info,
+        "items": items,
+        "insects": insects,
+        "enemies": enemies
+    })
 
-#병해 페이지
-@crop_bp.route('/disease/<disease_id>')
-def show_disease_detail(disease_id):
-    # 병해 세부 정보
-    disease_details = fetch_disease_detail(disease_id)
-    
-    if not disease_details:
-        return f"{disease_id}에 대한 세부 정보가 없습니다.", 404
-    
-    #오류
-    disease = disease_details if disease_details else {}
+#병해 정보
+@crop_bp.route('/diseases/<disease_id>')
+def api_disease_detail(disease_id):
+    disease = fetch_disease_detail(disease_id)
+    if not disease:
+        return jsonify({'error': '병해 정보를 찾을 수 없습니다.'}), 404
+    return jsonify(disease)
 
-    return render_template("disease_detail.html", disease=disease)
+#해충 정보
+@crop_bp.route('/insects/<insect_id>')
+def api_insect_detail(insect_id):
+    insect = fetch_insect_detail(insect_id)
+    if not insect:
+        return jsonify({'error': '해충 정보를 찾을 수 없습니다.'}), 404
+    return jsonify(insect)
 
-#해충 피해 페이지
-@crop_bp.route('/insect/<insect_id>')
-def show_insect_detail(insect_id):
-    # 해충 세부 정보
-    insect_details = fetch_insect_detail(insect_id)
-    
-    if not insect_details:
-        return f"{insect_id}에 대한 세부 정보가 없습니다.", 404
-    
-    #오류
-    insect = insect_details if insect_details else {}
-
-    return render_template("insect_detail.html", insect=insect)
-
-#천적 곤충 페이지
-@crop_bp.route('/enemy/<enemy_id>')
-def show_enemy_detail(enemy_id):
-    #천적 곤충 정보
-    predator_details = fetch_predator_detail(enemy_id)
-    
-    if not predator_details:
-        return f"{enemy_id}에 대한 천적 곤충 세부 정보가 없습니다.", 404
-    
-    #오류
-    predator = predator_details if predator_details else {}
-
-    return render_template("predator_detail.html", predator=predator)
-
+#천적 곤충 정보
+@crop_bp.route('/enemies/<enemy_id>')
+def api_enemy_detail(enemy_id):
+    enemy = fetch_predator_detail(enemy_id)
+    if not enemy:
+        return jsonify({'error': '천적 곤충 정보를 찾을 수 없습니다.'}), 404
+    return jsonify(enemy)

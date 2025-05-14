@@ -8,279 +8,6 @@ post_bp = Blueprint('post', __name__)
 def get_db_conn():
     return pymysql.connect(**DB_CONFIG)
 
-@post_bp.route('/post')
-def post():
-    username = session.get('user_id')
-    sort = request.args.get('sort', 'new')  # 정렬 기준 (new 또는 popular)
-    keyword = request.args.get('search', '')  # 검색 키워드
-
-    # 정렬 조건 구성
-    order_query = "ORDER BY likes DESC, b.id DESC" if sort == 'popular' else "ORDER BY b.id DESC"
-
-    conn = get_db_conn()
-    cursor = conn.cursor(pymysql.cursors.DictCursor)
-
-    # 검색 조건 구성
-    if keyword:
-        search_condition = "WHERE b.title LIKE %s OR b.content LIKE %s"
-        search_values = (f"%{keyword}%", f"%{keyword}%")
-    else:
-        search_condition = ""
-        search_values = ()
-
-    # 게시글 목록 쿼리
-    query = f"""
-    SELECT 
-        b.id, 
-        b.name, 
-        b.title, 
-        b.wdate, 
-        b.view,
-        (SELECT COUNT(*) FROM likes WHERE board_id = b.id) AS likes
-    FROM board AS b
-    {search_condition}
-    {order_query}
-    """
-    cursor.execute(query, search_values)
-    post_list = cursor.fetchall()
-    cursor.close()
-    conn.close()
-
-    return render_template('post.html', postlist=post_list, logininfo=username, current_sort=sort, current_search=keyword)
-
-# 게시글 상세 페이지
-@post_bp.route('/post/content/<id>')
-def content(id):
-    if 'user_id' not in session:
-        return render_template('Error.html')
-
-    username = session['user_id']
-
-    # 조회수 증가
-    conn = get_db_conn()
-    cursor = conn.cursor()
-    cursor.execute("UPDATE board SET view = view + 1 WHERE id = %s", (id,))
-    conn.commit()
-    cursor.close()
-    conn.close()
-
-    # 게시글, 좋아요 수, 댓글 가져오기
-    conn = get_db_conn()
-    cursor = conn.cursor(pymysql.cursors.DictCursor)
-    cursor.execute("SELECT id, title, content, name FROM board WHERE id = %s", (id,))
-    content = cursor.fetchone()
-    cursor.execute("SELECT COUNT(*) AS cnt FROM likes WHERE board_id = %s", (id,))
-    like_count = cursor.fetchone()['cnt']
-    cursor.execute("SELECT id, commenter, content, cdate FROM comments WHERE board_id = %s ORDER BY cdate DESC", (id,))
-    comments = cursor.fetchall()
-    cursor.close()
-    conn.close()
-
-    return render_template('content.html', data=content, username=username, like_count=like_count, comments=comments)
-
-# 게시글 좋아요 기능
-@post_bp.route('/like/<id>')
-def like(id):
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
-
-    username = session['user_id']
-    conn = get_db_conn()
-    cursor = conn.cursor()
-
-    # 중복 좋아요 확인 및 등록
-    cursor.execute("SELECT * FROM likes WHERE board_id = %s AND user_name = %s", (id, username))
-    if not cursor.fetchone():
-        cursor.execute("INSERT INTO likes (board_id, user_name) VALUES (%s, %s)", (id, username))
-        conn.commit()
-
-    cursor.close()
-    conn.close()
-    return redirect(url_for('post.content', id=id))
-
-# 게시글 수정
-@post_bp.route('/post/edit/<id>', methods=['GET', 'POST'])
-def edit(id):
-    if 'user_id' not in session:
-        return render_template('Error.html')
-
-    username = session['user_id']
-
-    if request.method == 'POST':
-        edittitle = request.form['title']
-        editcontent = request.form['content']
-
-        conn = get_db_conn()
-        cursor = conn.cursor()
-        cursor.execute("UPDATE board SET title = %s, content = %s WHERE id = %s", (edittitle, editcontent, id))
-        conn.commit()
-        cursor.close()
-        conn.close()
-        return render_template('editSuccess.html')
-
-    else:
-        conn = get_db_conn()
-        cursor = conn.cursor(pymysql.cursors.DictCursor)
-        cursor.execute("SELECT id, title, content, name FROM board WHERE id = %s", (id,))
-        postdata = cursor.fetchone()
-        cursor.close()
-        conn.close()
-
-        if postdata and postdata['name'] == username:
-            return render_template('edit.html', data=postdata, logininfo=username)
-        else:
-            return render_template('editError.html')
-
-# 게시글 삭제
-@post_bp.route('/post/delete/<id>', methods=['GET', 'POST'])
-def delete(id):
-    if 'user_id' not in session:
-        return render_template('Error.html')
-
-    username = session['user_id']
-
-    if request.method == 'POST':
-        conn = get_db_conn()
-        cursor = conn.cursor()
-        cursor.execute("DELETE FROM board WHERE id = %s", (id,))
-        conn.commit()
-        cursor.close()
-        conn.close()
-        return render_template('deleteSuccess.html')
-    else:
-        conn = get_db_conn()
-        cursor = conn.cursor(pymysql.cursors.DictCursor)
-        cursor.execute("SELECT name FROM board WHERE id = %s", (id,))
-        result = cursor.fetchone()
-        cursor.close()
-        conn.close()
-
-        if result and result['name'] == username:
-            return render_template('delete.html', id=id)
-        else:
-            return render_template('editError.html')
-
-# 게시글 삭제 성공 처리
-@post_bp.route('/post/delete/success/<id>')
-def deletesuccess(id):
-    if 'user_id' not in session:
-        return render_template('Error.html')
-
-    username = session['user_id']
-    conn = get_db_conn()
-    cursor = conn.cursor(pymysql.cursors.DictCursor)
-    cursor.execute("SELECT name FROM board WHERE id = %s", (id,))
-    result = cursor.fetchone()
-
-    if result and result['name'] == username:
-        cursor.execute("DELETE FROM board WHERE id = %s", (id,))
-        conn.commit()
-        cursor.close()
-        conn.close()
-        return render_template('deleteSuccess.html')
-    else:
-        cursor.close()
-        conn.close()
-        return render_template('editError.html')
-
-# 게시글 작성
-@post_bp.route('/write', methods=['GET', 'POST'])
-def write():
-    if 'user_id' not in session:
-        return render_template('Error.html')
-
-    username = session['user_id']
-
-    if request.method == 'POST':
-        usertitle = request.form['title']
-        usercontent = request.form['content']
-
-        conn = get_db_conn()
-        cursor = conn.cursor()
-        cursor.execute("INSERT INTO board (name, title, content) VALUES (%s, %s, %s)", (username, usertitle, usercontent))
-        conn.commit()
-        cursor.close()
-        conn.close()
-        return redirect(url_for('post.post'))
-
-    return render_template('write.html', logininfo=username)
-
-# 댓글 작성
-@post_bp.route('/comment/<post_id>', methods=['POST'])
-def comment(post_id):
-    if 'user_id' not in session:
-        return render_template('Error.html')
-
-    commenter = session['user_id']
-    content = request.form['content']
-
-    conn = get_db_conn()
-    cursor = conn.cursor()
-    cursor.execute("INSERT INTO comments (board_id, commenter, content) VALUES (%s, %s, %s)", (post_id, commenter, content))
-    conn.commit()
-    cursor.close()
-    conn.close()
-    return redirect(url_for('post.content', id=post_id))
-
-# 댓글 삭제
-@post_bp.route('/comment/delete/<comment_id>/<post_id>')
-def delete_comment(comment_id, post_id):
-    if 'user_id' not in session:
-        return render_template('Error.html')
-
-    username = session['user_id']
-    conn = get_db_conn()
-    cursor = conn.cursor(pymysql.cursors.DictCursor)
-
-    cursor.execute("SELECT commenter FROM comments WHERE id = %s", (comment_id,))
-    result = cursor.fetchone()
-
-    if result and result['commenter'] == username:
-        cursor.execute("DELETE FROM comments WHERE id = %s", (comment_id,))
-        conn.commit()
-
-    cursor.close()
-    conn.close()
-    return redirect(url_for('post.content', id=post_id))
-
-# 댓글 수정
-@post_bp.route('/comment/edit/<int:comment_id>', methods=['GET', 'POST'])
-def edit_comment(comment_id):
-    if 'user_id' not in session:
-        return render_template('Error.html')
-
-    username = session['user_id']
-    conn = get_db_conn()
-    cursor = conn.cursor(pymysql.cursors.DictCursor)
-
-    if request.method == 'POST':
-        new_content = request.form['content']
-        cursor.execute("SELECT board_id FROM comments WHERE id = %s AND commenter = %s", (comment_id, username))
-        result = cursor.fetchone()
-
-        if result:
-            cursor.execute("UPDATE comments SET content = %s WHERE id = %s AND commenter = %s", (new_content, comment_id, username))
-            conn.commit()
-            board_id = result['board_id']
-            cursor.close()
-            conn.close()
-            return redirect(url_for('post.content', id=board_id))
-        else:
-            cursor.close()
-            conn.close()
-            return render_template('editError.html')
-
-    else:
-        cursor.execute("SELECT * FROM comments WHERE id = %s", (comment_id,))
-        comment = cursor.fetchone()
-        cursor.close()
-        conn.close()
-
-        if comment and comment['commenter'] == username:
-            return render_template('editComment.html', comment=comment)
-        else:
-            return render_template('editError.html')
-
 
 # 게시물 신고 기능
 from flask import jsonify
@@ -362,3 +89,360 @@ def report_comment(comment_id):
     finally:
         cursor.close()
         conn.close()
+
+# 게시글 관련 API
+@post_bp.route('/api/posts', methods=['GET'])
+def get_posts():
+    if 'user_id' not in session:
+        return jsonify({'message': '로그인이 필요합니다.'}), 401
+
+    conn = get_db_conn()
+    if not conn:
+        return jsonify({'message': 'DB 연결 실패'}), 500
+    
+    # URL 파라미터 가져오기
+    sort_by = request.args.get('sort', 'new')  # 기본값은 'new'
+    search_term = request.args.get('search', '')
+    
+    cursor = conn.cursor(pymysql.cursors.DictCursor)
+    
+    # 기본 쿼리
+    query = '''
+        SELECT b.*, 
+               (SELECT COUNT(*) FROM likes WHERE board_id = b.id) as like_count,
+               (SELECT COUNT(*) FROM comments WHERE board_id = b.id) as comment_count
+        FROM board b
+    '''
+    
+    # 검색어가 있는 경우 WHERE 절 추가
+    params = []
+    if search_term:
+        query += " WHERE b.title LIKE %s OR b.content LIKE %s "
+        params.extend([f'%{search_term}%', f'%{search_term}%'])
+    
+    # 정렬 기준 적용
+    if sort_by == 'popular':
+        query += " ORDER BY like_count DESC, b.wdate DESC"
+    else:  # 'new'
+        query += " ORDER BY b.wdate DESC"
+    
+    cursor.execute(query, params)
+    posts = cursor.fetchall()
+    cursor.close()
+    conn.close()
+
+    return jsonify({'posts': posts})
+
+@post_bp.route('/api/posts', methods=['POST'])
+def create_post():
+    if 'user_id' not in session:
+        return jsonify({'message': '로그인이 필요합니다.'}), 401
+
+    data = request.get_json()
+    title = data.get('title')
+    content = data.get('content')
+
+    if not title or not content:
+        return jsonify({'message': '제목과 내용을 모두 입력해주세요.'}), 400
+
+    conn = get_db_conn()
+    if not conn:
+        return jsonify({'message': 'DB 연결 실패'}), 500
+        
+    cursor = conn.cursor()
+    cursor.execute(
+        'INSERT INTO board (name, title, content) VALUES (%s, %s, %s)',
+        (session['user_id'], title, content)
+    )
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+    return jsonify({'message': '게시글이 작성되었습니다.'})
+
+@post_bp.route('/api/posts/<int:post_id>', methods=['GET'])
+def get_post(post_id):
+    if 'user_id' not in session:
+        return jsonify({'message': '로그인이 필요합니다.'}), 401
+
+    conn = get_db_conn()
+    if not conn:
+        return jsonify({'message': 'DB 연결 실패'}), 500
+        
+    cursor = conn.cursor(pymysql.cursors.DictCursor)
+    
+    # 게시글 정보 조회
+    cursor.execute('''
+        SELECT b.*, 
+               (SELECT COUNT(*) FROM likes WHERE board_id = b.id) as like_count,
+               b.name = %s as is_author
+        FROM board b
+        WHERE b.id = %s
+    ''', (session['user_id'], post_id))
+    post = cursor.fetchone()
+
+    if not post:
+        cursor.close()
+        conn.close()
+        return jsonify({'message': '게시글을 찾을 수 없습니다.'}), 404
+
+    # 조회수 증가
+    cursor.execute('UPDATE board SET view = view + 1 WHERE id = %s', (post_id,))
+    
+    # 댓글 조회 - cdate 기준으로 최신순 정렬
+    cursor.execute('''
+        SELECT c.*, 
+               c.commenter = %s as is_author,
+               DATE_FORMAT(c.cdate, '%%Y-%%m-%%d %%H:%%i:%%s') as formatted_date
+        FROM comments c
+        WHERE c.board_id = %s
+        ORDER BY c.cdate DESC
+    ''', (session['user_id'], post_id))
+    comments = cursor.fetchall()
+
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+    return jsonify({
+        'post': post,
+        'comments': comments
+    })
+
+@post_bp.route('/api/posts/<int:post_id>', methods=['PUT'])
+def update_post(post_id):
+    if 'user_id' not in session:
+        return jsonify({'message': '로그인이 필요합니다.'}), 401
+
+    conn = get_db_conn()
+    if not conn:
+        return jsonify({'message': 'DB 연결 실패'}), 500
+        
+    cursor = conn.cursor(pymysql.cursors.DictCursor)
+    cursor.execute('SELECT name FROM board WHERE id = %s', (post_id,))
+    post = cursor.fetchone()
+
+    if not post:
+        cursor.close()
+        conn.close()
+        return jsonify({'message': '게시글을 찾을 수 없습니다.'}), 404
+
+    if post['name'] != session['user_id']:
+        cursor.close()
+        conn.close()
+        return jsonify({'message': '수정 권한이 없습니다.'}), 403
+
+    data = request.get_json()
+    title = data.get('title')
+    content = data.get('content')
+
+    if not title or not content:
+        cursor.close()
+        conn.close()
+        return jsonify({'message': '제목과 내용을 모두 입력해주세요.'}), 400
+
+    cursor.execute(
+        'UPDATE board SET title = %s, content = %s WHERE id = %s',
+        (title, content, post_id)
+    )
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+    return jsonify({'message': '게시글이 수정되었습니다.'})
+
+@post_bp.route('/api/posts/<int:post_id>', methods=['DELETE'])
+def delete_post(post_id):
+    if 'user_id' not in session:
+        return jsonify({'message': '로그인이 필요합니다.'}), 401
+
+    conn = get_db_conn()
+    if not conn:
+        return jsonify({'message': 'DB 연결 실패'}), 500
+        
+    cursor = conn.cursor(pymysql.cursors.DictCursor)
+    cursor.execute('SELECT name FROM board WHERE id = %s', (post_id,))
+    post = cursor.fetchone()
+
+    if not post:
+        cursor.close()
+        conn.close()
+        return jsonify({'message': '게시글을 찾을 수 없습니다.'}), 404
+
+    if post['name'] != session['user_id']:
+        cursor.close()
+        conn.close()
+        return jsonify({'message': '삭제 권한이 없습니다.'}), 403
+
+    cursor.execute('DELETE FROM board WHERE id = %s', (post_id,))
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+    return jsonify({'message': '게시글이 삭제되었습니다.'})
+
+@post_bp.route('/api/posts/<int:post_id>/like', methods=['POST'])
+def toggle_like(post_id):
+    if 'user_id' not in session:
+        return jsonify({'message': '로그인이 필요합니다.'}), 401
+
+    conn = get_db_conn()
+    if not conn:
+        return jsonify({'message': 'DB 연결 실패'}), 500
+        
+    cursor = conn.cursor(pymysql.cursors.DictCursor)
+    
+    # 이미 좋아요를 눌렀는지 확인
+    cursor.execute(
+        'SELECT * FROM likes WHERE board_id = %s AND user_name = %s',
+        (post_id, session['user_id'])
+    )
+    existing_like = cursor.fetchone()
+
+    if existing_like:
+        # 좋아요 취소
+        cursor.execute(
+            'DELETE FROM likes WHERE board_id = %s AND user_name = %s',
+            (post_id, session['user_id'])
+        )
+    else:
+        # 좋아요 추가
+        cursor.execute(
+            'INSERT INTO likes (board_id, user_name) VALUES (%s, %s)',
+            (post_id, session['user_id'])
+        )
+
+    # 좋아요 수 조회
+    cursor.execute('SELECT COUNT(*) as count FROM likes WHERE board_id = %s', (post_id,))
+    like_count = cursor.fetchone()['count']
+
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+    return jsonify({
+        'message': '좋아요가 처리되었습니다.',
+        'like_count': like_count
+    })
+
+# 댓글 관련 API
+@post_bp.route('/api/posts/<int:post_id>/comments', methods=['POST'])
+def create_comment(post_id):
+    if 'user_id' not in session:
+        return jsonify({'message': '로그인이 필요합니다.'}), 401
+
+    data = request.get_json()
+    content = data.get('content')
+
+    if not content:
+        return jsonify({'message': '댓글 내용을 입력해주세요.'}), 400
+
+    conn = get_db_conn()
+    if not conn:
+        return jsonify({'message': 'DB 연결 실패'}), 500
+        
+    cursor = conn.cursor()
+    cursor.execute(
+        'INSERT INTO comments (board_id, commenter, content) VALUES (%s, %s, %s)',
+        (post_id, session['user_id'], content)
+    )
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+    return jsonify({'message': '댓글이 작성되었습니다.'})
+
+@post_bp.route('/api/comments/<int:comment_id>', methods=['GET'])
+def get_comment(comment_id):
+    if 'user_id' not in session:
+        return jsonify({'message': '로그인이 필요합니다.'}), 401
+
+    conn = get_db_conn()
+    if not conn:
+        return jsonify({'message': 'DB 연결 실패'}), 500
+        
+    cursor = conn.cursor(pymysql.cursors.DictCursor)
+    cursor.execute('''
+        SELECT c.*
+        FROM comments c
+        WHERE c.id = %s
+    ''', (comment_id,))
+    comment = cursor.fetchone()
+    cursor.close()
+    conn.close()
+
+    if not comment:
+        return jsonify({'message': '댓글을 찾을 수 없습니다.'}), 404
+
+    return jsonify(comment)
+
+@post_bp.route('/api/comments/<int:comment_id>', methods=['PUT'])
+def update_comment(comment_id):
+    if 'user_id' not in session:
+        return jsonify({'message': '로그인이 필요합니다.'}), 401
+
+    conn = get_db_conn()
+    if not conn:
+        return jsonify({'message': 'DB 연결 실패'}), 500
+        
+    cursor = conn.cursor(pymysql.cursors.DictCursor)
+    cursor.execute('SELECT commenter FROM comments WHERE id = %s', (comment_id,))
+    comment = cursor.fetchone()
+
+    if not comment:
+        cursor.close()
+        conn.close()
+        return jsonify({'message': '댓글을 찾을 수 없습니다.'}), 404
+
+    if comment['commenter'] != session['user_id']:
+        cursor.close()
+        conn.close()
+        return jsonify({'message': '수정 권한이 없습니다.'}), 403
+
+    data = request.get_json()
+    content = data.get('content')
+
+    if not content:
+        cursor.close()
+        conn.close()
+        return jsonify({'message': '댓글 내용을 입력해주세요.'}), 400
+
+    cursor.execute(
+        'UPDATE comments SET content = %s WHERE id = %s',
+        (content, comment_id)
+    )
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+    return jsonify({'message': '댓글이 수정되었습니다.'})
+
+@post_bp.route('/api/comments/<int:comment_id>', methods=['DELETE'])
+def delete_comment(comment_id):
+    if 'user_id' not in session:
+        return jsonify({'message': '로그인이 필요합니다.'}), 401
+
+    conn = get_db_conn()
+    if not conn:
+        return jsonify({'message': 'DB 연결 실패'}), 500
+        
+    cursor = conn.cursor(pymysql.cursors.DictCursor)
+    cursor.execute('SELECT commenter FROM comments WHERE id = %s', (comment_id,))
+    comment = cursor.fetchone()
+
+    if not comment:
+        cursor.close()
+        conn.close()
+        return jsonify({'message': '댓글을 찾을 수 없습니다.'}), 404
+
+    if comment['commenter'] != session['user_id']:
+        cursor.close()
+        conn.close()
+        return jsonify({'message': '삭제 권한이 없습니다.'}), 403
+
+    cursor.execute('DELETE FROM comments WHERE id = %s', (comment_id,))
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+    return jsonify({'message': '댓글이 삭제되었습니다.'})
