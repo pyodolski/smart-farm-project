@@ -38,7 +38,7 @@ def get_db_connection():
 @app.route('/')
 def home():
     username = session.get('user_id')  #로그인한 유저 이름
-    usernickname = session.get('nickname')
+    nickname = session.get('nickname')
 
     farms = []
 
