@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %}{{ insect.insectSpeciesKor if insect.insectSpeciesKor else '해충 정보 없음' }} 세부 정보{% endblock %}
+{% block header %}{{ insect.insectSpeciesKor if insect.insectSpeciesKor else '해충 정보 없음' }} 세부 정보{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2>{{ insect.insectSpeciesKor if insect.insectSpeciesKor else '해충 정보 없음' }} 해충 세부 정보</h2>
+
+    <div class="card mt-3">
+        <div class="card-body">
+            <h5 class="card-title">해충 정보</h5>
+            <p><strong>해충명:</strong> {{ insect.insectSpeciesKor if insect.insectSpeciesKor else '정보 없음' }}</p>
+            <p><strong>생태정보:</strong> {{ insect.ecologyInfo if insect.ecologyInfo else '정보 없음' }}</p>
+            <p><strong>피해정보:</strong> {{ insect.damageInfo if insect.damageInfo else '정보 없음' }}</p>
+            <p><strong>방제방법:</strong> {{ insect.preventMethod if insect.preventMethod else '정보 없음' }}</p>
+            <p><strong>검역정보:</strong> {{ insect.qrantInfo if insect.qrantInfo else '정보 없음' }}</p>
+            <p><strong>분포정보:</strong> {{ insect.distrbInfo if insect.distrbInfo else '정보 없음' }}</p>
+            <p><strong>형태정보:</strong> {{ insect.stleInfo if insect.stleInfo else '정보 없음' }}</p>
+        </div>
+    </div>
+
+    <!-- 해충 이미지 -->
+    <div class="card mt-3">
+        <div class="card-body">
+            <h5 class="card-title">해충 이미지</h5>
+            {% if insect.spcsPhotoData %}
+                {% for photo in insect.spcsPhotoData %}
+                    <img src="{{ photo['image'] }}" alt="{{ insect.insectSpeciesKor }}" class="img-fluid">
+                {% endfor %}
+            {% else %}
+                <p>해충 이미지를 찾을 수 없습니다.</p>
+            {% endif %}
+        </div>
+    </div>
+
+
+    <div class="mt-4">
+        <a href="{{ url_for('crop.show_crop_detail', crop=insect.cropName) }}" class="btn btn-secondary">돌아가기</a>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block title %}작물 도감{% endblock %}
+{% block header %}작물 선택{% endblock %}
+
+{% block content %}
+    <div style="display: flex; gap: 20px;">
+        <a href="{{ url_for('crop.show_crop_detail', crop='strawberry') }}">
+            <div class="card">
+                <h3>딸기 🍓</h3>
+            </div>
+        </a>
+
+        <a href="{{ url_for('crop.show_crop_detail', crop='tomato') }}">
+            <div class="card">
+                <h3>토마토 🍅</h3>
+            </div>
+        </a>
+    </div>
+{% endblock %}
