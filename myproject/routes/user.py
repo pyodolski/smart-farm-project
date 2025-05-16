@@ -37,12 +37,15 @@ def login():
                         user = cursor.fetchone()
                         if user:
                             session['user_id'] = user_id
+                            nickname = user['nickname']
+                            session['nickname']  = nickname
                             is_admin = user['is_admin']
 
                             response = {
                                 "success": True,
                                 "message": "로그인 성공!",
-                                "user_id": user_id
+                                "user_id": user_id,
+                                "nickname": nickname
                             }
 
                             if is_admin == 1:
