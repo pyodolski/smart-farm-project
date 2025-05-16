@@ -1,0 +1,362 @@
+.mainpage-layout {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  width: 100vw;
+  margin: 0;
+  min-height: 100vh;
+}
+
+.weather-aside {
+  margin-left: 10px;
+  width: 320px;
+  min-width: 220px;
+  height: 100vh;
+  min-height: 500px;
+  background: transparent;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 0;
+  box-sizing: border-box;
+  position: sticky;
+  top: 0;
+  margin-top: 48px;
+}
+
+.main-content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: 40px;
+  width: 100%;
+  max-width: 1200px;
+  padding: 0 24px;
+}
+
+.farm-list {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.farms-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 15px;
+  justify-items: center;
+  align-items: start;
+}
+
+.main-container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.main-container h1 {
+  text-align: center;
+  margin-bottom: 0.5rem;
+  margin-top: 1.5rem;
+  color: #333;
+}
+
+.main-container p {
+  text-align: center;
+  margin-bottom: 1.2rem;
+  margin-top: 0.5rem;
+  color: #333;
+}
+
+.farm-card {
+  background: white;
+  border-radius: 8px;
+  margin-top: 13px;
+  padding: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s;
+  width: 240px;
+  height: 210px;
+}
+
+.farm-card:hover {
+  transform: translateY(-5px);
+}
+
+.farm-card h3 {
+  margin: 0 0 15px 0;
+  color: #333;
+}
+
+.farm-card p {
+  margin: 8px 0;
+  color: #666;
+}
+
+.farm-buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.farm-buttons button {
+  flex: 1;
+  padding: 8px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.farm-buttons button:first-child {
+  background-color: #bfd27a;
+  color: #000;
+}
+
+.farm-buttons button:last-child {
+  background-color: #ff4444;
+  color: white;
+}
+
+.empty-farm-box {
+  width: 280px;
+  height: 200px;
+  margin: 0 auto;
+  border: 2px dashed #ccc;
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.empty-farm-box:hover {
+  border-color: #bfd27a;
+  background-color: rgba(191, 210, 122, 0.1);
+}
+
+.add-farm-card {
+  background: #f8f9fa;
+  border: 2px dashed #ccc;
+  margin-top: 13px;
+  border-radius: 8px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  height: 210px;
+  width: 240px;
+}
+
+.add-farm-card:hover {
+  border-color: #bfd27a;
+  background-color: rgba(191, 210, 122, 0.1);
+}
+
+.plus-icon {
+  font-size: 40px;
+  color: #666;
+  margin-bottom: 10px;
+}
+
+/* 모달 스타일 */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  padding: 30px;
+  border-radius: 8px;
+  width: 90%;
+  max-width: 500px;
+}
+
+.modal-content h2 {
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 5px;
+  color: #333;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 16px;
+}
+
+.modal-buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.modal-buttons button {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: background-color 0.3s;
+}
+
+.submit-button {
+  background-color: #bfd27a;
+  color: #000;
+}
+
+.cancel-button {
+  background-color: #f0f0f0;
+  color: #333;
+}
+
+.submit-button:hover, .cancel-button:hover {
+  opacity: 0.9;
+}
+
+.empty-farm-message {
+  width: 100%;
+  height: 200px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: 2px dashed #ddd;
+  border-radius: 8px;
+  color: #666;
+  font-size: 1.1rem;
+}
+
+.weather-section {
+  display: flex;
+  justify-content: center;
+  margin-top: 30px;
+  margin-bottom: 40px;
+}
+
+.weather-card {
+  width: 100%;
+  min-height: 340px;
+  height: 420px;
+  max-height: 600px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+  border-radius: 18px;
+  background: #fff;
+  padding: 28px 24px 20px 24px;
+}
+
+.weather-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+.weather-header h3 {
+  margin-right: 15px;
+  font-size: 1.18rem;
+}
+
+.city-select {
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+  font-size: 1rem;
+}
+
+.weather-today {
+  display: flex;
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+.weather-icon {
+  font-size: 2.8rem;
+  margin-right: 18px;
+}
+
+.weather-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.weather-temp {
+  font-size: 2.5rem;
+  font-weight: bold;
+}
+
+.weather-desc {
+  font-size: 1.2rem;
+  color: #666;
+}
+
+.weather-forecast-title {
+  font-weight: bold;
+  margin-bottom: 8px;
+  margin-top: 10px;
+}
+
+.weather-forecast-row {
+  display: flex;
+  gap: 16px;
+}
+
+.forecast-card {
+  background: #f7f7fa;
+  border-radius: 10px;
+  padding: 12px 16px;
+  min-width: 120px;
+  text-align: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+
+.forecast-date {
+  font-size: 1.05rem;
+  font-weight: bold;
+  margin-bottom: 4px;
+}
+
+.forecast-temp {
+  font-size: 1.05rem;
+  margin-bottom: 2px;
+}
+
+.forecast-desc {
+  font-size: 0.95rem;
+  color: #888;
+}
