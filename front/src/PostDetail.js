@@ -24,7 +24,7 @@ function PostDetail() {
         const data = await response.json();
         setPost(data.post);
         setComments(data.comments);
-        setLikeCount(data.like_count ?? 0);
+        setLikeCount(typeof data.post?.like_count === 'number' ? data.post.like_count : 0);
         setReportCount(data.post.report ?? 0);
       }
     } catch (error) {
@@ -164,7 +164,6 @@ function PostDetail() {
           <>
             <button onClick={() => navigate(`/community/edit/${postId}`)}>✏️ 수정</button>
             <button onClick={handleDelete}>🗑️ 삭제</button>
-            <button onClick={handleReportPost}>🚨 신고 ({reportCount})</button>
           </>
         ) : (
           <button onClick={handleReportPost}>🚨 신고 ({reportCount})</button>
