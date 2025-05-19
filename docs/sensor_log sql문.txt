@@ -1,0 +1,10 @@
+USE smartfarm;
+
+CREATE TABLE sensor_log (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    temperature FLOAT,
+    humidity FLOAT,
+    timestamp DATETIME
+);
+
+select * from sensor_log;
