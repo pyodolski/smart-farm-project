@@ -2,14 +2,16 @@ import pymysql
 import os
 from werkzeug.utils import secure_filename
 from flask import Flask, render_template, request, redirect, session, url_for, flash, jsonify
+from datetime import datetime
 
 from routes.user import user_bp
 from routes.admin import admin_bp
 from routes.farm import farm_bp
+from routes.iot import iot_bp
+from routes.weather import weather_bp
 from config import DB_CONFIG
 from routes.post import post_bp
 from routes.crop import crop_bp, fetch_disease_detail, fetch_insect_detail, fetch_predator_detail
-from routes.weather import weather_bp
 from flask_cors import CORS
 
 def get_db_conn():
@@ -28,6 +30,7 @@ app.register_blueprint(farm_bp, url_prefix='/api/farms')
 app.register_blueprint(post_bp)
 app.register_blueprint(crop_bp)
 app.register_blueprint(admin_bp)
+app.register_blueprint(iot_bp)
 app.register_blueprint(weather_bp)
 
 def get_db_connection():

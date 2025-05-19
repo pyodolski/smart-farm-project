@@ -143,9 +143,6 @@ function PostDetail() {
 
   return (
     <div className="post-detail-container">
-      <button className="back-button" onClick={() => navigate('/community')}>
-        ← 목록으로
-      </button>
       <div className="post-header">
         <h2>{post.title}</h2>
         <div className="post-info">
@@ -159,14 +156,14 @@ function PostDetail() {
       </div>
 
       <div className="post-actions">
-        {[ 
-          <button key="like" onClick={handleLike}>❤️ 좋아요 ({likeCount ?? 0})</button>,
-          ...(post.is_author ? [
-            <button key="edit" onClick={() => navigate(`/community/edit/${postId}`)}>✏️ 수정</button>,
-            <button key="delete" onClick={handleDelete}>🗑️ 삭제</button>
-          ] : []),
-          <button key="report" onClick={handleReportPost}>🚨 신고 ({reportCount ?? 0})</button>
-        ]}
+        <button onClick={handleLike}>❤️ 좋아요 ({likeCount})</button>
+        {post.is_author && (
+          <>
+            <button onClick={() => navigate(`/community/edit/${postId}`)}>✏️ 수정</button>
+            <button onClick={handleDelete}>🗑️ 삭제</button>
+          </>
+        )}
+        <button onClick={handleReportPost}>🚨 신고 ({reportCount})</button>
       </div>
 
       <div className="comments-section">
@@ -190,22 +187,22 @@ function PostDetail() {
               </div>
               <p>{comment.content}</p>
               <div className="comment-actions">
-                {[
-                  ...(comment.is_author ? [
-                    <button key="edit" onClick={() => navigate(`/community/comment/edit/${comment.id}`)}>✏️ 수정</button>,
-                    <button key="delete" onClick={() => handleCommentDelete(comment.id)}>🗑️ 삭제</button>
-                  ] : []),
-                  <button key="report" onClick={() => handleReportComment(comment.id)}>
-                    🚨 댓글 신고 ({comment.report ?? 0})
-                  </button>
-                ]}
+                {comment.is_author && (
+                  <>
+                    <button onClick={() => navigate(`/community/comment/edit/${comment.id}`)}>✏️ 수정</button>
+                    <button onClick={() => handleCommentDelete(comment.id)}>🗑️ 삭제</button>
+                  </>
+                )}
+                 <button onClick={() => handleReportComment(comment.id)}>🚨 댓글 신고 ({comment.report ?? 0})</button>
               </div>
             </div>
           ))}
         </div>
       </div>
 
-      
+      <button className="back-button" onClick={() => navigate('/community')}>
+        ← 목록으로
+      </button>
     </div>
   );
 }

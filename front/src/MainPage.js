@@ -130,14 +130,11 @@ function MainPage() {
   }, [isLoggedIn]);
 
   useEffect(() => {
-    fetch(`http://localhost:5001/api/weather?city=${selectedCity}`)
+    fetch(`/api/weather?city=${selectedCity}`)
       .then(res => res.json())
       .then(data => {
         setWeather(data.weather);
         setTwoDay(data.two_day);
-      })
-      .catch(error => {
-        console.error('날씨 정보를 가져오는데 실패했습니다:', error);
       });
   }, [selectedCity]);
 
