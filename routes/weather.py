@@ -3,7 +3,7 @@ from collections import defaultdict
 from datetime import datetime, timedelta
 import requests
 
-weather_bp = Blueprint('weather', __name__, url_prefix='/api')
+weather_bp = Blueprint('weather', __name__, url_prefix='/api/weather')
 API_KEY = '2c583720d6f7b0b19b9164ed79e28471'
 cities = ['서울특별시',
     '부산광역시',
@@ -113,7 +113,7 @@ def fetch_two_day_minmax(kor_city: str) -> list:
             })
     return summary
 
-@weather_bp.route('/weather', methods=['GET'])
+@weather_bp.route('', methods=['GET'])
 def get_weather():
     city = request.args.get('city', '서울특별시')
     weather = fetch_weather(city)
