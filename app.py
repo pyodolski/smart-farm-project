@@ -11,6 +11,7 @@ from routes.iot import iot_bp
 from routes.weather import weather_bp
 from config import DB_CONFIG
 from routes.post import post_bp
+from routes.product import product_bp
 from routes.crop import crop_bp, fetch_disease_detail, fetch_insect_detail, fetch_predator_detail
 from flask_cors import CORS
 
@@ -32,6 +33,7 @@ app.register_blueprint(crop_bp)
 app.register_blueprint(admin_bp)
 app.register_blueprint(iot_bp)
 app.register_blueprint(weather_bp)
+app.register_blueprint(product_bp)
 
 def get_db_connection():
     try:

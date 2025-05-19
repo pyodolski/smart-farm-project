@@ -14,6 +14,7 @@ import EncyclopediaDetail from './EncyclopediaDetail';
 import DiseaseDetail from './DiseaseDetail';
 import InsectDetail from './InsectDetail';
 import EnemyDetail from './EnemyDetail';
+import Products from './Products';
 import './App.css';
 import logo from './leaves-growing-from-ground-green-glyph-style_78370-6720.png'
 import { AuthContext } from './contexts/AuthContext';
@@ -127,6 +128,7 @@ function App() {
             <Route path="/register" element={<Register />} />
             <Route path="/profile" element={isLoggedIn ? <UserProfile /> : <Navigate to="/login" />} />
             <Route path="/community" element={isLoggedIn ? <Community /> : <Navigate to="/login" />} />
+            <Route path="/products" element={isLoggedIn ? <Products /> : <Navigate to="/login" />} />
             <Route path="/community/write" element={isLoggedIn ? <WritePost /> : <Navigate to="/login" />} />
             <Route path="/community/post/:postId" element={isLoggedIn ? <PostDetail /> : <Navigate to="/login" />} />
             <Route path="/community/edit/:postId" element={isLoggedIn ? <EditPost /> : <Navigate to="/login" />} />
