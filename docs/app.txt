@@ -1,0 +1,765 @@
+import pymysql
+from flask import Flask, render_template, request, redirect, session, url_for, flash, jsonify
+from routes.farm import farm_bp
+from config import DB_CONFIG
+from routes.post import post_bp
+from flask_cors import CORS
+
+app = Flask(__name__)
+CORS(app, supports_credentials=True)  # CORS 설정 추가
+app.register_blueprint(farm_bp)
+app.register_blueprint(post_bp)
+
+def get_db_connection():
+    try:
+        return pymysql.connect(**DB_CONFIG)
+    except pymysql.MySQLError as e:
+        print(f"DB 연결 실패: {e}")
+        return None
+
+@app.route('/')
+def home():
+    username = session.get('user_id')  #로그인한 유저 이름
+
+    farms = []
+
+    if username:
+        conn = get_db_connection()
+        cur = conn.cursor(pymysql.cursors.DictCursor)
+        sql = "SELECT * FROM farms WHERE owner_username = %s"
+        cur.execute(sql, (username,))
+        farms = cur.fetchall()
+        conn.close()
+
+    return render_template('my_farms.html', farms=farms)
+
+#임시(로그인/회원가입) --------------------------------------------------------------------
+app.secret_key = 'your_secret_key'  # 세션에 필요한 비밀키 (랜덤한 문자열)
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        # JSON 요청 처리
+        try:
+            if request.is_json:
+                data = request.get_json()
+                user_id = data.get('id')
+                password = data.get('password')
+            else:
+                # 폼 데이터도 처리 가능하도록 유지
+                user_id = request.form.get('id')
+                password = request.form.get('password')
+                
+            if not user_id or not password:
+                return jsonify({"success": False, "message": "모든 필드를 입력해주세요."}), 400
+
+            conn = get_db_connection()
+            if conn:
+                try:
+                    with conn.cursor() as cursor:
+                        cursor.execute("SELECT * FROM users WHERE id = %s AND password = %s", (user_id, password))
+                        user = cursor.fetchone()
+                        if user:
+                            session['user_id'] = user_id
+                            return jsonify({"success": True, "message": "로그인 성공!", "user_id": user_id}), 200
+                        else:
+                            return jsonify({"success": False, "message": "아이디 또는 비밀번호가 일치하지 않습니다."}), 401
+                finally:
+                    conn.close()
+            else:
+                return jsonify({"success": False, "message": "DB 연결 실패"}), 500
+        except Exception as e:
+            return jsonify({"success": False, "message": f"오류가 발생했습니다: {str(e)}"}), 500
+    
+    # GET 요청 처리 - React는 API만 사용하므로 JSON 응답만 필요
+    return jsonify({"success": True, "message": "로그인 API가 정상 작동 중입니다."}), 200
+
+
+
+@app.route('/logout', methods=['POST'])
+def logout():
+    session.pop('user_id', None)
+    return jsonify({
+        'success': True,
+        'message': '로그아웃 되었습니다.'
+    }), 200
+
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        data = request.get_json()  # JSON 데이터 받기
+        user_id = data.get('id')
+        password = data.get('password')
+        password_confirm = data.get('password_confirm')
+        nickname = data.get('nickname')
+        email = data.get('email')
+        name = data.get('name')
+        
+        if not (user_id and password and password_confirm and nickname and email and name):
+            return jsonify({'success': False, 'message': '모든 필드를 입력해주세요.'}), 400
+
+        if password != password_confirm:
+            return jsonify({'success': False, 'message': '비밀번호가 일치하지 않습니다.'}), 400
+
+        conn = get_db_connection()
+        if conn:
+            try:
+                with conn.cursor() as cursor:
+                    cursor.execute("SELECT * FROM users WHERE id = %s OR nickname = %s OR email = %s", (user_id, nickname, email))
+                    if cursor.fetchone():
+                        return jsonify({'success': False, 'message': '이미 등록된 아이디, 닉네임 또는 이메일입니다.'}), 400
+
+                    cursor.execute("""
+                        INSERT INTO users (id, password, nickname, email, name, is_black)
+                        VALUES (%s, %s, %s, %s, %s, %s)
+                    """, (user_id, password, nickname, email, name, False))
+                    conn.commit()
+                    return jsonify({'success': True, 'message': '회원가입에 성공했습니다!'}), 200
+            finally:
+                conn.close()
+        else:
+            return jsonify({'success': False, 'message': 'DB 연결 실패'}), 500
+
+    # GET 요청에 대한 응답 (React 앱을 제공하는 경우)
+    return jsonify({'success': True, 'message': 'API is running'}), 200
+
+
+#정보 수정
+@app.route('/edit', methods=['GET', 'POST'])
+def edit_profile():
+    user_id = session['user_id']
+    conn = get_db_connection()
+
+    if request.method == 'POST':
+        new_nickname = request.form.get('nickname')
+        new_email = request.form.get('email')
+        new_name = request.form.get('name')
+        current_password = request.form.get('current_password')
+
+        if conn:
+            try:
+                with conn.cursor() as cursor:
+                    cursor.execute("SELECT password FROM users WHERE id = %s", (user_id,))
+                    user = cursor.fetchone()
+                    if not user or user[0] != current_password:
+                        flash("현재 비밀번호가 일치하지 않습니다.")
+                        return render_template('edit.html', nickname=new_nickname, email=new_email, name=new_name)
+
+                    update_query = """
+                        UPDATE users
+                        SET nickname = %s, email = %s, name = %s
+                        WHERE id = %s
+                    """
+                    cursor.execute(update_query, (new_nickname, new_email, new_name, user_id))
+                    conn.commit()
+                    flash("정보가 성공적으로 수정되었습니다.")
+                    return redirect(url_for('edit_profile'))
+            finally:
+                conn.close()
+
+    else:
+        if conn:
+            try:
+                with conn.cursor() as cursor:
+                    cursor.execute("SELECT nickname, email, name FROM users WHERE id = %s", (user_id,))
+                    user = cursor.fetchone()
+                    if user:
+                        return render_template('edit.html', nickname=user[0], email=user[1], name=user[2])
+                    else:
+                        flash("사용자 정보를 찾을 수 없습니다.")
+                        return redirect(url_for('index'))
+            finally:
+                conn.close()
+
+@app.route('/api/farms', methods=['GET'])
+def get_farms():
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({'success': False, 'message': '로그인이 필요합니다.'}), 401
+
+    conn = get_db_connection()
+    if conn:
+        try:
+            with conn.cursor(pymysql.cursors.DictCursor) as cursor:
+                cursor.execute("SELECT * FROM farms WHERE owner_username = %s", (user_id,))
+                farms = cursor.fetchall()
+                return jsonify({'success': True, 'farms': farms}), 200
+        finally:
+            conn.close()
+    return jsonify({'success': False, 'message': 'DB 연결 실패'}), 500
+
+@app.route('/api/farms', methods=['POST'])
+def add_farm():
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({'success': False, 'message': '로그인이 필요합니다.'}), 401
+
+    data = request.get_json()
+    name = data.get('name')
+    location = data.get('location')
+    area = data.get('area')
+
+    if not all([name, location, area]):
+        return jsonify({'success': False, 'message': '모든 필드를 입력해주세요.'}), 400
+
+    conn = get_db_connection()
+    if conn:
+        try:
+            with conn.cursor() as cursor:
+                sql = """
+                    INSERT INTO farms (name, location, area, owner_username)
+                    VALUES (%s, %s, %s, %s)
+                """
+                cursor.execute(sql, (name, location, area, user_id))
+                conn.commit()
+                return jsonify({'success': True, 'message': '농장이 추가되었습니다.'}), 200
+        finally:
+            conn.close()
+    return jsonify({'success': False, 'message': 'DB 연결 실패'}), 500
+
+@app.route('/api/farms/<int:farm_id>', methods=['PUT'])
+def update_farm(farm_id):
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({'success': False, 'message': '로그인이 필요합니다.'}), 401
+
+    data = request.get_json()
+    name = data.get('name')
+    location = data.get('location')
+    area = data.get('area')
+
+    if not all([name, location, area]):
+        return jsonify({'success': False, 'message': '모든 필드를 입력해주세요.'}), 400
+
+    conn = get_db_connection()
+    if conn:
+        try:
+            with conn.cursor() as cursor:
+                # 농장 소유자 확인
+                cursor.execute("SELECT owner_username FROM farms WHERE id = %s", (farm_id,))
+                farm = cursor.fetchone()
+                if not farm or farm[0] != user_id:
+                    return jsonify({'success': False, 'message': '권한이 없습니다.'}), 403
+
+                sql = """
+                    UPDATE farms
+                    SET name = %s, location = %s, area = %s
+                    WHERE id = %s AND owner_username = %s
+                """
+                cursor.execute(sql, (name, location, area, farm_id, user_id))
+                conn.commit()
+                return jsonify({'success': True, 'message': '농장 정보가 수정되었습니다.'}), 200
+        finally:
+            conn.close()
+    return jsonify({'success': False, 'message': 'DB 연결 실패'}), 500
+
+@app.route('/api/farms/<int:farm_id>', methods=['DELETE'])
+def delete_farm(farm_id):
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({'success': False, 'message': '로그인이 필요합니다.'}), 401
+
+    conn = get_db_connection()
+    if conn:
+        try:
+            with conn.cursor() as cursor:
+                # 농장 소유자 확인
+                cursor.execute("SELECT owner_username FROM farms WHERE id = %s", (farm_id,))
+                farm = cursor.fetchone()
+                if not farm or farm[0] != user_id:
+                    return jsonify({'success': False, 'message': '권한이 없습니다.'}), 403
+
+                cursor.execute("DELETE FROM farms WHERE id = %s AND owner_username = %s", (farm_id, user_id))
+                conn.commit()
+                return jsonify({'success': True, 'message': '농장이 삭제되었습니다.'}), 200
+        finally:
+            conn.close()
+    return jsonify({'success': False, 'message': 'DB 연결 실패'}), 500
+
+# 게시글 관련 API
+@app.route('/api/posts', methods=['GET'])
+def get_posts():
+    if 'user_id' not in session:
+        return jsonify({'message': '로그인이 필요합니다.'}), 401
+
+    conn = get_db_connection()
+    if not conn:
+        return jsonify({'message': 'DB 연결 실패'}), 500
+    
+    # URL 파라미터 가져오기
+    sort_by = request.args.get('sort', 'new')  # 기본값은 'new'
+    search_term = request.args.get('search', '')
+    
+    cursor = conn.cursor(pymysql.cursors.DictCursor)
+    
+    # 기본 쿼리
+    query = '''
+        SELECT b.*, 
+               (SELECT COUNT(*) FROM likes WHERE board_id = b.id) as like_count,
+               (SELECT COUNT(*) FROM comments WHERE board_id = b.id) as comment_count
+        FROM board b
+    '''
+    
+    # 검색어가 있는 경우 WHERE 절 추가
+    params = []
+    if search_term:
+        query += " WHERE b.title LIKE %s OR b.content LIKE %s "
+        params.extend([f'%{search_term}%', f'%{search_term}%'])
+    
+    # 정렬 기준 적용
+    if sort_by == 'popular':
+        query += " ORDER BY like_count DESC, b.wdate DESC"
+    else:  # 'new'
+        query += " ORDER BY b.wdate DESC"
+    
+    cursor.execute(query, params)
+    posts = cursor.fetchall()
+    cursor.close()
+    conn.close()
+
+    return jsonify({'posts': posts})
+
+@app.route('/api/posts', methods=['POST'])
+def create_post():
+    if 'user_id' not in session:
+        return jsonify({'message': '로그인이 필요합니다.'}), 401
+
+    data = request.get_json()
+    title = data.get('title')
+    content = data.get('content')
+
+    if not title or not content:
+        return jsonify({'message': '제목과 내용을 모두 입력해주세요.'}), 400
+
+    conn = get_db_connection()
+    if not conn:
+        return jsonify({'message': 'DB 연결 실패'}), 500
+        
+    cursor = conn.cursor()
+    cursor.execute(
+        'INSERT INTO board (name, title, content) VALUES (%s, %s, %s)',
+        (session['user_id'], title, content)
+    )
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+    return jsonify({'message': '게시글이 작성되었습니다.'})
+
+@app.route('/api/posts/<int:post_id>', methods=['GET'])
+def get_post(post_id):
+    if 'user_id' not in session:
+        return jsonify({'message': '로그인이 필요합니다.'}), 401
+
+    conn = get_db_connection()
+    if not conn:
+        return jsonify({'message': 'DB 연결 실패'}), 500
+        
+    cursor = conn.cursor(pymysql.cursors.DictCursor)
+    
+    # 게시글 정보 조회
+    cursor.execute('''
+        SELECT b.*, 
+               (SELECT COUNT(*) FROM likes WHERE board_id = b.id) as like_count,
+               b.name = %s as is_author
+        FROM board b
+        WHERE b.id = %s
+    ''', (session['user_id'], post_id))
+    post = cursor.fetchone()
+
+    if not post:
+        cursor.close()
+        conn.close()
+        return jsonify({'message': '게시글을 찾을 수 없습니다.'}), 404
+
+    # 조회수 증가
+    cursor.execute('UPDATE board SET view = view + 1 WHERE id = %s', (post_id,))
+    
+    # 댓글 조회
+    cursor.execute('''
+        SELECT c.*, 
+               c.commenter = %s as is_author
+        FROM comments c
+        WHERE c.board_id = %s
+        ORDER BY c.cdate DESC
+    ''', (session['user_id'], post_id))
+    comments = cursor.fetchall()
+
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+    return jsonify({
+        'post': post,
+        'comments': comments
+    })
+
+@app.route('/api/posts/<int:post_id>', methods=['PUT'])
+def update_post(post_id):
+    if 'user_id' not in session:
+        return jsonify({'message': '로그인이 필요합니다.'}), 401
+
+    conn = get_db_connection()
+    if not conn:
+        return jsonify({'message': 'DB 연결 실패'}), 500
+        
+    cursor = conn.cursor(pymysql.cursors.DictCursor)
+    cursor.execute('SELECT name FROM board WHERE id = %s', (post_id,))
+    post = cursor.fetchone()
+
+    if not post:
+        cursor.close()
+        conn.close()
+        return jsonify({'message': '게시글을 찾을 수 없습니다.'}), 404
+
+    if post['name'] != session['user_id']:
+        cursor.close()
+        conn.close()
+        return jsonify({'message': '수정 권한이 없습니다.'}), 403
+
+    data = request.get_json()
+    title = data.get('title')
+    content = data.get('content')
+
+    if not title or not content:
+        cursor.close()
+        conn.close()
+        return jsonify({'message': '제목과 내용을 모두 입력해주세요.'}), 400
+
+    cursor.execute(
+        'UPDATE board SET title = %s, content = %s WHERE id = %s',
+        (title, content, post_id)
+    )
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+    return jsonify({'message': '게시글이 수정되었습니다.'})
+
+@app.route('/api/posts/<int:post_id>', methods=['DELETE'])
+def delete_post(post_id):
+    if 'user_id' not in session:
+        return jsonify({'message': '로그인이 필요합니다.'}), 401
+
+    conn = get_db_connection()
+    if not conn:
+        return jsonify({'message': 'DB 연결 실패'}), 500
+        
+    cursor = conn.cursor(pymysql.cursors.DictCursor)
+    cursor.execute('SELECT name FROM board WHERE id = %s', (post_id,))
+    post = cursor.fetchone()
+
+    if not post:
+        cursor.close()
+        conn.close()
+        return jsonify({'message': '게시글을 찾을 수 없습니다.'}), 404
+
+    if post['name'] != session['user_id']:
+        cursor.close()
+        conn.close()
+        return jsonify({'message': '삭제 권한이 없습니다.'}), 403
+
+    cursor.execute('DELETE FROM board WHERE id = %s', (post_id,))
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+    return jsonify({'message': '게시글이 삭제되었습니다.'})
+
+@app.route('/api/posts/<int:post_id>/like', methods=['POST'])
+def toggle_like(post_id):
+    if 'user_id' not in session:
+        return jsonify({'message': '로그인이 필요합니다.'}), 401
+
+    conn = get_db_connection()
+    if not conn:
+        return jsonify({'message': 'DB 연결 실패'}), 500
+        
+    cursor = conn.cursor(pymysql.cursors.DictCursor)
+    
+    # 이미 좋아요를 눌렀는지 확인
+    cursor.execute(
+        'SELECT * FROM likes WHERE board_id = %s AND user_name = %s',
+        (post_id, session['user_id'])
+    )
+    existing_like = cursor.fetchone()
+
+    if existing_like:
+        # 좋아요 취소
+        cursor.execute(
+            'DELETE FROM likes WHERE board_id = %s AND user_name = %s',
+            (post_id, session['user_id'])
+        )
+    else:
+        # 좋아요 추가
+        cursor.execute(
+            'INSERT INTO likes (board_id, user_name) VALUES (%s, %s)',
+            (post_id, session['user_id'])
+        )
+
+    # 좋아요 수 조회
+    cursor.execute('SELECT COUNT(*) as count FROM likes WHERE board_id = %s', (post_id,))
+    like_count = cursor.fetchone()['count']
+
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+    return jsonify({
+        'message': '좋아요가 처리되었습니다.',
+        'like_count': like_count
+    })
+
+# 댓글 관련 API
+@app.route('/api/posts/<int:post_id>/comments', methods=['POST'])
+def create_comment(post_id):
+    if 'user_id' not in session:
+        return jsonify({'message': '로그인이 필요합니다.'}), 401
+
+    data = request.get_json()
+    content = data.get('content')
+
+    if not content:
+        return jsonify({'message': '댓글 내용을 입력해주세요.'}), 400
+
+    conn = get_db_connection()
+    if not conn:
+        return jsonify({'message': 'DB 연결 실패'}), 500
+        
+    cursor = conn.cursor()
+    cursor.execute(
+        'INSERT INTO comments (board_id, commenter, content) VALUES (%s, %s, %s)',
+        (post_id, session['user_id'], content)
+    )
+    conn.commit()
+    cursor.close()
+    conn.close()
+
+    return jsonify({'message': '댓글이 작성되었습니다.'})
+
+@app.route('/api/comments/<int:comment_id>', methods=['GET'])
+def get_comment(comment_id):
+    if 'user_id' not in session:
+        return jsonify({'message': '로그인이 필요합니다.'}), 401
+
+    cursor = mysql.connection.cursor(pymysql.cursors.DictCursor)
+    cursor.execute('''
+        SELECT c.*
+        FROM comments c
+        WHERE c.id = %s
+    ''', (comment_id,))
+    comment = cursor.fetchone()
+    cursor.close()
+
+    if not comment:
+        return jsonify({'message': '댓글을 찾을 수 없습니다.'}), 404
+
+    return jsonify(comment)
+
+@app.route('/api/comments/<int:comment_id>', methods=['PUT'])
+def update_comment(comment_id):
+    if 'user_id' not in session:
+        return jsonify({'message': '로그인이 필요합니다.'}), 401
+
+    cursor = mysql.connection.cursor(pymysql.cursors.DictCursor)
+    cursor.execute('SELECT commenter FROM comments WHERE id = %s', (comment_id,))
+    comment = cursor.fetchone()
+
+    if not comment:
+        cursor.close()
+        return jsonify({'message': '댓글을 찾을 수 없습니다.'}), 404
+
+    if comment['commenter'] != session['user_id']:
+        cursor.close()
+        return jsonify({'message': '수정 권한이 없습니다.'}), 403
+
+    data = request.get_json()
+    content = data.get('content')
+
+    if not content:
+        cursor.close()
+        return jsonify({'message': '댓글 내용을 입력해주세요.'}), 400
+
+    cursor.execute(
+        'UPDATE comments SET content = %s WHERE id = %s',
+        (content, comment_id)
+    )
+    mysql.connection.commit()
+    cursor.close()
+
+    return jsonify({'message': '댓글이 수정되었습니다.'})
+
+@app.route('/api/comments/<int:comment_id>', methods=['DELETE'])
+def delete_comment(comment_id):
+    if 'user_id' not in session:
+        return jsonify({'message': '로그인이 필요합니다.'}), 401
+
+    cursor = mysql.connection.cursor(pymysql.cursors.DictCursor)
+    cursor.execute('SELECT commenter FROM comments WHERE id = %s', (comment_id,))
+    comment = cursor.fetchone()
+
+    if not comment:
+        cursor.close()
+        return jsonify({'message': '댓글을 찾을 수 없습니다.'}), 404
+
+    if comment['commenter'] != session['user_id']:
+        cursor.close()
+        return jsonify({'message': '삭제 권한이 없습니다.'}), 403
+
+    cursor.execute('DELETE FROM comments WHERE id = %s', (comment_id,))
+    mysql.connection.commit()
+    cursor.close()
+
+    return jsonify({'message': '댓글이 삭제되었습니다.'})
+
+# 사용자 정보 조회
+@app.route('/api/user/profile', methods=['GET'])
+def get_profile():
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'message': '로그인이 필요합니다.'}), 401
+
+    user_id = session['user_id']
+    conn = get_db_connection()
+
+    if conn:
+        try:
+            with conn.cursor(pymysql.cursors.DictCursor) as cursor:
+                cursor.execute(
+                    "SELECT id, nickname, email, name FROM users WHERE id = %s",
+                    (user_id,)
+                )
+                user = cursor.fetchone()
+                if user:
+                    return jsonify({
+                        'success': True,
+                        'user': user
+                    })
+                else:
+                    return jsonify({
+                        'success': False,
+                        'message': '사용자 정보를 찾을 수 없습니다.'
+                    }), 404
+        finally:
+            conn.close()
+    return jsonify({'success': False, 'message': 'DB 연결 실패'}), 500
+
+# 사용자 정보 수정
+@app.route('/api/user/profile', methods=['PUT'])
+def update_profile():
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'message': '로그인이 필요합니다.'}), 401
+
+    user_id = session['user_id']
+    data = request.get_json()
+    
+    new_nickname = data.get('nickname')
+    new_email = data.get('email')
+    new_name = data.get('name')
+    current_password = data.get('current_password')
+
+    if not all([new_nickname, new_email, new_name, current_password]):
+        return jsonify({
+            'success': False,
+            'message': '모든 필드를 입력해주세요.'
+        }), 400
+
+    conn = get_db_connection()
+    if conn:
+        try:
+            with conn.cursor() as cursor:
+                # 현재 비밀번호 확인
+                cursor.execute(
+                    "SELECT password FROM users WHERE id = %s",
+                    (user_id,)
+                )
+                user = cursor.fetchone()
+                if not user or user[0] != current_password:
+                    return jsonify({
+                        'success': False,
+                        'message': '현재 비밀번호가 일치하지 않습니다.'
+                    }), 401
+
+                # 닉네임과 이메일 중복 확인
+                cursor.execute(
+                    "SELECT id FROM users WHERE (nickname = %s OR email = %s) AND id != %s",
+                    (new_nickname, new_email, user_id)
+                )
+                if cursor.fetchone():
+                    return jsonify({
+                        'success': False,
+                        'message': '이미 사용 중인 닉네임 또는 이메일입니다.'
+                    }), 400
+
+                # 정보 업데이트
+                update_query = """
+                    UPDATE users
+                    SET nickname = %s, email = %s, name = %s
+                    WHERE id = %s
+                """
+                cursor.execute(update_query, (new_nickname, new_email, new_name, user_id))
+                conn.commit()
+
+                return jsonify({
+                    'success': True,
+                    'message': '정보가 성공적으로 수정되었습니다.'
+                })
+        finally:
+            conn.close()
+    return jsonify({'success': False, 'message': 'DB 연결 실패'}), 500
+
+# 비밀번호 변경
+@app.route('/api/user/password', methods=['PUT'])
+def change_password():
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'message': '로그인이 필요합니다.'}), 401
+
+    user_id = session['user_id']
+    data = request.get_json()
+    
+    current_password = data.get('current_password')
+    new_password = data.get('new_password')
+    confirm_password = data.get('confirm_password')
+
+    if not all([current_password, new_password, confirm_password]):
+        return jsonify({
+            'success': False,
+            'message': '모든 필드를 입력해주세요.'
+        }), 400
+
+    if new_password != confirm_password:
+        return jsonify({
+            'success': False,
+            'message': '새 비밀번호가 일치하지 않습니다.'
+        }), 400
+
+    conn = get_db_connection()
+    if conn:
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    "SELECT password FROM users WHERE id = %s",
+                    (user_id,)
+                )
+                user = cursor.fetchone()
+                if not user or user[0] != current_password:
+                    return jsonify({
+                        'success': False,
+                        'message': '현재 비밀번호가 일치하지 않습니다.'
+                    }), 401
+
+                cursor.execute(
+                    "UPDATE users SET password = %s WHERE id = %s",
+                    (new_password, user_id)
+                )
+                conn.commit()
+
+                return jsonify({
+                    'success': True,
+                    'message': '비밀번호가 성공적으로 변경되었습니다.'
+                })
+        finally:
+            conn.close()
+    return jsonify({'success': False, 'message': 'DB 연결 실패'}), 500
+
+if __name__ == '__main__':
+    app.run(debug=True)

@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>글쓰기</title>
+</head>
+<body>
+    <h1>📝 글 작성</h1>
+
+    <!-- 로그인된 사용자 확인 -->
+    <p><strong>{{ session['user_id'] }}</strong> 님, 글을 작성해 주세요.</p>
+
+    <!-- 글 작성 폼 -->
+    <form method="POST">
+        <p><label>제목: <input type="text" name="title" required></label></p>
+        <p><label>내용:</label><br>
+            <textarea name="content" rows="10" cols="50" required></textarea>
+        </p>
+        <button type="submit">작성 완료</button>
+    </form>
+
+    <!-- 게시글 목록으로 돌아가는 링크 -->
+    <p><a href="{{ url_for('post.post') }}">← 게시글 목록으로</a></p>
+</body>
+</html>
