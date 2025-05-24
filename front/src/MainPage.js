@@ -4,14 +4,14 @@ import './MainPage.css';
 
 // 별도의 모달 컴포넌트
 function FarmModal({ show, onClose, title, onSubmit, initialData }) {
-  const [localFormData, setLocalFormData] = useState({ name: '', location: '', area: '' });
+  const [localFormData, setLocalFormData] = useState({ name: '', location: '' });
 
   // 모달이 열릴 때 초기 데이터 설정
   useEffect(() => {
     if (show && initialData) {
       setLocalFormData(initialData);
     } else if (show) {
-      setLocalFormData({ name: '', location: '', area: '' });
+      setLocalFormData({ name: '', location: '' });
     }
   }, [show, initialData]);
 
@@ -28,7 +28,7 @@ function FarmModal({ show, onClose, title, onSubmit, initialData }) {
     const formData = new FormData();
     formData.append('name', localFormData.name);
     formData.append('location', localFormData.location);
-    formData.append('area', localFormData.area);
+    //formData.append('area', localFormData.area);
     formData.append('document', localFormData.document); // ← 핵심
   
     onSubmit(formData); // ← FormData 객체로 넘김
@@ -64,18 +64,6 @@ function FarmModal({ show, onClose, title, onSubmit, initialData }) {
               name="location"
               type="text"
               value={localFormData.location}
-              onChange={handleLocalInputChange}
-              required
-            />
-          </div>
-          <div className="form-group">
-            <label htmlFor="area">면적 (㎡):</label>
-            <input
-              id="area"
-              name="area"
-              type="number"
-              step="0.01"
-              value={localFormData.area}
               onChange={handleLocalInputChange}
               required
             />
@@ -305,7 +293,6 @@ function MainPage() {
                   <div key={farm.id} className="farm-card">
                     <h3>{farm.name}</h3>
                     <p>위치: {farm.location}</p>
-                    <p>면적: {farm.area} ㎡</p>
                     <div className="farm-buttons">
                       <button onClick={() => openEditModal(farm)}>수정</button>
                       <button onClick={() => handleDeleteFarm(farm.id)}>삭제</button>

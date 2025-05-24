@@ -100,7 +100,6 @@
                     <div class="farm-card">
                         <p><strong>농장 이름:</strong> {{ farm.name }}</p>
                         <p><strong>위치:</strong> {{ farm.location }}</p>
-                        <p><strong>면적:</strong> {{ farm.area }} ㎡</p>
                         <p><strong>소유자:</strong> {{ farm.owner_username }}</p>
                         <p><strong>증명 서류:</strong> 
                             <a href="{{ url_for('static', filename=farm.document_url) }}" target="_blank">[문서 보기]</a>

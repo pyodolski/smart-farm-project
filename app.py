@@ -7,7 +7,6 @@ from datetime import datetime
 from routes.user import user_bp
 from routes.admin import admin_bp
 from routes.farm import farm_bp
-from routes.iot import iot_bp
 from routes.weather import weather_bp
 from config import DB_CONFIG
 from routes.post import post_bp
@@ -32,7 +31,6 @@ app.register_blueprint(farm_bp, url_prefix='/api/farms')
 app.register_blueprint(post_bp)
 app.register_blueprint(crop_bp)
 app.register_blueprint(admin_bp)
-app.register_blueprint(iot_bp)
 app.register_blueprint(weather_bp)
 app.register_blueprint(product_bp)
 app.register_blueprint(chart_bp)
