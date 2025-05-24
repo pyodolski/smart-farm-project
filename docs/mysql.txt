@@ -62,14 +62,14 @@ CREATE TABLE iot (
     id INT AUTO_INCREMENT PRIMARY KEY,
     iot_name VARCHAR(100) NOT NULL,
     owner_id VARCHAR(50) NOT NULL,
-    farm_id INT,
+    gh_id INT,
     start_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     capture_interval ENUM('5', '15', '30') DEFAULT '15',
     direction ENUM('left', 'right', 'both') DEFAULT 'both',
     resolution ENUM('640x480', '1280x720', '1920x1080') DEFAULT '1280x720',
     camera_on BOOLEAN DEFAULT TRUE,
     FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (farm_id) REFERENCES farms(id) ON DELETE SET NULL
+    FOREIGN KEY (gh_id) REFERENCES greenhouses(id) ON DELETE SET NULL
 )
 
 CREATE TABLE greenhouses (
@@ -79,6 +79,3 @@ CREATE TABLE greenhouses (
     area JSON NOT NULL,
     FOREIGN KEY (farm_id) REFERENCES farms(id) ON DELETE CASCADE
 )
-
-
-
