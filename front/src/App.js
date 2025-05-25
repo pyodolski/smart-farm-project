@@ -19,6 +19,8 @@ import Statistics from './Statistics';
 import './App.css';
 import logo from './leaves-growing-from-ground-green-glyph-style_78370-6720.png'
 import { AuthContext } from './contexts/AuthContext';
+import CameraSetting from './CameraSetting';
+import FarmDetail from './FarmDetail';
 
 function Navigation() {
   const navigate = useNavigate();
@@ -140,6 +142,8 @@ function App() {
             <Route path="/encyclopedia/insect/:insectId" element={isLoggedIn ? <InsectDetail /> : <Navigate to="/login" />} />
             <Route path="/encyclopedia/enemy/:enemyId" element={isLoggedIn ? <EnemyDetail /> : <Navigate to="/login" />} />
             <Route path="/statistics" element={isLoggedIn ? <Statistics /> : <Navigate to="/login" />} />
+            <Route path="/iot-setting" element={<CameraSetting />} />
+            <Route path="/farm-card-tail/:farmId" element={isLoggedIn ? <FarmDetail /> : <Navigate to="/login" />} />
           </Routes>
         </div>
       </Router>

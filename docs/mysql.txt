@@ -70,7 +70,7 @@ CREATE TABLE iot (
     camera_on BOOLEAN DEFAULT TRUE,
     FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (gh_id) REFERENCES greenhouses(id) ON DELETE SET NULL
-)
+);
 
 CREATE TABLE greenhouses (
     id INT AUTO_INCREMENT PRIMARY KEY,

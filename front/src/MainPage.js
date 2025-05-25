@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import { AuthContext } from './contexts/AuthContext';
 import './MainPage.css';
+import { useNavigate } from 'react-router-dom';
 
 // 별도의 모달 컴포넌트
 function FarmModal({ show, onClose, title, onSubmit, initialData }) {
@@ -109,6 +110,7 @@ function MainPage() {
     '대전광역시', '울산광역시', '세종특별자치시', '경기도', '강원특별자치도',
     '충청북도', '충청남도', '전라북도', '전라남도', '경상북도', '경상남도', '제주특별자치도'
   ];
+  const navigate = useNavigate();
 
   // 농장 목록 불러오기
   useEffect(() => {
@@ -290,10 +292,15 @@ function MainPage() {
             ) : (
               <div className="farms-grid">
                 {farms.map((farm) => (
-                  <div key={farm.id} className="farm-card">
+                  <div
+                    key={farm.id}
+                    className="farm-card"
+                    onClick={() => navigate(`/farm-card-tail/${farm.id}`)}
+                    style={{ cursor: 'pointer' }}
+                  >
                     <h3>{farm.name}</h3>
                     <p>위치: {farm.location}</p>
-                    <div className="farm-buttons">
+                    <div className="farm-buttons" onClick={e => e.stopPropagation()}>
                       <button onClick={() => openEditModal(farm)}>수정</button>
                       <button onClick={() => handleDeleteFarm(farm.id)}>삭제</button>
                     </div>
