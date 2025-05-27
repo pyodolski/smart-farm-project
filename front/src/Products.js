@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import './Products.css';
 
 function Products() {
   const [devices, setDevices] = useState([]);
+  const navigate = useNavigate();
 
-  useEffect(() => {
+  const loadDevices = () => {
     fetch("http://localhost:5001/product/my_devices", {
       credentials: "include"
     })
@@ -15,30 +17,30 @@ function Products() {
         }
       })
       .catch(err => console.error("구독 목록 불러오기 실패:", err));
+  };
+
+  useEffect(() => {
+    loadDevices();
   }, []);
 
-  const handleSubscribe = async () => {
-    const confirmed = window.confirm("IOT를 구독하시겠습니까?");
+  const handleSubscribe = () => {
+    navigate('/iot-setting');
+  };
+
+  const handleUnsubscribe = async (id) => {
+    const confirmed = window.confirm("정말 구독을 취소하시겠습니까?");
     if (!confirmed) return;
 
     try {
-      const res = await fetch("http://localhost:5001/product/subscribe", {
-        method: "POST",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json"
-        }
+      const res = await fetch(`http://localhost:5001/product/unsubscribe/${id}`, {
+        method: "DELETE",
+        credentials: "include"
       });
-
       const data = await res.json();
-      if (res.ok) {
-        alert("✅ " + data.message);
-        window.location.reload();
-      } else {
-        alert("❌ " + data.message);
-      }
+      alert(data.message);
+      loadDevices();
     } catch (err) {
-      alert("❌ 서버 오류 발생");
+      alert("❌ 구독 취소 실패");
       console.error(err);
     }
   };
@@ -48,15 +50,35 @@ function Products() {
       <table className="products-table">
         <tbody>
           <tr>
-            <td valign="top" width="250">
+            <td valign="top" width="300">
               <h3 className="products-title">내 IOT 구독</h3>
               {devices.length === 0 ? (
                 <p>아직 구독한 기기가 없습니다.</p>
               ) : (
                 <ul className="products-list">
-                  {devices.map((device, index) => (
-                    <li key={device.id}>
-                      {index + 1}. 시작일: {new Date(device.start_date).toLocaleString()}
+                  {devices.map((device) => (
+                    <li key={device.id} style={{ marginBottom: '10px' }}>
+                      <strong>📷 {device.iot_name}</strong>
+                      <div style={{ marginTop: '5px' }}>
+                        <button
+                          style={{ marginRight: '8px', padding: '4px 8px' }}
+                          onClick={() => navigate(`/iot-setting/${device.id}`)}
+                        >
+                          수정
+                        </button>
+                        <button
+                          style={{
+                            padding: '4px 8px',
+                            backgroundColor: '#ff5c5c',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '4px'
+                          }}
+                          onClick={() => handleUnsubscribe(device.id)}
+                        >
+                          구독 취소
+                        </button>
+                      </div>
                     </li>
                   ))}
                 </ul>

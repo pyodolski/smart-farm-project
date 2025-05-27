@@ -14,7 +14,7 @@ def get_db_conn():
     return pymysql.connect(**DB_CONFIG)
 
 
-# ✅ REST API: 농장 목록 조회 및 추가 (FormData 처리)
+#농장 목록 조회 및 추가
 @farm_bp.route('/', methods=['GET', 'POST'])
 def farms_api():
     if request.method == 'GET':
@@ -31,7 +31,7 @@ def farms_api():
 
     elif request.method == 'POST':
         name = request.form.get('name')
-        area = request.form.get('area')
+        #area = request.form.get('area')
         location = request.form.get('location')
         document = request.files.get('document')
         owner = session.get('user_id')
@@ -48,22 +48,22 @@ def farms_api():
         conn = get_db_conn()
         cur = conn.cursor()
         sql = """
-            INSERT INTO farms (name, area, location, owner_username, document_path)
-            VALUES (%s, %s, %s, %s, %s)
+            INSERT INTO farms (name, location, owner_username, document_path)
+            VALUES (%s, %s, %s, %s)
         """
-        cur.execute(sql, (name, area, location, owner, upload_path))
+        cur.execute(sql, (name, location, owner, upload_path))
         conn.commit()
         conn.close()
 
         return jsonify({'message': 'Farm created'}), 201
 
 
-# ✅ HTML 페이지: 농장 추가 버튼 처리
+#농장 추가 버튼 처리
 @farm_bp.route('/add_farm', methods=['GET', 'POST'])
 def add_farm():
     if request.method == 'POST':
         name = request.form['name']
-        area = request.form['area']
+        #area = request.form['area']
         location = request.form['location']
         owner = session.get('user_id')
         document = request.files.get('document')
@@ -80,10 +80,10 @@ def add_farm():
         conn = get_db_conn()
         cur = conn.cursor()
         sql = """
-            INSERT INTO farms (name, area, location, owner_username, document_path)
-            VALUES (%s, %s, %s, %s, %s)
+            INSERT INTO farms (name, location, owner_username, document_path)
+            VALUES (%s, %s, %s, %s)
         """
-        cur.execute(sql, (name, area, location, owner, filepath))
+        cur.execute(sql, (name, location, owner, filepath))
         conn.commit()
         conn.close()
 
@@ -92,7 +92,7 @@ def add_farm():
     return render_template('add_farm.html')
 
 
-# ✅ 농장 상세 보기
+# 농장 상세
 @farm_bp.route('/farm/<int:farm_id>', endpoint='farm_detail')
 def farm_detail(farm_id):
     user = session.get('user_id')
@@ -114,7 +114,7 @@ def farm_detail(farm_id):
     return render_template('farm_detail.html', farm=farm)
 
 
-# ✅ 농장 수정
+#농장 수정
 @farm_bp.route('/farm/<int:farm_id>/edit', methods=['GET', 'POST'])
 def edit_farm(farm_id):
     username = session.get('user_id')
@@ -135,12 +135,12 @@ def edit_farm(farm_id):
 
     if request.method == 'POST':
         name = request.form['name']
-        area = request.form['area']
+        #area = request.form['area']
         location = request.form['location']
 
         cur.execute(
-            "UPDATE farms SET name = %s, area = %s, location = %s WHERE id = %s",
-            (name, area, location, farm_id)
+            "UPDATE farms SET name = %s, location = %s WHERE id = %s",
+            (name, location, farm_id)
         )
         conn.commit()
         conn.close()
@@ -150,7 +150,7 @@ def edit_farm(farm_id):
     return render_template('edit_farm.html', farm=farm)
 
 
-# ✅ 농장 삭제
+# 농장 삭제
 @farm_bp.route('/<int:farm_id>', methods=['DELETE'])
 def delete_farm(farm_id):
     username = session.get('user_id')

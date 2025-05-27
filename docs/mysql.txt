@@ -43,7 +43,6 @@ CREATE TABLE likes (
 CREATE TABLE farms (
     id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100),
-    area FLOAT,
     location VARCHAR(255),
     owner_username VARCHAR(100),
     document_path VARCHAR(255),
@@ -61,7 +60,22 @@ CREATE TABLE report_log (
 
 CREATE TABLE iot (
     id INT AUTO_INCREMENT PRIMARY KEY,
+    iot_name VARCHAR(100) NOT NULL,
     owner_id VARCHAR(50) NOT NULL,
-    start_date DATE NOT NULL,
-    FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE CASCADE
+    gh_id INT,
+    start_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    capture_interval ENUM('5', '15', '30') DEFAULT '15',
+    direction ENUM('left', 'right', 'both') DEFAULT 'both',
+    resolution ENUM('640x480', '1280x720', '1920x1080') DEFAULT '1280x720',
+    camera_on BOOLEAN DEFAULT TRUE,
+    FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (gh_id) REFERENCES greenhouses(id) ON DELETE SET NULL
 );
+
+CREATE TABLE greenhouses (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    farm_id INT NOT NULL,
+    greenhouse_name VARCHAR(100) NOT NULL,
+    area JSON NOT NULL,
+    FOREIGN KEY (farm_id) REFERENCES farms(id) ON DELETE CASCADE
+)

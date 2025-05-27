@@ -42,7 +42,7 @@ def admin_page():
 
         # 승인 대기 농장 조회
         cursor.execute("""
-            SELECT id, name, area, location, owner_username, document_path 
+            SELECT id, name, location, owner_username, document_path 
             FROM farms 
             WHERE is_approved = 0 
             ORDER BY id DESC
