@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import './Register.css';
+import API_BASE_URL from './config';
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -27,7 +28,7 @@ const Register = () => {
 
   const handleEmailVerification = async () => {
     try {
-      const response = await fetch('http://localhost:5001/send_code', {
+      const response = await fetch('${API_BASE_URL}/send_code', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -43,7 +44,7 @@ const Register = () => {
 
   const handleVerifyCode = async () => {
     try {
-      const response = await fetch('http://localhost:5001/check_code', {
+      const response = await fetch('${API_BASE_URL}/check_code', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -101,7 +102,7 @@ const Register = () => {
     }
 
     try {
-      const response = await fetch('http://localhost:5001/register', {
+      const response = await fetch('${API_BASE_URL}/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

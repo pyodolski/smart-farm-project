@@ -21,6 +21,7 @@ import logo from './leaves-growing-from-ground-green-glyph-style_78370-6720.png'
 import { AuthContext } from './contexts/AuthContext';
 import CameraSetting from './CameraSetting';
 import FarmDetail from './FarmDetail';
+import API_BASE_URL from './config';
 
 function Navigation() {
   const navigate = useNavigate();
@@ -32,7 +33,7 @@ function Navigation() {
 
   const handleLogout = async () => {
     try {
-      const response = await fetch('http://localhost:5001/logout', {
+      const response = await fetch('${API_BASE_URL}/logout', {
         method: 'POST',
         credentials: 'include'
       });
@@ -95,7 +96,7 @@ function App() {
   useEffect(() => {
     const checkLoginStatus = async () => {
       try {
-        const response = await fetch('http://localhost:5001/check_login', {
+        const response = await fetch('${API_BASE_URL}/check_login', {
           credentials: 'include'
         });
         const data = await response.json();

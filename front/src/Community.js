@@ -2,6 +2,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from './contexts/AuthContext';
 import './Community.css';
+import API_BASE_URL from './config';
 
 function Community() {
   const [posts, setPosts] = useState([]);
@@ -16,7 +17,7 @@ function Community() {
 
   const fetchPosts = async () => {
     try {
-      const response = await fetch(`http://localhost:5001/api/posts?sort=${sortBy}&search=${searchTerm}`, {
+      const response = await fetch(`${API_BASE_URL}/api/posts?sort=${sortBy}&search=${searchTerm}`, {
         credentials: 'include'
       });
       if (response.ok) {

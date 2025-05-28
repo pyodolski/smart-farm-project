@@ -2,6 +2,7 @@ import React, { useState, useContext } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from './contexts/AuthContext';
 import './Login.css';
+import API_BASE_URL from './config';
 
 function Login() {
   const [id, setId] = useState('');
@@ -17,7 +18,7 @@ function Login() {
     setIsLoading(true);
 
     try {
-      const response = await fetch('http://localhost:5001/login', {
+      const response = await fetch('${API_BASE_URL}/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -35,7 +36,7 @@ function Login() {
         setIsLoggedIn(true);
 
         if (data.admin) {
-          window.location.href = 'http://localhost:5001/admin.html';  // 관리자일 경우 정적 페이지 이동
+          window.location.href = '${API_BASE_URL}/admin.html';  // 관리자일 경우 정적 페이지 이동
         } else {
           navigate('/');  // 일반 유저는 홈으로 이동
         }
@@ -52,7 +53,7 @@ function Login() {
   };
 
   const handleKakaoLogin = () => {
-    window.location.href = 'http://localhost:5001/auth/kakao';
+    window.location.href = '${API_BASE_URL}/auth/kakao';
   };
 
   return (

@@ -2,6 +2,7 @@ import React, { useState, useEffect, useContext } from 'react';
 import { AuthContext } from './contexts/AuthContext';
 import './MainPage.css';
 import { useNavigate } from 'react-router-dom';
+import API_BASE_URL from './config';
 
 // 별도의 모달 컴포넌트
 function FarmModal({ show, onClose, title, onSubmit, initialData }) {
@@ -130,7 +131,7 @@ function MainPage() {
 
   const fetchFarms = async () => {
     try {
-      const response = await fetch('http://localhost:5001/api/farms', {
+      const response = await fetch('${API_BASE_URL}/api/farms', {
         credentials: 'include'
       });
       if (response.ok) {
@@ -145,7 +146,7 @@ function MainPage() {
   // 농장 추가
   const handleAddFarm = async (formData) => {
     try {
-      const response = await fetch('http://localhost:5001/api/farms', {
+      const response = await fetch('${API_BASE_URL}/api/farms', {
         method: 'POST',
         //headers: {
         //  'Content-Type': 'application/json',
@@ -169,7 +170,7 @@ function MainPage() {
   // 농장 수정
   const handleEditFarm = async (formData) => {
     try {
-      const response = await fetch(`http://localhost:5001/api/farms/${selectedFarm.id}`, {
+      const response = await fetch(`${API_BASE_URL}/api/farms/${selectedFarm.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -192,7 +193,7 @@ function MainPage() {
   const handleDeleteFarm = async (farmId) => {
     if (window.confirm('정말 삭제하시겠습니까?')) {
       try {
-        const response = await fetch(`http://localhost:5001/api/farms/${farmId}`, {
+        const response = await fetch(`${API_BASE_URL}/api/farms/${farmId}`, {
           method: 'DELETE',
           credentials: 'include'
         });

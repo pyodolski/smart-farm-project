@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import './CameraSetting.css';
+import API_BASE_URL from './config';
 
 function CameraSetting() {
   const [interval, setInterval] = useState(60);
@@ -19,7 +20,7 @@ function CameraSetting() {
 
   useEffect(() => {
     // 농장 목록 가져오기
-    fetch("http://localhost:5001/api/farms", {
+    fetch("${API_BASE_URL}/api/farms", {
       credentials: "include"
     })
       .then(res => res.json())
@@ -31,7 +32,7 @@ function CameraSetting() {
       .catch(err => console.error("농장 목록 불러오기 실패:", err));
 
     // 전체 비닐하우스 목록 가져오기
-    fetch("http://localhost:5001/product/my_greenhouses", {
+    fetch("${API_BASE_URL}/product/my_greenhouses", {
       credentials: "include"
     })
       .then(res => res.json())
@@ -44,7 +45,7 @@ function CameraSetting() {
 
     // 수정 모드인 경우 기존 데이터 가져오기
     if (deviceId) {
-      fetch(`http://localhost:5001/product/my_devices/${deviceId}`, {
+      fetch(`${API_BASE_URL}/product/my_devices/${deviceId}`, {
         credentials: "include"
       })
         .then(res => res.json())
@@ -93,8 +94,8 @@ function CameraSetting() {
 
     try {
       const url = deviceId 
-        ? `http://localhost:5001/product/update/${deviceId}`
-        : "http://localhost:5001/product/subscribe";
+        ? `${API_BASE_URL}/product/update/${deviceId}`
+        : "${API_BASE_URL}/product/subscribe";
       
       const res = await fetch(url, {
         method: "POST",

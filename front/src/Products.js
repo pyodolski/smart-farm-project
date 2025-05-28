@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './Products.css';
+import API_BASE_URL from './config';
 
 function Products() {
   const [devices, setDevices] = useState([]);
   const navigate = useNavigate();
 
   const loadDevices = () => {
-    fetch("http://localhost:5001/product/my_devices", {
+    fetch("${API_BASE_URL}/product/my_devices", {
       credentials: "include"
     })
       .then(res => res.json())
@@ -32,7 +33,7 @@ function Products() {
     if (!confirmed) return;
 
     try {
-      const res = await fetch(`http://localhost:5001/product/unsubscribe/${id}`, {
+      const res = await fetch(`${API_BASE_URL}/product/unsubscribe/${id}`, {
         method: "DELETE",
         credentials: "include"
       });

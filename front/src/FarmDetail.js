@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
+import API_BASE_URL from './config';
 
 function FarmDetail() {
   const { farmId } = useParams();
@@ -15,12 +16,12 @@ function FarmDetail() {
   }, [farmId]);
 
   const handleAddGreenhouse = () => {
-  window.location.href = `http://localhost:5001/grid?farm_id=${farmId}`;
+  window.location.href = `${API_BASE_URL}/grid?farm_id=${farmId}`;
 };
 
 
   const handleEditGreenhouse = (id) => {
-    window.location.href = `http://localhost:5001/grid?id=${id}`;
+    window.location.href = `${API_BASE_URL}/grid?id=${id}`;
     // Flask 쪽 라우트로 맞춰야 함
   };
 

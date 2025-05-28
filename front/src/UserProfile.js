@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './UserProfile.css';
+import API_BASE_URL from './config';
 
 function UserProfile() {
   const navigate = useNavigate();
@@ -27,7 +28,7 @@ function UserProfile() {
 
   const fetchUserProfile = async () => {
     try {
-      const response = await fetch('http://localhost:5001/api/user/profile', {
+      const response = await fetch('${API_BASE_URL}/api/user/profile', {
         credentials: 'include'
       });
       if (response.ok) {
@@ -72,7 +73,7 @@ function UserProfile() {
     setSuccess('');
 
     try {
-      const response = await fetch('http://localhost:5001/api/user/profile', {
+      const response = await fetch('${API_BASE_URL}/api/user/profile', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -106,7 +107,7 @@ function UserProfile() {
     }
 
     try {
-      const response = await fetch('http://localhost:5001/api/user/password', {
+      const response = await fetch('${API_BASE_URL}/api/user/password', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
