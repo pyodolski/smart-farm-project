@@ -48,15 +48,23 @@
 
   <h2>🧱 비닐하우스 그리드 생성기</h2>
 
+  <!-- 뒤로가기 버튼 -->
+  <button onclick="goBack()" style="margin-bottom: 20px;">⬅ 뒤로가기</button>
+
   <div class="controls">
     <label>Farm ID:</label>
-    <input type="number" id="farmId" value="1" min="1">
+    <span id="farmIdText">{{ farm_id }}</span>
+    <input type="hidden" id="farmId" value="{{ farm_id }}">
+
+    <input type="hidden" id="greenhouseId" value="{{ greenhouse_id or '' }}">
+
     <label>하우스 이름:</label>
-    <input type="text" id="houseName" placeholder="예: 1동">
+    <input type="text" id="houseName" placeholder="예: 1동" value="{{ house_name }}">
+
     <label>행:</label>
-    <input type="number" id="rows" value="10" min="1">
+    <input type="number" id="rows" value="{{ num_rows or 10 }}" min="1">
     <label>열:</label>
-    <input type="number" id="cols" value="10" min="1">
+    <input type="number" id="cols" value="{{ num_cols or 10 }}" min="1">
     <button onclick="generateGrid()">그리드 생성</button>
     <button onclick="submitGrid()">✅ 저장</button>
   </div>
@@ -71,8 +79,13 @@
   <div class="grid" id="grid"></div>
 
   <script>
+    const existingGridData = {{ grid_data|safe }};
     let currentValue = 0;
     let isDragging = false;
+
+    function goBack() {
+      window.history.back();
+    }
 
     function setCurrentValue(value) {
       currentValue = value;
@@ -105,21 +118,32 @@
       grid.style.gridTemplateRows = `repeat(${rows}, 30px)`;
       grid.innerHTML = '';
 
-      for (let i = 0; i < rows * cols; i++) {
-        const cell = document.createElement('div');
-        cell.className = 'cell';
-        cell.dataset.value = '0';
-        cell.textContent = '0';
-        cell.style.backgroundColor = getColor(0);
-        cell.addEventListener('mousedown', () => {
-          isDragging = true;
-          applyValue(cell);
-        });
-        cell.addEventListener('mouseenter', () => {
-          if (isDragging) applyValue(cell);
-        });
-        cell.addEventListener('click', () => applyValue(cell));
-        grid.appendChild(cell);
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          const cell = document.createElement('div');
+          cell.className = 'cell';
+
+          let value = 0;
+          if (existingGridData && existingGridData[r] && existingGridData[r][c] !== undefined) {
+            value = existingGridData[r][c];
+          }
+
+          cell.dataset.value = value;
+          cell.textContent = value;
+          cell.style.backgroundColor = getColor(value);
+          cell.style.color = value === 1 ? 'white' : 'black';
+
+          cell.addEventListener('mousedown', () => {
+            isDragging = true;
+            applyValue(cell);
+          });
+          cell.addEventListener('mouseenter', () => {
+            if (isDragging) applyValue(cell);
+          });
+          cell.addEventListener('click', () => applyValue(cell));
+
+          grid.appendChild(cell);
+        }
       }
     }
 
@@ -128,6 +152,7 @@
     });
 
     function submitGrid() {
+      const greenhouseId = document.getElementById('greenhouseId').value;
       const rows = parseInt(document.getElementById('rows').value);
       const cols = parseInt(document.getElementById('cols').value);
       const houseName = document.getElementById('houseName').value;
@@ -145,7 +170,9 @@
         gridData.push(row);
       }
 
-      fetch('/api/greenhouses/create', {
+      const endpoint = greenhouseId ? `/api/greenhouses/update/${greenhouseId}` : '/api/greenhouses/create';
+
+      fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -156,9 +183,9 @@
           grid_data: gridData
         })
       })
-      .then(res => res.json())
-      .then(data => alert(data.message))
-      .catch(err => alert("저장 중 오류 발생"));
+        .then(res => res.json())
+        .then(data => alert(data.message))
+        .catch(err => alert("저장 중 오류 발생"));
     }
 
     // 초기화
