@@ -140,6 +140,7 @@ def upload_sensor():
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
+# 센서 데이터 값 띄우기
 @product_bp.route("/last-sensor", methods=["GET"])
 def get_last_sensor():
     try:
