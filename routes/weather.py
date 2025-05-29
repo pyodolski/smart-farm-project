@@ -7,6 +7,7 @@ from flask_cors import CORS
 weather_bp = Blueprint('weather', __name__, url_prefix='/api/weather')
 CORS(weather_bp, resources={r"/*": {"origins": [
     "http://localhost:3001",
+    "http://localhost:3000",
     "https://mature-grub-climbing.ngrok-free.app"
 ]}}, supports_credentials=True)
 

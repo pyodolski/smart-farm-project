@@ -30,6 +30,7 @@ app.config['SESSION_COOKIE_SECURE'] = True
 
 CORS(app, resources={r"/*": {"origins": [
     "http://localhost:3001",
+    "http://localhost:3000",
     "https://mature-grub-climbing.ngrok-free.app"
 ]}}, supports_credentials=True)
 

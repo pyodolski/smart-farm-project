@@ -10,6 +10,7 @@ from email.header import Header
 user_bp = Blueprint('user', __name__)
 CORS(user_bp, resources={r"/*": {"origins": [
     "http://localhost:3001",
+    "http://localhost:3000",
     "https://mature-grub-climbing.ngrok-free.app"
 ]}}, supports_credentials=True)
 

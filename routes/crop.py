@@ -5,6 +5,7 @@ from flask_cors import CORS
 crop_bp = Blueprint('crop', __name__, url_prefix='/api')
 CORS(crop_bp, resources={r"/*": {"origins": [
     "http://localhost:3001",
+    "http://localhost:3000",
     "https://mature-grub-climbing.ngrok-free.app"
 ]}}, supports_credentials=True)
 

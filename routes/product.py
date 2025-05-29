@@ -9,6 +9,7 @@ from flask_cors import CORS
 product_bp = Blueprint('product', __name__, url_prefix='/product')
 CORS(product_bp, resources={r"/*": {"origins": [
     "http://localhost:3001",
+    "http://localhost:3000",
     "https://mature-grub-climbing.ngrok-free.app"
 ]}}, supports_credentials=True)
 
@@ -140,7 +141,7 @@ def upload_sensor():
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
-# 센서 데이터 값 띄우기
+# 센서 데이터 값 띄우기 (실험용 코드입니다.)
 @product_bp.route("/last-sensor", methods=["GET"])
 def get_last_sensor():
     try:
@@ -148,7 +149,8 @@ def get_last_sensor():
         with conn.cursor() as cursor:
             cursor.execute("SELECT temperature, humidity, timestamp FROM sensor_log ORDER BY timestamp DESC LIMIT 1")
             row = cursor.fetchone()
-        
+
+        # 아래 사진 데이터 형식 지정 필요
         if row:
             response = {
                 "temperature": row[0],

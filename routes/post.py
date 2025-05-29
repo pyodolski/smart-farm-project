@@ -6,6 +6,7 @@ from flask_cors import CORS
 post_bp = Blueprint('post', __name__)
 CORS(post_bp, resources={r"/*": {"origins": [
     "http://localhost:3001",
+    "http://localhost:3000",
     "https://mature-grub-climbing.ngrok-free.app"
 ]}}, supports_credentials=True)
 

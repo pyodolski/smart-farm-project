@@ -15,6 +15,7 @@ YEARS = list(range(2016, 2026))
 chart_bp = Blueprint('chart', __name__)
 CORS(chart_bp, resources={r"/*": {"origins": [
     "http://localhost:3001",
+    "http://localhost:3000",
     "https://mature-grub-climbing.ngrok-free.app"
 ]}}, supports_credentials=True)
 
