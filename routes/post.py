@@ -1,8 +1,13 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session
 import pymysql
 from config import DB_CONFIG
+from flask_cors import CORS
 
 post_bp = Blueprint('post', __name__)
+CORS(post_bp, resources={r"/*": {"origins": [
+    "http://localhost:3001",
+    "https://mature-grub-climbing.ngrok-free.app"
+]}}, supports_credentials=True)
 
 # DB 연결 공통 함수
 def get_db_conn():

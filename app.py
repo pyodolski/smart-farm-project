@@ -24,9 +24,15 @@ UPLOAD_FOLDER = 'static/uploads/farms'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 app = Flask(__name__)
-CORS(app, 
-     resources={r"/*": {"origins": "http://localhost:3000"}},
-     supports_credentials=True)
+
+app.config['SESSION_COOKIE_SAMESITE'] = 'None'
+app.config['SESSION_COOKIE_SECURE'] = True
+
+CORS(app, resources={r"/*": {"origins": [
+    "http://localhost:3001",
+    "https://mature-grub-climbing.ngrok-free.app"
+]}}, supports_credentials=True)
+
 app.register_blueprint(user_bp)
 app.register_blueprint(farm_bp, url_prefix='/api/farms')
 app.register_blueprint(post_bp)

@@ -1,7 +1,12 @@
 from flask import Blueprint, jsonify
 import requests
+from flask_cors import CORS
 
 crop_bp = Blueprint('crop', __name__, url_prefix='/api')
+CORS(crop_bp, resources={r"/*": {"origins": [
+    "http://localhost:3001",
+    "https://mature-grub-climbing.ngrok-free.app"
+]}}, supports_credentials=True)
 
 API_KEY = "20253105e956e7f172ff09e237ed92508153"
 BASE_URL = "http://ncpms.rda.go.kr/npmsAPI/service"

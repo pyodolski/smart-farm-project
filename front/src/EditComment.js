@@ -13,7 +13,7 @@ function EditComment() {
 
   const fetchComment = async () => {
     try {
-      const response = await fetch(`http://localhost:5001/api/comments/${commentId}`, {
+      const response = await fetch(`https://mature-grub-climbing.ngrok-free.app/api/comments/${commentId}`, {
         credentials: 'include'
       });
       if (response.ok) {
@@ -33,7 +33,7 @@ function EditComment() {
     e.preventDefault();
     
     try {
-      const response = await fetch(`http://localhost:5001/api/comments/${commentId}`, {
+      const response = await fetch(`https://mature-grub-climbing.ngrok-free.app/api/comments/${commentId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

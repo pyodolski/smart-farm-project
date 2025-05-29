@@ -32,7 +32,7 @@ function Navigation() {
 
   const handleLogout = async () => {
     try {
-      const response = await fetch('http://localhost:5001/logout', {
+      const response = await fetch('https://mature-grub-climbing.ngrok-free.app/logout', {
         method: 'POST',
         credentials: 'include'
       });
@@ -95,7 +95,7 @@ function App() {
   useEffect(() => {
     const checkLoginStatus = async () => {
       try {
-        const response = await fetch('http://localhost:5001/check_login', {
+        const response = await fetch('https://mature-grub-climbing.ngrok-free.app/check_login', {
           credentials: 'include'
         });
         const data = await response.json();

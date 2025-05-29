@@ -28,7 +28,7 @@ const Statistics = () => {
                 graph: graph,
                 ...selectedYears
             });
-            const response = await fetch(`http://localhost:5001/api/statistics?${params}`);
+            const response = await fetch(`https://mature-grub-climbing.ngrok-free.app/api/statistics?${params}`);
             if (!response.ok) throw new Error('API 오류');
             const data = await response.json();
             setPlotData(JSON.parse(data.plot_json));

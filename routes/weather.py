@@ -2,8 +2,14 @@ from flask import Blueprint, jsonify, request
 from collections import defaultdict
 from datetime import datetime, timedelta
 import requests
+from flask_cors import CORS
 
 weather_bp = Blueprint('weather', __name__, url_prefix='/api/weather')
+CORS(weather_bp, resources={r"/*": {"origins": [
+    "http://localhost:3001",
+    "https://mature-grub-climbing.ngrok-free.app"
+]}}, supports_credentials=True)
+
 API_KEY = '2c583720d6f7b0b19b9164ed79e28471'
 cities = ['서울특별시',
     '부산광역시',

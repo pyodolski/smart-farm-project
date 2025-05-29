@@ -27,7 +27,7 @@ const Register = () => {
 
   const handleEmailVerification = async () => {
     try {
-      const response = await fetch('http://localhost:5001/send_code', {
+      const response = await fetch('https://mature-grub-climbing.ngrok-free.app/send_code', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -43,7 +43,7 @@ const Register = () => {
 
   const handleVerifyCode = async () => {
     try {
-      const response = await fetch('http://localhost:5001/check_code', {
+      const response = await fetch('https://mature-grub-climbing.ngrok-free.app/check_code', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -101,7 +101,7 @@ const Register = () => {
     }
 
     try {
-      const response = await fetch('http://localhost:5001/register', {
+      const response = await fetch('https://mature-grub-climbing.ngrok-free.app/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

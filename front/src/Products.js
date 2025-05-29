@@ -7,7 +7,7 @@ function Products() {
   const navigate = useNavigate();
 
   const loadDevices = () => {
-    fetch("http://localhost:5001/product/my_devices", {
+    fetch("https://mature-grub-climbing.ngrok-free.app/product/my_devices", {
       credentials: "include"
     })
       .then(res => res.json())
@@ -32,7 +32,7 @@ function Products() {
     if (!confirmed) return;
 
     try {
-      const res = await fetch(`http://localhost:5001/product/unsubscribe/${id}`, {
+      const res = await fetch(`https://mature-grub-climbing.ngrok-free.app/product/unsubscribe/${id}`, {
         method: "DELETE",
         credentials: "include"
       });

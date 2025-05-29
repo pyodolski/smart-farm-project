@@ -130,7 +130,7 @@ function MainPage() {
 
   const fetchFarms = async () => {
     try {
-      const response = await fetch('http://localhost:5001/api/farms', {
+      const response = await fetch('https://mature-grub-climbing.ngrok-free.app/api/farms', {
         credentials: 'include'
       });
       if (response.ok) {
@@ -145,7 +145,7 @@ function MainPage() {
   // 농장 추가
   const handleAddFarm = async (formData) => {
     try {
-      const response = await fetch('http://localhost:5001/api/farms', {
+      const response = await fetch('https://mature-grub-climbing.ngrok-free.app/api/farms', {
         method: 'POST',
         //headers: {
         //  'Content-Type': 'application/json',
@@ -169,7 +169,7 @@ function MainPage() {
   // 농장 수정
   const handleEditFarm = async (formData) => {
     try {
-      const response = await fetch(`http://localhost:5001/api/farms/${selectedFarm.id}`, {
+      const response = await fetch(`https://mature-grub-climbing.ngrok-free.app/api/farms/${selectedFarm.id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -192,7 +192,7 @@ function MainPage() {
   const handleDeleteFarm = async (farmId) => {
     if (window.confirm('정말 삭제하시겠습니까?')) {
       try {
-        const response = await fetch(`http://localhost:5001/api/farms/${farmId}`, {
+        const response = await fetch(`https://mature-grub-climbing.ngrok-free.app/api/farms/${farmId}`, {
           method: 'DELETE',
           credentials: 'include'
         });

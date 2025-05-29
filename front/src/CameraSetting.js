@@ -19,7 +19,7 @@ function CameraSetting() {
 
   useEffect(() => {
     // 농장 목록 가져오기
-    fetch("http://localhost:5001/api/farms", {
+    fetch("https://mature-grub-climbing.ngrok-free.app/api/farms", {
       credentials: "include"
     })
       .then(res => res.json())
@@ -31,7 +31,7 @@ function CameraSetting() {
       .catch(err => console.error("농장 목록 불러오기 실패:", err));
 
     // 전체 비닐하우스 목록 가져오기
-    fetch("http://localhost:5001/product/my_greenhouses", {
+    fetch("https://mature-grub-climbing.ngrok-free.app/product/my_greenhouses", {
       credentials: "include"
     })
       .then(res => res.json())
@@ -44,7 +44,7 @@ function CameraSetting() {
 
     // 수정 모드인 경우 기존 데이터 가져오기
     if (deviceId) {
-      fetch(`http://localhost:5001/product/my_devices/${deviceId}`, {
+      fetch(`https://mature-grub-climbing.ngrok-free.app/product/my_devices/${deviceId}`, {
         credentials: "include"
       })
         .then(res => res.json())
@@ -93,8 +93,8 @@ function CameraSetting() {
 
     try {
       const url = deviceId 
-        ? `http://localhost:5001/product/update/${deviceId}`
-        : "http://localhost:5001/product/subscribe";
+        ? `https://mature-grub-climbing.ngrok-free.app/product/update/${deviceId}`
+        : "https://mature-grub-climbing.ngrok-free.app/product/subscribe";
       
       const res = await fetch(url, {
         method: "POST",

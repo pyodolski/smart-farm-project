@@ -11,7 +11,7 @@ function WritePost() {
     e.preventDefault();
     
     try {
-      const response = await fetch('http://localhost:5001/api/posts', {
+      const response = await fetch('https://mature-grub-climbing.ngrok-free.app/api/posts', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

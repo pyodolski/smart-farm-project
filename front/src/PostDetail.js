@@ -17,7 +17,7 @@ function PostDetail() {
 
   const fetchPostDetail = async () => {
     try {
-      const response = await fetch(`http://localhost:5001/api/posts/${postId}`, {
+      const response = await fetch(`https://mature-grub-climbing.ngrok-free.app/api/posts/${postId}`, {
         credentials: 'include'
       });
       if (response.ok) {
@@ -34,7 +34,7 @@ function PostDetail() {
 
   const handleLike = async () => {
     try {
-      const response = await fetch(`http://localhost:5001/api/posts/${postId}/like`, {
+      const response = await fetch(`https://mature-grub-climbing.ngrok-free.app/api/posts/${postId}/like`, {
         method: 'POST',
         credentials: 'include'
       });
@@ -50,7 +50,7 @@ function PostDetail() {
   const handleDelete = async () => {
     if (window.confirm('정말 삭제하시겠습니까?')) {
       try {
-        const response = await fetch(`http://localhost:5001/api/posts/${postId}`, {
+        const response = await fetch(`https://mature-grub-climbing.ngrok-free.app/api/posts/${postId}`, {
           method: 'DELETE',
           credentials: 'include'
         });
@@ -66,7 +66,7 @@ function PostDetail() {
   const handleReportPost = async () => {
     if (window.confirm('이 게시글을 신고하시겠습니까?')) {
       try {
-        const response = await fetch(`http://localhost:5001/report/post/${postId}`, {
+        const response = await fetch(`https://mature-grub-climbing.ngrok-free.app/report/post/${postId}`, {
           method: 'POST',
           credentials: 'include'
         });
@@ -86,7 +86,7 @@ function PostDetail() {
   const handleReportComment = async (commentId) => {
     if (window.confirm('이 댓글을 신고하시겠습니까?')) {
       try {
-        const response = await fetch(`http://localhost:5001/report/comment/${commentId}`, {
+        const response = await fetch(`https://mature-grub-climbing.ngrok-free.app/report/comment/${commentId}`, {
           method: 'POST',
           credentials: 'include'
         });
@@ -106,7 +106,7 @@ function PostDetail() {
   const handleCommentSubmit = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch(`http://localhost:5001/api/posts/${postId}/comments`, {
+      const response = await fetch(`https://mature-grub-climbing.ngrok-free.app/api/posts/${postId}/comments`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -126,7 +126,7 @@ function PostDetail() {
   const handleCommentDelete = async (commentId) => {
     if (window.confirm('댓글을 삭제하시겠습니까?')) {
       try {
-        const response = await fetch(`http://localhost:5001/api/comments/${commentId}`, {
+        const response = await fetch(`https://mature-grub-climbing.ngrok-free.app/api/comments/${commentId}`, {
           method: 'DELETE',
           credentials: 'include'
         });
