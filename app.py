@@ -115,4 +115,4 @@ def create_greenhouse():
         return jsonify({"message": "서버 오류 발생"}), 500
 
 if __name__ == '__main__':
-    app.run(port=5001, debug=True)
+    app.run(host="0.0.0.0", port=5001, debug=True)
