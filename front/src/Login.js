@@ -35,7 +35,7 @@ function Login() {
         setIsLoggedIn(true);
 
         if (data.admin) {
-          window.location.href = 'http://localhost:5001/admin.html';  // 관리자일 경우 정적 페이지 이동
+          window.location.href = 'https://mature-grub-climbing.ngrok-free.app/admin.html';  // 관리자일 경우 정적 페이지 이동
         } else {
           navigate('/');  // 일반 유저는 홈으로 이동
         }
@@ -52,7 +52,7 @@ function Login() {
   };
 
   const handleKakaoLogin = () => {
-    window.location.href = 'http://localhost:5001/auth/kakao';
+    window.location.href = 'https://mature-grub-climbing.ngrok-free.app/auth/kakao';
   };
 
   return (
