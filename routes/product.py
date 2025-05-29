@@ -140,6 +140,34 @@ def upload_sensor():
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
+@product_bp.route("/last-sensor", methods=["GET"])
+def get_last_sensor():
+    try:
+        conn = get_db_connection()
+        with conn.cursor() as cursor:
+            cursor.execute("SELECT temperature, humidity, timestamp FROM sensor_log ORDER BY timestamp DESC LIMIT 1")
+            row = cursor.fetchone()
+        
+        if row:
+            response = {
+                "temperature": row[0],
+                "humidity": row[1],
+                "timestamp": row[2].isoformat(),  # JS에서 파싱 가능한 형태
+                "image_url": "/static/images/last.jpg"
+            }
+        else:
+            response = {
+                "temperature": None,
+                "humidity": None,
+                "timestamp": None,
+                "image_url": "/static/images/last.jpg"
+            }
+
+        return jsonify(response)
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 #구독 취소
 @product_bp.route('/unsubscribe/<int:iot_id>', methods=['DELETE'])
 def unsubscribe_iot(iot_id):

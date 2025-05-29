@@ -21,6 +21,7 @@ import logo from './leaves-growing-from-ground-green-glyph-style_78370-6720.png'
 import { AuthContext } from './contexts/AuthContext';
 import CameraSetting from './CameraSetting';
 import FarmDetail from './FarmDetail';
+import SensorPage from './SensorPage';
 
 function Navigation() {
   const navigate = useNavigate();
@@ -144,6 +145,7 @@ function App() {
             <Route path="/statistics" element={isLoggedIn ? <Statistics /> : <Navigate to="/login" />} />
             <Route path="/iot-setting" element={<CameraSetting />} />
             <Route path="/farm-card-tail/:farmId" element={isLoggedIn ? <FarmDetail /> : <Navigate to="/login" />} />
+            <Route path="/sensor" element={<SensorPage />} />
           </Routes>
         </div>
       </Router>

@@ -1,0 +1,17 @@
+.sensor-container {
+  width: 800px;
+  margin: auto;
+  text-align: center;
+}
+
+.sensor-image {
+  max-width: 100%;
+  border: 2px solid #444;
+  margin-top: 10px;
+}
+
+.sensor-data {
+  margin-top: 20px;
+  font-size: 1.2em;
+  color: #222;
+}
