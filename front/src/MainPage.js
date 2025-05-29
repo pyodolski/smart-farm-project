@@ -131,7 +131,7 @@ function MainPage() {
 
   const fetchFarms = async () => {
     try {
-      const response = await fetch('${API_BASE_URL}/api/farms', {
+      const response = await fetch(`${API_BASE_URL}/api/farms`, {
         credentials: 'include'
       });
       if (response.ok) {
@@ -146,7 +146,7 @@ function MainPage() {
   // 농장 추가
   const handleAddFarm = async (formData) => {
     try {
-      const response = await fetch('${API_BASE_URL}/api/farms', {
+      const response = await fetch(`${API_BASE_URL}/api/farms`, {
         method: 'POST',
         //headers: {
         //  'Content-Type': 'application/json',

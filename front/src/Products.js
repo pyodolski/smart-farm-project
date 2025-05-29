@@ -8,7 +8,7 @@ function Products() {
   const navigate = useNavigate();
 
   const loadDevices = () => {
-    fetch("${API_BASE_URL}/product/my_devices", {
+    fetch(`${API_BASE_URL}/product/my_devices`, {
       credentials: "include"
     })
       .then(res => res.json())

@@ -28,7 +28,7 @@ function UserProfile() {
 
   const fetchUserProfile = async () => {
     try {
-      const response = await fetch('${API_BASE_URL}/api/user/profile', {
+      const response = await fetch(`${API_BASE_URL}/api/user/profile`, {
         credentials: 'include'
       });
       if (response.ok) {
@@ -73,7 +73,7 @@ function UserProfile() {
     setSuccess('');
 
     try {
-      const response = await fetch('${API_BASE_URL}/api/user/profile', {
+      const response = await fetch(`${API_BASE_URL}/api/user/profile`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -107,7 +107,7 @@ function UserProfile() {
     }
 
     try {
-      const response = await fetch('${API_BASE_URL}/api/user/password', {
+      const response = await fetch(`${API_BASE_URL}/api/user/password`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

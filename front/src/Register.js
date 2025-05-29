@@ -28,7 +28,7 @@ const Register = () => {
 
   const handleEmailVerification = async () => {
     try {
-      const response = await fetch('${API_BASE_URL}/send_code', {
+      const response = await fetch(`${API_BASE_URL}/send_code`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -44,7 +44,7 @@ const Register = () => {
 
   const handleVerifyCode = async () => {
     try {
-      const response = await fetch('${API_BASE_URL}/check_code', {
+      const response = await fetch(`${API_BASE_URL}/check_code`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -102,7 +102,7 @@ const Register = () => {
     }
 
     try {
-      const response = await fetch('${API_BASE_URL}/register', {
+      const response = await fetch(`${API_BASE_URL}/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

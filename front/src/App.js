@@ -33,7 +33,7 @@ function Navigation() {
 
   const handleLogout = async () => {
     try {
-      const response = await fetch('${API_BASE_URL}/logout', {
+      const response = await fetch(`${API_BASE_URL}/logout`, {
         method: 'POST',
         credentials: 'include'
       });
@@ -96,7 +96,7 @@ function App() {
   useEffect(() => {
     const checkLoginStatus = async () => {
       try {
-        const response = await fetch('${API_BASE_URL}/check_login', {
+        const response = await fetch(`${API_BASE_URL}/check_login`, {
           credentials: 'include'
         });
         const data = await response.json();

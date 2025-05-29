@@ -12,7 +12,7 @@ function WritePost() {
     e.preventDefault();
     
     try {
-      const response = await fetch('${API_BASE_URL}/api/posts', {
+      const response = await fetch(`${API_BASE_URL}/api/posts`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

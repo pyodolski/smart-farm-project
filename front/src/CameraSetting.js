@@ -20,7 +20,7 @@ function CameraSetting() {
 
   useEffect(() => {
     // 농장 목록 가져오기
-    fetch("${API_BASE_URL}/api/farms", {
+    fetch(`${API_BASE_URL}/api/farms`, {
       credentials: "include"
     })
       .then(res => res.json())
@@ -32,7 +32,7 @@ function CameraSetting() {
       .catch(err => console.error("농장 목록 불러오기 실패:", err));
 
     // 전체 비닐하우스 목록 가져오기
-    fetch("${API_BASE_URL}/product/my_greenhouses", {
+    fetch(`${API_BASE_URL}/product/my_greenhouses`, {
       credentials: "include"
     })
       .then(res => res.json())
@@ -95,7 +95,7 @@ function CameraSetting() {
     try {
       const url = deviceId 
         ? `${API_BASE_URL}/product/update/${deviceId}`
-        : "${API_BASE_URL}/product/subscribe";
+        : `${API_BASE_URL}/product/subscribe`;
       
       const res = await fetch(url, {
         method: "POST",

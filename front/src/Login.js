@@ -18,7 +18,7 @@ function Login() {
     setIsLoading(true);
 
     try {
-      const response = await fetch('${API_BASE_URL}/login', {
+      const response = await fetch(`${API_BASE_URL}/login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -36,7 +36,7 @@ function Login() {
         setIsLoggedIn(true);
 
         if (data.admin) {
-          window.location.href = '${API_BASE_URL}/admin.html';  // 관리자일 경우 정적 페이지 이동
+          window.location.href = `${API_BASE_URL}/admin.html`;  // 관리자일 경우 정적 페이지 이동
         } else {
           navigate('/');  // 일반 유저는 홈으로 이동
         }
@@ -53,7 +53,7 @@ function Login() {
   };
 
   const handleKakaoLogin = () => {
-    window.location.href = '${API_BASE_URL}/auth/kakao';
+    window.location.href = `${API_BASE_URL}/auth/kakao`;
   };
 
   return (
