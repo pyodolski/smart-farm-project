@@ -4,11 +4,6 @@ from config import DB_CONFIG
 from flask_cors import CORS
 
 admin_bp = Blueprint('admin', __name__)
-CORS(admin_bp, resources={r"/*": {"origins": [
-    "http://localhost:3001",
-    "http://localhost:3000",
-    "https://mature-grub-climbing.ngrok-free.app"
-]}}, supports_credentials=True)
 
 # 공통 DB 연결 함수 (post.py와 동일한 방식)
 def get_db_conn():

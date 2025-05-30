@@ -8,11 +8,6 @@ from email.mime.text import MIMEText
 from email.header import Header
 
 user_bp = Blueprint('user', __name__)
-CORS(user_bp, resources={r"/*": {"origins": [
-    "http://localhost:3001",
-    "http://localhost:3000",
-    "https://mature-grub-climbing.ngrok-free.app"
-]}}, supports_credentials=True)
 
 def get_db_conn():
     return pymysql.connect(**DB_CONFIG)
@@ -109,7 +104,7 @@ def check_code():
     else:
         return jsonify({'verified': False, 'message': '인증번호가 일치하지 않습니다.'})
 
-@user_bp.route('/logout', methods=['POST'])
+@user_bp.route('/logout', methods=['POST', 'GET'])
 def logout():
     session.pop('user_id', None)
     return jsonify({

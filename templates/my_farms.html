@@ -1,3 +1,4 @@
+{% extends "js_css.html" %}
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -70,14 +71,14 @@
     <div class="auth-buttons">
       {% if session.user_id %}
         <span>{{ session.user_id }}님</span>
-        <a href="{{ url_for('logout') }}">로그아웃</a>
+        <a href="{{ url_for('user.logout') }}">로그아웃</a>
       {% else %}
-        <a href="{{ url_for('login') }}">로그인</a>
-        <a href="{{ url_for('register') }}">회원가입</a>
+        <a href="{{ url_for('user.login') }}">로그인</a>
+        <a href="{{ url_for('user.register') }}">회원가입</a>
       {% endif %}
     </div>
     <!-- 게시판 버튼 추가 -->
-    <a href="{{ url_for('post.post') }}" class="post-button">게시판</a>
+    <a href="{{ url_for('post.get_posts') }}" class="post-button">게시판</a>
   </div>
 
     <div class="content">

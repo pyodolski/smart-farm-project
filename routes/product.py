@@ -7,11 +7,6 @@ from datetime import datetime
 from flask_cors import CORS
 
 product_bp = Blueprint('product', __name__, url_prefix='/product')
-CORS(product_bp, resources={r"/*": {"origins": [
-    "http://localhost:3001",
-    "http://localhost:3000",
-    "https://mature-grub-climbing.ngrok-free.app"
-]}}, supports_credentials=True)
 
 # 구독하기 (IOT 설정)
 @product_bp.route('/subscribe', methods=['POST'])

@@ -8,12 +8,6 @@ from flask_cors import CORS
 UPLOAD_FOLDER = 'static/uploads/farms'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 farm_bp = Blueprint('farm', __name__)
-CORS(farm_bp, resources={r"/*": {"origins": [
-    "http://localhost:3001",
-    "http://localhost:3000",
-    "https://mature-grub-climbing.ngrok-free.app"
-]}}, supports_credentials=True)
-
 
 # DB 연결 공통 함수
 def get_db_conn():
