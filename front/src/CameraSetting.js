@@ -48,7 +48,12 @@ function CameraSetting() {
       fetch(`${API_BASE_URL}/product/my_devices/${deviceId}`, {
         credentials: "include"
       })
-        .then(res => res.json())
+        .then(res => {
+          if (!res.ok) {
+            throw new Error('기기 정보를 불러올 수 없습니다');
+          }
+          return res.json();
+        })
         .then(data => {
           if (data.device) {
             setIotName(data.device.iot_name);
@@ -59,9 +64,15 @@ function CameraSetting() {
             setEnabled(data.device.camera_on);
             // device에 farm_id가 있다면 세팅
             if (data.device.farm_id) setFarmId(data.device.farm_id);
+          } else {
+            throw new Error('기기 정보가 없습니다');
           }
         })
-        .catch(err => console.error("기기 정보 불러오기 실패:", err));
+        .catch(err => {
+          console.error("기기 정보 불러오기 실패:", err);
+          setMessage(err.message);
+          setTimeout(() => navigate('/products'), 1500);
+        });
     }
   }, [deviceId]);
 

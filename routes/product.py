@@ -178,4 +178,32 @@ def update_iot(iot_id):
 
     return jsonify({"message": "IOT 정보가 수정되었습니다"}), 200
 
+#iot 조회
+@product_bp.route('/my_devices/<int:device_id>', methods=['GET'])
+def get_device(device_id):
+    try:
+        user_id = session.get('user_id')
+        if not user_id:
+            return jsonify({"message": "로그인이 필요합니다"}), 401
+
+        conn = get_db_connection()
+        cur = conn.cursor(pymysql.cursors.DictCursor)
+        cur.execute("""
+            SELECT i.*, g.greenhouse_name, g.farm_id
+            FROM iot i
+            LEFT JOIN greenhouses g ON i.gh_id = g.id
+            WHERE i.id = %s AND i.owner_id = %s
+        """, (device_id, user_id))
+        device = cur.fetchone()
+        conn.close()
+
+        if not device:
+            return jsonify({"message": "디바이스를 찾을 수 없습니다"}), 404
+
+        return jsonify({"device": device}), 200
+
+    except Exception as e:
+        print(f"[에러] IoT 디바이스 조회 중 오류 발생: {e}")
+        return jsonify({"message": "서버 내부 오류"}), 500
+
 

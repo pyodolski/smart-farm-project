@@ -143,7 +143,8 @@ function App() {
             <Route path="/encyclopedia/insect/:insectId" element={isLoggedIn ? <InsectDetail /> : <Navigate to="/login" />} />
             <Route path="/encyclopedia/enemy/:enemyId" element={isLoggedIn ? <EnemyDetail /> : <Navigate to="/login" />} />
             <Route path="/statistics" element={isLoggedIn ? <Statistics /> : <Navigate to="/login" />} />
-            <Route path="/iot-setting" element={<CameraSetting />} />
+            <Route path="/iot-setting" element={isLoggedIn ? <CameraSetting /> : <Navigate to="/login" />} />
+            <Route path="/iot-setting/:deviceId" element={isLoggedIn ? <CameraSetting /> : <Navigate to="/login" />} />
             <Route path="/farm-card-tail/:farmId" element={isLoggedIn ? <FarmDetail /> : <Navigate to="/login" />} />
           </Routes>
         </div>
