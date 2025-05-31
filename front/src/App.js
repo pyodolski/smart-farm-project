@@ -92,6 +92,7 @@ function Navigation() {
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const checkLoginStatus = async () => {
@@ -115,11 +116,32 @@ function App() {
         setIsLoggedIn(false);
         sessionStorage.removeItem('isLoggedIn');
         sessionStorage.removeItem('userId');
+      } finally {
+        setIsLoading(false);
       }
     };
 
     checkLoginStatus();
   }, []);
+
+  if (isLoading) {
+    return (
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: '100vh',
+        backgroundColor: '#f7f7f7'
+      }}>
+        <div style={{
+          textAlign: 'center',
+          color: '#666'
+        }}>
+          <div>로딩 중...</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <AuthContext.Provider value={[isLoggedIn, setIsLoggedIn]}>

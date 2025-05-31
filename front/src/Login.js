@@ -1,4 +1,4 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from './contexts/AuthContext';
 import './Login.css';
@@ -11,6 +11,26 @@ function Login() {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const [isLoggedIn, setIsLoggedIn] = useContext(AuthContext);
+
+  useEffect(() => {
+    // 이미 로그인된 상태라면 메인 페이지로 리다이렉트
+    const checkLoginStatus = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/check_login`, {
+          credentials: 'include'
+        });
+        const data = await response.json();
+        
+        if (data.logged_in) {
+          navigate('/');
+        }
+      } catch (error) {
+        console.error('로그인 상태 확인 실패:', error);
+      }
+    };
+
+    checkLoginStatus();
+  }, [navigate]);
 
   const handleLogin = async (e) => {
     e.preventDefault();

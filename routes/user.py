@@ -347,3 +347,15 @@ def change_password():
         finally:
             conn.close()
     return jsonify({'success': False, 'message': 'DB 연결 실패'}), 500
+
+@user_bp.route('/check_login', methods=['GET'])
+def check_login():
+    user_id = session.get('user_id')
+    if user_id:
+        return jsonify({
+            'logged_in': True,
+            'user_id': user_id
+        }), 200
+    return jsonify({
+        'logged_in': False
+    }), 200
