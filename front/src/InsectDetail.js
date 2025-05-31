@@ -9,6 +9,11 @@ const InsectDetail = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  const convertHtmlToText = (html) => {
+    if (!html) return '정보 없음';
+    return html.replace(/<br\s*\/?>/g, '\n');
+  };
+
   useEffect(() => {
     const fetchInsectData = async () => {
       try {
@@ -58,12 +63,12 @@ const InsectDetail = () => {
           <div className="insect-details">
             <h3>해충 정보</h3>
             <p><strong>해충명:</strong> {insectData.insectSpeciesKor || '정보 없음'}</p>
-            <p><strong>생태정보:</strong> {insectData.ecologyInfo || '정보 없음'}</p>
-            <p><strong>피해정보:</strong> {insectData.damageInfo || '정보 없음'}</p>
-            <p><strong>방제방법:</strong> {insectData.preventMethod || '정보 없음'}</p>
-            <p><strong>검역정보:</strong> {insectData.qrantInfo || '정보 없음'}</p>
-            <p><strong>분포정보:</strong> {insectData.distrbInfo || '정보 없음'}</p>
-            <p><strong>형태정보:</strong> {insectData.stleInfo || '정보 없음'}</p>
+            <p style={{ whiteSpace: 'pre-line' }}><strong>생태정보:</strong> {convertHtmlToText(insectData.ecologyInfo)}</p>
+            <p style={{ whiteSpace: 'pre-line' }}><strong>피해정보:</strong> {convertHtmlToText(insectData.damageInfo)}</p>
+            <p style={{ whiteSpace: 'pre-line' }}><strong>방제방법:</strong> {convertHtmlToText(insectData.preventMethod)}</p>
+            <p style={{ whiteSpace: 'pre-line' }}><strong>검역정보:</strong> {convertHtmlToText(insectData.qrantInfo)}</p>
+            <p style={{ whiteSpace: 'pre-line' }}><strong>분포정보:</strong> {convertHtmlToText(insectData.distrbInfo)}</p>
+            <p style={{ whiteSpace: 'pre-line' }}><strong>형태정보:</strong> {convertHtmlToText(insectData.stleInfo)}</p>
           </div>
         </div>
       </div>

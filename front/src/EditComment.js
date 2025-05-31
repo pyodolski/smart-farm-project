@@ -20,12 +20,21 @@ function EditComment() {
       if (response.ok) {
         const data = await response.json();
         setContent(data.content);
-        setPostId(data.post_id);
+        setPostId(data.board_id);
+        
+        if (!data.board_id) {
+          console.error('게시글 ID를 찾을 수 없습니다.');
+          navigate('/community');
+          return;
+        }
       } else {
+        const errorData = await response.json();
+        alert(errorData.message || '댓글을 불러올 수 없습니다.');
         navigate('/community');
       }
     } catch (error) {
       console.error('댓글 로딩 실패:', error);
+      alert('댓글을 불러오는 중 오류가 발생했습니다.');
       navigate('/community');
     }
   };
@@ -33,6 +42,11 @@ function EditComment() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
+    if (!postId) {
+      alert('게시글 정보를 찾을 수 없습니다.');
+      return;
+    }
+
     try {
       const response = await fetch(`${API_BASE_URL}/api/comments/${commentId}`, {
         method: 'PUT',
@@ -40,20 +54,27 @@ function EditComment() {
           'Content-Type': 'application/json',
         },
         credentials: 'include',
-        body: JSON.stringify({ content })
+        body: JSON.stringify({ 
+          content,
+          board_id: postId
+        })
       });
 
       if (response.ok) {
         navigate(`/community/post/${postId}`);
       } else {
-        const data = await response.json();
-        alert(data.message || '댓글 수정에 실패했습니다.');
+        const errorData = await response.json();
+        alert(errorData.message || '댓글 수정에 실패했습니다.');
       }
     } catch (error) {
       console.error('댓글 수정 실패:', error);
-      alert('댓글 수정에 실패했습니다.');
+      alert('댓글 수정 중 오류가 발생했습니다.');
     }
   };
+
+  if (!postId) {
+    return <div>로딩 중...</div>;
+  }
 
   return (
     <div className="write-post-container">

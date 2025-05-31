@@ -1,4 +1,3 @@
-import pymysql
 import random
 import smtplib
 from flask import Blueprint, Flask, render_template, request, redirect, session, url_for, flash, jsonify
@@ -6,6 +5,7 @@ from config import DB_CONFIG
 from flask_cors import CORS
 from email.mime.text import MIMEText
 from email.header import Header
+from utils.database import get_db_connection, get_dict_cursor_connection
 
 user_bp = Blueprint('user', __name__)
 
@@ -22,46 +22,44 @@ def login():
                 user_id = data.get('id')
                 password = data.get('password')
             else:
-                # 폼 데이터도 처리 가능하도록 유지
                 user_id = request.form.get('id')
                 password = request.form.get('password')
 
             if not user_id or not password:
                 return jsonify({"success": False, "message": "모든 필드를 입력해주세요."}), 400
 
-            conn = get_db_conn()
-            if conn:
+            conn, cursor = get_dict_cursor_connection()
+            if conn and cursor:
                 try:
-                    with conn.cursor(pymysql.cursors.DictCursor) as cursor:
-                        cursor.execute("SELECT * FROM users WHERE id = %s AND password = %s", (user_id, password))
-                        user = cursor.fetchone()
-                        if user:
-                            session['user_id'] = user_id
-                            nickname = user['nickname']
-                            session['nickname']  = nickname
-                            is_admin = user['is_admin']
+                    cursor.execute("SELECT * FROM users WHERE id = %s AND password = %s", (user_id, password))
+                    user = cursor.fetchone()
+                    if user:
+                        session['user_id'] = user_id
+                        nickname = user['nickname']
+                        session['nickname'] = nickname
+                        is_admin = user['is_admin']
 
-                            response = {
-                                "success": True,
-                                "message": "로그인 성공!",
-                                "user_id": user_id,
-                                "nickname": nickname
-                            }
+                        response = {
+                            "success": True,
+                            "message": "로그인 성공!",
+                            "user_id": user_id,
+                            "nickname": nickname
+                        }
 
-                            if is_admin == 1:
-                                response["admin"] = True
+                        if is_admin == 1:
+                            response["admin"] = True
 
-                            return jsonify(response), 200
-                        else:
-                            return jsonify({"success": False, "message": "아이디 또는 비밀번호가 일치하지 않습니다."}), 401
+                        return jsonify(response), 200
+                    else:
+                        return jsonify({"success": False, "message": "아이디 또는 비밀번호가 일치하지 않습니다."}), 401
                 finally:
+                    cursor.close()
                     conn.close()
             else:
                 return jsonify({"success": False, "message": "DB 연결 실패"}), 500
         except Exception as e:
             return jsonify({"success": False, "message": f"오류가 발생했습니다: {str(e)}"}), 500
 
-    # GET 요청 처리 - React는 API만 사용하므로 JSON 응답만 필요
     return jsonify({"success": True, "message": "로그인 API가 정상 작동 중입니다."}), 200
 
 @user_bp.route('/send_code', methods=['POST'])
@@ -115,7 +113,7 @@ def logout():
 @user_bp.route('/register', methods=['GET', 'POST'])
 def register():
     if request.method == 'POST':
-        data = request.get_json()  # JSON 데이터 받기
+        data = request.get_json()
         user_id = data.get('id')
         password = data.get('password')
         password_confirm = data.get('password_confirm')
@@ -129,11 +127,12 @@ def register():
         if password != password_confirm:
             return jsonify({'success': False, 'message': '비밀번호가 일치하지 않습니다.'}), 400
 
-        conn = get_db_conn()
+        conn = get_db_connection()
         if conn:
             try:
                 with conn.cursor() as cursor:
-                    cursor.execute("SELECT * FROM users WHERE id = %s OR nickname = %s OR email = %s", (user_id, nickname, email))
+                    cursor.execute("SELECT * FROM users WHERE id = %s OR nickname = %s OR email = %s", 
+                                 (user_id, nickname, email))
                     if cursor.fetchone():
                         return jsonify({'success': False, 'message': '이미 등록된 아이디, 닉네임 또는 이메일입니다.'}), 400
 
@@ -206,27 +205,27 @@ def get_profile():
         return jsonify({'success': False, 'message': '로그인이 필요합니다.'}), 401
 
     user_id = session['user_id']
-    conn = get_db_conn()
+    conn, cursor = get_dict_cursor_connection()
 
-    if conn:
+    if conn and cursor:
         try:
-            with conn.cursor(pymysql.cursors.DictCursor) as cursor:
-                cursor.execute(
-                    "SELECT id, nickname, email, name FROM users WHERE id = %s",
-                    (user_id,)
-                )
-                user = cursor.fetchone()
-                if user:
-                    return jsonify({
-                        'success': True,
-                        'user': user
-                    })
-                else:
-                    return jsonify({
-                        'success': False,
-                        'message': '사용자 정보를 찾을 수 없습니다.'
-                    }), 404
+            cursor.execute(
+                "SELECT id, nickname, email, name FROM users WHERE id = %s",
+                (user_id,)
+            )
+            user = cursor.fetchone()
+            if user:
+                return jsonify({
+                    'success': True,
+                    'user': user
+                })
+            else:
+                return jsonify({
+                    'success': False,
+                    'message': '사용자 정보를 찾을 수 없습니다.'
+                }), 404
         finally:
+            cursor.close()
             conn.close()
     return jsonify({'success': False, 'message': 'DB 연결 실패'}), 500
 
@@ -250,7 +249,7 @@ def update_profile():
             'message': '모든 필드를 입력해주세요.'
         }), 400
 
-    conn = get_db_conn()
+    conn = get_db_connection()
     if conn:
         try:
             with conn.cursor() as cursor:
@@ -277,13 +276,11 @@ def update_profile():
                         'message': '이미 사용 중인 닉네임 또는 이메일입니다.'
                     }), 400
 
-                # 정보 업데이트
-                update_query = """
+                cursor.execute("""
                     UPDATE users
                     SET nickname = %s, email = %s, name = %s
                     WHERE id = %s
-                """
-                cursor.execute(update_query, (new_nickname, new_email, new_name, user_id))
+                """, (new_nickname, new_email, new_name, user_id))
                 conn.commit()
 
                 return jsonify({
@@ -319,7 +316,7 @@ def change_password():
             'message': '새 비밀번호가 일치하지 않습니다.'
         }), 400
 
-    conn = get_db_conn()
+    conn = get_db_connection()
     if conn:
         try:
             with conn.cursor() as cursor:

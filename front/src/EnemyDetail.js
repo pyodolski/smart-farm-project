@@ -9,6 +9,11 @@ const EnemyDetail = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  const convertHtmlToText = (html) => {
+    if (!html) return '정보 없음';
+    return html.replace(/<br\s*\/?>/g, '\n');
+  };
+
   useEffect(() => {
     const fetchEnemyData = async () => {
       try {
@@ -58,11 +63,11 @@ const EnemyDetail = () => {
           <div className="enemy-details">
             <h3>천적 곤충 정보</h3>
             <p><strong>천적 곤충명:</strong> {enemyData.insectSpeciesKor || '정보 없음'}</p>
-            <p><strong>국내 분포:</strong> {enemyData.domesticDistribution || '정보 없음'}</p>
-            <p><strong>특징:</strong> {enemyData.feature || '정보 없음'}</p>
-            <p><strong>생활사:</strong> {enemyData.lifeCycle || '정보 없음'}</p>
-            <p><strong>이용방법:</strong> {enemyData.utilizationMethod || '정보 없음'}</p>
-            <p><strong>기타 작물:</strong> {enemyData.etcCrop || '정보 없음'}</p>
+            <p style={{ whiteSpace: 'pre-line' }}><strong>국내 분포:</strong> {convertHtmlToText(enemyData.domesticDistribution)}</p>
+            <p style={{ whiteSpace: 'pre-line' }}><strong>특징:</strong> {convertHtmlToText(enemyData.feature)}</p>
+            <p style={{ whiteSpace: 'pre-line' }}><strong>생활사:</strong> {convertHtmlToText(enemyData.lifeCycle)}</p>
+            <p style={{ whiteSpace: 'pre-line' }}><strong>이용방법:</strong> {convertHtmlToText(enemyData.utilizationMethod)}</p>
+            <p style={{ whiteSpace: 'pre-line' }}><strong>기타 작물:</strong> {convertHtmlToText(enemyData.etcCrop)}</p>
           </div>
         </div>
       </div>

@@ -9,6 +9,11 @@ const DiseaseDetail = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  const convertHtmlToText = (html) => {
+    if (!html) return '정보 없음';
+    return html.replace(/<br\s*\/?>/g, '\n');
+  };
+
   useEffect(() => {
     const fetchDiseaseData = async () => {
       try {
@@ -58,9 +63,9 @@ const DiseaseDetail = () => {
           <div className="disease-details">
             <h3>병해 정보</h3>
             <p><strong>병명:</strong> {diseaseData.sickNameKor}</p>
-            <p><strong>전파 경로:</strong> {diseaseData.developmentCondition || '정보 없음'}</p>
-            <p><strong>예방법:</strong> {diseaseData.preventionMethod || '정보 없음'}</p>
-            <p><strong>증상:</strong> {diseaseData.symptoms || '정보 없음'}</p>
+            <p style={{ whiteSpace: 'pre-line' }}><strong>전파 경로:</strong> {convertHtmlToText(diseaseData.developmentCondition)}</p>
+            <p style={{ whiteSpace: 'pre-line' }}><strong>예방법:</strong> {convertHtmlToText(diseaseData.preventionMethod)}</p>
+            <p style={{ whiteSpace: 'pre-line' }}><strong>증상:</strong> {convertHtmlToText(diseaseData.symptoms)}</p>
           </div>
         </div>
       </div>

@@ -1,6 +1,5 @@
 from flask import Blueprint, request, session, jsonify
-from check_db import get_db_connection
-import pymysql
+from utils.database import get_db_connection, get_dict_cursor_connection
 import os
 import json
 from datetime import datetime
@@ -10,11 +9,10 @@ product_bp = Blueprint('product', __name__, url_prefix='/product')
 # 구독하기 (IOT 설정)
 @product_bp.route('/subscribe', methods=['POST'])
 def subscribe_iot():
-    try:
-        user_id = session.get('user_id')
-        if not user_id:
-            return jsonify({"message": "로그인이 필요합니다", "success": False}), 401
+    if 'user_id' not in session:
+        return jsonify({"message": "로그인이 필요합니다", "success": False}), 401
 
+    try:
         data = request.get_json()
         iot_name = data.get('iot_name')
         gh_id = data.get('gh_id')
@@ -24,65 +22,73 @@ def subscribe_iot():
         camera_on = data.get('camera_on', True)
 
         conn = get_db_connection()
-        cur = conn.cursor()
-        sql = """
-            INSERT INTO iot (iot_name, owner_id, gh_id, capture_interval, direction, resolution, camera_on)
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
-        """
-        cur.execute(sql, (
-            iot_name, user_id, gh_id, capture_interval, direction, resolution, camera_on
-        ))
-        conn.commit()
-        conn.close()
+        if not conn:
+            return jsonify({"message": "DB 연결 실패", "success": False}), 500
 
-        return jsonify({"message": "IOT 구독이 완료되었습니다", "success": True}), 200
+        try:
+            with conn.cursor() as cur:
+                sql = """
+                    INSERT INTO iot (iot_name, owner_id, gh_id, capture_interval, direction, resolution, camera_on)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s)
+                """
+                cur.execute(sql, (
+                    iot_name, session['user_id'], gh_id, capture_interval, direction, resolution, camera_on
+                ))
+                conn.commit()
+                return jsonify({"message": "IOT 구독이 완료되었습니다", "success": True}), 200
+        finally:
+            conn.close()
 
     except Exception as e:
         print(f"[에러] IOT 구독 중 오류 발생: {e}")
         return jsonify({"message": "서버 내부 오류", "success": False}), 500
 
-
-
 # 내 구독 목록 조회
 @product_bp.route('/my_devices', methods=['GET'])
 def my_devices():
-    user_id = session.get('user_id')
-    if not user_id:
+    if 'user_id' not in session:
         return jsonify({"message": "로그인이 필요합니다"}), 401
 
-    conn = get_db_connection()
-    cursor = conn.cursor(pymysql.cursors.DictCursor)
-    cursor.execute("""
-        SELECT i.*, g.greenhouse_name
-        FROM iot i
-        LEFT JOIN greenhouses g ON i.gh_id = g.id
-        WHERE i.owner_id = %s
-    """, (user_id,))
-    devices = cursor.fetchall()
-    conn.close()
+    conn, cursor = get_dict_cursor_connection()
+    if not conn or not cursor:
+        return jsonify({"message": "DB 연결 실패"}), 500
 
-    return jsonify({"devices": devices})
+    try:
+        cursor.execute("""
+            SELECT i.*, g.greenhouse_name
+            FROM iot i
+            LEFT JOIN greenhouses g ON i.gh_id = g.id
+            WHERE i.owner_id = %s
+        """, (session['user_id'],))
+        devices = cursor.fetchall()
+        return jsonify({"devices": devices})
+    finally:
+        cursor.close()
+        conn.close()
 
 # 내 비닐하우스 목록 조회
 @product_bp.route('/my_greenhouses', methods=['GET'])
 def my_greenhouses():
-    user_id = session.get('user_id')
-    if not user_id:
+    if 'user_id' not in session:
         return jsonify({"message": "로그인이 필요합니다"}), 401
 
-    conn = get_db_connection()
-    cursor = conn.cursor(pymysql.cursors.DictCursor)
-    sql = """
-        SELECT g.id, g.greenhouse_name, g.farm_id
-        FROM greenhouses g
-        JOIN farms f ON g.farm_id = f.id
-        WHERE f.owner_username = %s
-    """
-    cursor.execute(sql, (user_id,))
-    greenhouses = cursor.fetchall()
-    conn.close()
+    conn, cursor = get_dict_cursor_connection()
+    if not conn or not cursor:
+        return jsonify({"message": "DB 연결 실패"}), 500
 
-    return jsonify({"greenhouses": greenhouses})
+    try:
+        sql = """
+            SELECT g.id, g.greenhouse_name, g.farm_id
+            FROM greenhouses g
+            JOIN farms f ON g.farm_id = f.id
+            WHERE f.owner_username = %s
+        """
+        cursor.execute(sql, (session['user_id'],))
+        greenhouses = cursor.fetchall()
+        return jsonify({"greenhouses": greenhouses})
+    finally:
+        cursor.close()
+        conn.close()
 
 # 설정 읽기용 get api
 @product_bp.route('/camera-config', methods=['GET'])
@@ -101,6 +107,7 @@ def save_camera_config():
     with open("camera_config.json", "w") as f:
         json.dump(config, f)
     return jsonify({"message": "설정 저장 완료"}), 200
+
 #이미지 파일 업로드
 @product_bp.route('/upload-image', methods=['POST'])
 def upload_image():
@@ -122,39 +129,46 @@ def upload_sensor():
     humidity = data.get('humidity')
     timestamp = data.get('timestamp', datetime.now().isoformat())
 
+    conn = get_db_connection()
+    if not conn:
+        return jsonify({"status": "error", "message": "DB 연결 실패"}), 500
+
     try:
-        conn = get_db_connection()
         with conn.cursor() as cursor:
             sql = """
                 INSERT INTO sensor_log (temperature, humidity, timestamp)
                 VALUES (%s, %s, %s)
             """
             cursor.execute(sql, (temperature, humidity, timestamp))
-            conn.commit()  
-        return jsonify({"status": "success"}), 200
+            conn.commit()
+            return jsonify({"status": "success"}), 200
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
+    finally:
+        conn.close()
 
 #구독 취소
 @product_bp.route('/unsubscribe/<int:iot_id>', methods=['DELETE'])
 def unsubscribe_iot(iot_id):
-    user_id = session.get('user_id')
-    if not user_id:
+    if 'user_id' not in session:
         return jsonify({"message": "로그인이 필요합니다"}), 401
 
     conn = get_db_connection()
-    cur = conn.cursor()
-    cur.execute("DELETE FROM iot WHERE id = %s AND owner_id = %s", (iot_id, user_id))
-    conn.commit()
-    conn.close()
+    if not conn:
+        return jsonify({"message": "DB 연결 실패"}), 500
 
-    return jsonify({"message": "구독이 취소되었습니다"}), 200
+    try:
+        with conn.cursor() as cur:
+            cur.execute("DELETE FROM iot WHERE id = %s AND owner_id = %s", (iot_id, session['user_id']))
+            conn.commit()
+            return jsonify({"message": "구독이 취소되었습니다"}), 200
+    finally:
+        conn.close()
 
 #iot 설정 수정
 @product_bp.route('/update/<int:iot_id>', methods=['POST'])
 def update_iot(iot_id):
-    user_id = session.get('user_id')
-    if not user_id:
+    if 'user_id' not in session:
         return jsonify({"message": "로그인이 필요합니다"}), 401
 
     data = request.get_json()
@@ -166,44 +180,50 @@ def update_iot(iot_id):
     camera_on = data.get('camera_on')
 
     conn = get_db_connection()
-    cur = conn.cursor()
-    cur.execute("""
-        UPDATE iot
-        SET iot_name = %s, gh_id = %s, capture_interval = %s,
-            direction = %s, resolution = %s, camera_on = %s
-        WHERE id = %s AND owner_id = %s
-    """, (iot_name, gh_id, capture_interval, direction, resolution, camera_on, iot_id, user_id))
-    conn.commit()
-    conn.close()
+    if not conn:
+        return jsonify({"message": "DB 연결 실패"}), 500
 
-    return jsonify({"message": "IOT 정보가 수정되었습니다"}), 200
+    try:
+        with conn.cursor() as cur:
+            cur.execute("""
+                UPDATE iot
+                SET iot_name = %s, gh_id = %s, capture_interval = %s,
+                    direction = %s, resolution = %s, camera_on = %s
+                WHERE id = %s AND owner_id = %s
+            """, (iot_name, gh_id, capture_interval, direction, resolution, camera_on, iot_id, session['user_id']))
+            conn.commit()
+            return jsonify({"message": "IOT 정보가 수정되었습니다"}), 200
+    finally:
+        conn.close()
 
 #iot 조회
 @product_bp.route('/my_devices/<int:device_id>', methods=['GET'])
 def get_device(device_id):
-    try:
-        user_id = session.get('user_id')
-        if not user_id:
-            return jsonify({"message": "로그인이 필요합니다"}), 401
+    if 'user_id' not in session:
+        return jsonify({"message": "로그인이 필요합니다"}), 401
 
-        conn = get_db_connection()
-        cur = conn.cursor(pymysql.cursors.DictCursor)
-        cur.execute("""
+    conn, cursor = get_dict_cursor_connection()
+    if not conn or not cursor:
+        return jsonify({"message": "DB 연결 실패"}), 500
+
+    try:
+        cursor.execute("""
             SELECT i.*, g.greenhouse_name, g.farm_id
             FROM iot i
             LEFT JOIN greenhouses g ON i.gh_id = g.id
             WHERE i.id = %s AND i.owner_id = %s
-        """, (device_id, user_id))
-        device = cur.fetchone()
-        conn.close()
+        """, (device_id, session['user_id']))
+        device = cursor.fetchone()
 
         if not device:
             return jsonify({"message": "디바이스를 찾을 수 없습니다"}), 404
 
         return jsonify({"device": device}), 200
-
     except Exception as e:
         print(f"[에러] IoT 디바이스 조회 중 오류 발생: {e}")
         return jsonify({"message": "서버 내부 오류"}), 500
+    finally:
+        cursor.close()
+        conn.close()
 
 
