@@ -1,5 +1,6 @@
 import random
 import smtplib
+import requests
 from flask import Blueprint, Flask, render_template, request, redirect, session, url_for, flash, jsonify
 from config import DB_CONFIG
 from flask_cors import CORS
@@ -356,3 +357,73 @@ def check_login():
     return jsonify({
         'logged_in': False
     }), 200
+
+#카카오톡 로그인
+@user_bp.route('/auth/kakao', methods=['GET'])
+def kakao_auth():
+    REST_API_KEY = "90cec3288e3b53d18d3272c58c479c67"
+    # 반드시 카카오 개발자 콘솔에도 등록된 URI여야 합니다.
+    REDIRECT_URI = "http://localhost:5001/oauth/kakao/callback"
+    kakao_auth_url = (
+        "https://kauth.kakao.com/oauth/authorize"
+        f"?client_id={REST_API_KEY}"
+        f"&redirect_uri={REDIRECT_URI}"
+        "&response_type=code"
+        "&prompt=login"
+    )
+    return redirect(kakao_auth_url)
+
+@user_bp.route('/oauth/kakao/callback', methods=['GET'])
+def kakao_callback():
+    code = request.args.get('code')
+    if not code:
+        return redirect('http://localhost:3000?error=KakaoAuthFailed')
+    
+    # Access Token 발급 요청
+    token_url = "https://kauth.kakao.com/oauth/token"
+    data = {
+        "grant_type": "authorization_code",
+        "client_id": "90cec3288e3b53d18d3272c58c479c67",  # 본인의 Kakao REST API Key
+        "redirect_uri": "http://localhost:5001/oauth/kakao/callback",
+        "code": code
+    }
+    token_res = requests.post(token_url, data=data)
+    token_json = token_res.json()
+    access_token = token_json.get("access_token")
+
+    if not access_token:
+        return redirect('http://localhost:3000?error=KakaoTokenMissing')
+    
+    # 카카오 API로 프로필 정보 요청
+    profile_url = "https://kapi.kakao.com/v2/user/me"
+    headers = {
+        "Authorization": f"Bearer {access_token}"
+    }
+    profile_res = requests.get(profile_url, headers=headers)
+    profile_json = profile_res.json()
+    
+    # 사용자 정보 추출
+    kakao_id = profile_json.get("id")
+    kakao_profile = profile_json.get("kakao_account", {}).get("profile", {})
+    nickname = kakao_profile.get("nickname", f"kakao_{kakao_id}")
+    
+    # DB에 사용자 있는지 조회 → 없으면 새로 INSERT
+    user_id = f'kakao_{kakao_id}'
+    conn = get_db_connection()
+    with conn.cursor() as cursor:
+        cursor.execute("SELECT * FROM users WHERE id = %s", (user_id,))
+        user = cursor.fetchone()
+        if not user:
+            dummy_password = 'kakao_login'
+            cursor.execute("""
+                INSERT INTO users (id, password, nickname, email, name, is_black, is_admin)
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
+            """, (user_id, dummy_password, nickname, '', nickname, 0, 0))
+            conn.commit()
+    conn.close()
+
+    # Flask 세션에 사용자 ID 저장
+    session['user_id'] = user_id
+
+    #    React 쪽에서 /oauth/success 라우트를 두고, 쿼리에 user_id를 받아 처리하도록 할 수 있음.
+    return redirect(f'http://localhost:3000/')
