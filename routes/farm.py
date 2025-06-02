@@ -1,17 +1,12 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session, jsonify
-import pymysql
 import os
 from config import DB_CONFIG
 from werkzeug.utils import secure_filename
-from flask_cors import CORS
+from utils.database import get_db_connection, get_dict_cursor_connection
 
 UPLOAD_FOLDER = 'static/uploads/farms'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 farm_bp = Blueprint('farm', __name__)
-
-# DB 연결 공통 함수
-def get_db_conn():
-    return pymysql.connect(**DB_CONFIG)
 
 
 #농장 목록 조회 및 추가
@@ -22,16 +17,19 @@ def farms_api():
         if not owner:
             return jsonify({'error': '로그인이 필요합니다.'}), 403
 
-        conn = get_db_conn()
-        cur = conn.cursor(pymysql.cursors.DictCursor)
-        cur.execute("SELECT * FROM farms WHERE is_approved = 1 AND owner_username = %s", (owner,))
-        farms = cur.fetchall()
-        conn.close()
-        return jsonify({'farms': farms})
+        conn, cursor = get_dict_cursor_connection()
+        if conn and cursor:
+            try:
+                cursor.execute("SELECT * FROM farms WHERE is_approved = 1 AND owner_username = %s", (owner,))
+                farms = cursor.fetchall()
+                return jsonify({'farms': farms})
+            finally:
+                cursor.close()
+                conn.close()
+        return jsonify({'error': 'DB 연결 실패'}), 500
 
     elif request.method == 'POST':
         name = request.form.get('name')
-        #area = request.form.get('area')
         location = request.form.get('location')
         document = request.files.get('document')
         owner = session.get('user_id')
@@ -45,17 +43,20 @@ def farms_api():
         upload_path = os.path.join(UPLOAD_FOLDER, filename).replace('\\', '/')
         document.save(upload_path)
 
-        conn = get_db_conn()
-        cur = conn.cursor()
-        sql = """
-            INSERT INTO farms (name, location, owner_username, document_path)
-            VALUES (%s, %s, %s, %s)
-        """
-        cur.execute(sql, (name, location, owner, upload_path))
-        conn.commit()
-        conn.close()
-
-        return jsonify({'message': 'Farm created'}), 201
+        conn = get_db_connection()
+        if conn:
+            try:
+                with conn.cursor() as cursor:
+                    sql = """
+                        INSERT INTO farms (name, location, owner_username, document_path)
+                        VALUES (%s, %s, %s, %s)
+                    """
+                    cursor.execute(sql, (name, location, owner, upload_path))
+                    conn.commit()
+                    return jsonify({'message': 'Farm created'}), 201
+            finally:
+                conn.close()
+        return jsonify({'error': 'DB 연결 실패'}), 500
 
 
 #농장 추가 버튼 처리
@@ -63,7 +64,6 @@ def farms_api():
 def add_farm():
     if request.method == 'POST':
         name = request.form['name']
-        #area = request.form['area']
         location = request.form['location']
         owner = session.get('user_id')
         document = request.files.get('document')
@@ -77,17 +77,20 @@ def add_farm():
         filepath = os.path.join(UPLOAD_FOLDER, filename).replace('\\', '/')
         document.save(filepath)
 
-        conn = get_db_conn()
-        cur = conn.cursor()
-        sql = """
-            INSERT INTO farms (name, location, owner_username, document_path)
-            VALUES (%s, %s, %s, %s)
-        """
-        cur.execute(sql, (name, location, owner, filepath))
-        conn.commit()
-        conn.close()
-
-        return redirect(url_for('home'))
+        conn = get_db_connection()
+        if conn:
+            try:
+                with conn.cursor() as cursor:
+                    sql = """
+                        INSERT INTO farms (name, location, owner_username, document_path)
+                        VALUES (%s, %s, %s, %s)
+                    """
+                    cursor.execute(sql, (name, location, owner, filepath))
+                    conn.commit()
+                    return redirect(url_for('home'))
+            finally:
+                conn.close()
+        return '데이터베이스 연결 실패', 500
 
     return render_template('add_farm.html')
 
@@ -99,19 +102,22 @@ def farm_detail(farm_id):
     if not user:
         return redirect(url_for('login'))
 
-    conn = get_db_conn()
-    cur = conn.cursor(pymysql.cursors.DictCursor)
-    cur.execute("SELECT * FROM farms WHERE id = %s AND is_approved = 1", (farm_id,))
-    
-    farm = cur.fetchone()
-    conn.close()
+    conn, cursor = get_dict_cursor_connection()
+    if conn and cursor:
+        try:
+            cursor.execute("SELECT * FROM farms WHERE id = %s AND is_approved = 1", (farm_id,))
+            farm = cursor.fetchone()
+            
+            if not farm:
+                return '존재하지 않는 농장입니다.', 404
+            if farm['owner_username'] != user:
+                return '이 농장에 접근할 수 없습니다.', 403
 
-    if not farm:
-        return '존재하지 않는 농장입니다.', 404
-    if farm['owner_username'] != user:
-        return '이 농장에 접근할 수 없습니다.', 403
-
-    return render_template('farm_detail.html', farm=farm)
+            return render_template('farm_detail.html', farm=farm)
+        finally:
+            cursor.close()
+            conn.close()
+    return '데이터베이스 연결 실패', 500
 
 
 #농장 수정
@@ -121,33 +127,33 @@ def edit_farm(farm_id):
     if not username:
         return redirect(url_for('login'))
 
-    conn = get_db_conn()
-    cur = conn.cursor(pymysql.cursors.DictCursor)
-    cur.execute("SELECT * FROM farms WHERE id = %s", (farm_id,))
-    farm = cur.fetchone()
+    conn, cursor = get_dict_cursor_connection()
+    if conn and cursor:
+        try:
+            cursor.execute("SELECT * FROM farms WHERE id = %s", (farm_id,))
+            farm = cursor.fetchone()
 
-    if not farm:
-        conn.close()
-        return '존재하지 않는 농장입니다.', 404
-    if farm['owner_username'] != username:
-        conn.close()
-        return '수정 권한이 없습니다.', 403
+            if not farm:
+                return '존재하지 않는 농장입니다.', 404
+            if farm['owner_username'] != username:
+                return '수정 권한이 없습니다.', 403
 
-    if request.method == 'POST':
-        name = request.form['name']
-        #area = request.form['area']
-        location = request.form['location']
+            if request.method == 'POST':
+                name = request.form['name']
+                location = request.form['location']
 
-        cur.execute(
-            "UPDATE farms SET name = %s, location = %s WHERE id = %s",
-            (name, location, farm_id)
-        )
-        conn.commit()
-        conn.close()
-        return redirect(url_for('farm.farm_detail', farm_id=farm_id))
+                cursor.execute(
+                    "UPDATE farms SET name = %s, location = %s WHERE id = %s",
+                    (name, location, farm_id)
+                )
+                conn.commit()
+                return redirect(url_for('farm.farm_detail', farm_id=farm_id))
 
-    conn.close()
-    return render_template('edit_farm.html', farm=farm)
+            return render_template('edit_farm.html', farm=farm)
+        finally:
+            cursor.close()
+            conn.close()
+    return '데이터베이스 연결 실패', 500
 
 
 # 농장 삭제
@@ -157,17 +163,19 @@ def delete_farm(farm_id):
     if not username:
         return redirect(url_for('login'))
 
-    conn = get_db_conn()
-    cur = conn.cursor()
-    cur.execute("SELECT owner_username FROM farms WHERE id = %s", (farm_id,))
-    result = cur.fetchone()
+    conn = get_db_connection()
+    if conn:
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute("SELECT owner_username FROM farms WHERE id = %s", (farm_id,))
+                result = cursor.fetchone()
 
-    if not result or result[0] != username:
-        conn.close()
-        return '삭제 권한이 없습니다.', 403
+                if not result or result[0] != username:
+                    return '삭제 권한이 없습니다.', 403
 
-    cur.execute("DELETE FROM farms WHERE id = %s", (farm_id,))
-    conn.commit()
-    conn.close()
-    return jsonify({'message': '삭제 완료'}), 200
-
+                cursor.execute("DELETE FROM farms WHERE id = %s", (farm_id,))
+                conn.commit()
+                return jsonify({'message': '삭제 완료'}), 200
+        finally:
+            conn.close()
+    return '데이터베이스 연결 실패', 500

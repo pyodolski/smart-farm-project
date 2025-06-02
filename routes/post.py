@@ -1,7 +1,6 @@
-from flask import Blueprint, render_template, request, redirect, url_for, session
-import pymysql
+from flask import Blueprint, render_template, request, redirect, url_for, session, jsonify
+import pymysql.cursors
 from config import DB_CONFIG
-from flask_cors import CORS
 
 post_bp = Blueprint('post', __name__)
 
@@ -9,18 +8,20 @@ post_bp = Blueprint('post', __name__)
 def get_db_conn():
     return pymysql.connect(**DB_CONFIG)
 
+def get_dict_cursor_conn():
+    conn = get_db_conn()
+    if conn:
+        return conn, conn.cursor(pymysql.cursors.DictCursor)
+    return None, None
 
 # 게시물 신고 기능
-from flask import jsonify
-
 @post_bp.route('/report/post/<int:post_id>', methods=['POST'])
 def report_post(post_id):
     if 'user_id' not in session:
         return jsonify({'success': False, 'message': '로그인이 필요합니다.'}), 401
 
     user_id = session['user_id']
-    conn = get_db_conn()
-    cursor = conn.cursor()
+    conn, cursor = get_dict_cursor_conn()
 
     try:
         # 중복 신고 확인
@@ -59,8 +60,7 @@ def report_comment(comment_id):
         return jsonify({'success': False, 'message': '로그인이 필요합니다.'}), 401
 
     user_id = session['user_id']
-    conn = get_db_conn()
-    cursor = conn.cursor()
+    conn, cursor = get_dict_cursor_conn()
 
     try:
         # 중복 신고 확인
@@ -97,15 +97,13 @@ def get_posts():
     if 'user_id' not in session:
         return jsonify({'message': '로그인이 필요합니다.'}), 401
 
-    conn = get_db_conn()
+    conn, cursor = get_dict_cursor_conn()
     if not conn:
         return jsonify({'message': 'DB 연결 실패'}), 500
     
     # URL 파라미터 가져오기
     sort_by = request.args.get('sort', 'new')  # 기본값은 'new'
     search_term = request.args.get('search', '')
-    
-    cursor = conn.cursor(pymysql.cursors.DictCursor)
     
     # 기본 쿼리
     query = '''
@@ -146,11 +144,10 @@ def create_post():
     if not title or not content:
         return jsonify({'message': '제목과 내용을 모두 입력해주세요.'}), 400
 
-    conn = get_db_conn()
+    conn, cursor = get_dict_cursor_conn()
     if not conn:
         return jsonify({'message': 'DB 연결 실패'}), 500
         
-    cursor = conn.cursor()
     cursor.execute(
         'INSERT INTO board (name, title, content) VALUES (%s, %s, %s)',
         (session['user_id'], title, content)
@@ -166,13 +163,10 @@ def get_post(post_id):
     if 'user_id' not in session:
         return jsonify({'message': '로그인이 필요합니다.'}), 401
 
-    conn = get_db_conn()
+    conn, cursor = get_dict_cursor_conn()
     if not conn:
         return jsonify({'message': 'DB 연결 실패'}), 500
         
-    cursor = conn.cursor(pymysql.cursors.DictCursor)
-    
-    # 게시글 정보 조회
     cursor.execute('''
         SELECT b.*, 
                (SELECT COUNT(*) FROM likes WHERE board_id = b.id) as like_count,
@@ -215,11 +209,10 @@ def update_post(post_id):
     if 'user_id' not in session:
         return jsonify({'message': '로그인이 필요합니다.'}), 401
 
-    conn = get_db_conn()
+    conn, cursor = get_dict_cursor_conn()
     if not conn:
         return jsonify({'message': 'DB 연결 실패'}), 500
         
-    cursor = conn.cursor(pymysql.cursors.DictCursor)
     cursor.execute('SELECT name FROM board WHERE id = %s', (post_id,))
     post = cursor.fetchone()
 
@@ -257,11 +250,10 @@ def delete_post(post_id):
     if 'user_id' not in session:
         return jsonify({'message': '로그인이 필요합니다.'}), 401
 
-    conn = get_db_conn()
+    conn, cursor = get_dict_cursor_conn()
     if not conn:
         return jsonify({'message': 'DB 연결 실패'}), 500
         
-    cursor = conn.cursor(pymysql.cursors.DictCursor)
     cursor.execute('SELECT name FROM board WHERE id = %s', (post_id,))
     post = cursor.fetchone()
 
@@ -287,13 +279,10 @@ def toggle_like(post_id):
     if 'user_id' not in session:
         return jsonify({'message': '로그인이 필요합니다.'}), 401
 
-    conn = get_db_conn()
+    conn, cursor = get_dict_cursor_conn()
     if not conn:
         return jsonify({'message': 'DB 연결 실패'}), 500
         
-    cursor = conn.cursor(pymysql.cursors.DictCursor)
-    
-    # 이미 좋아요를 눌렀는지 확인
     cursor.execute(
         'SELECT * FROM likes WHERE board_id = %s AND user_name = %s',
         (post_id, session['user_id'])
@@ -338,11 +327,10 @@ def create_comment(post_id):
     if not content:
         return jsonify({'message': '댓글 내용을 입력해주세요.'}), 400
 
-    conn = get_db_conn()
+    conn, cursor = get_dict_cursor_conn()
     if not conn:
         return jsonify({'message': 'DB 연결 실패'}), 500
         
-    cursor = conn.cursor()
     cursor.execute(
         'INSERT INTO comments (board_id, commenter, content) VALUES (%s, %s, %s)',
         (post_id, session['user_id'], content)
@@ -358,11 +346,10 @@ def get_comment(comment_id):
     if 'user_id' not in session:
         return jsonify({'message': '로그인이 필요합니다.'}), 401
 
-    conn = get_db_conn()
+    conn, cursor = get_dict_cursor_conn()
     if not conn:
         return jsonify({'message': 'DB 연결 실패'}), 500
         
-    cursor = conn.cursor(pymysql.cursors.DictCursor)
     cursor.execute('''
         SELECT c.*
         FROM comments c
@@ -382,11 +369,10 @@ def update_comment(comment_id):
     if 'user_id' not in session:
         return jsonify({'message': '로그인이 필요합니다.'}), 401
 
-    conn = get_db_conn()
+    conn, cursor = get_dict_cursor_conn()
     if not conn:
         return jsonify({'message': 'DB 연결 실패'}), 500
         
-    cursor = conn.cursor(pymysql.cursors.DictCursor)
     cursor.execute('SELECT commenter FROM comments WHERE id = %s', (comment_id,))
     comment = cursor.fetchone()
 
@@ -423,11 +409,10 @@ def delete_comment(comment_id):
     if 'user_id' not in session:
         return jsonify({'message': '로그인이 필요합니다.'}), 401
 
-    conn = get_db_conn()
+    conn, cursor = get_dict_cursor_conn()
     if not conn:
         return jsonify({'message': 'DB 연결 실패'}), 500
         
-    cursor = conn.cursor(pymysql.cursors.DictCursor)
     cursor.execute('SELECT commenter FROM comments WHERE id = %s', (comment_id,))
     comment = cursor.fetchone()
 
@@ -445,5 +430,4 @@ def delete_comment(comment_id):
     conn.commit()
     cursor.close()
     conn.close()
-
     return jsonify({'message': '댓글이 삭제되었습니다.'})

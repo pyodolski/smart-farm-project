@@ -1,212 +1,358 @@
-from flask import Blueprint, request, session, jsonify
-from check_db import get_db_connection
-import pymysql
-import os
-import json
-from datetime import datetime
+import random
+import smtplib
+from flask import Blueprint, Flask, render_template, request, redirect, session, url_for, flash, jsonify
+from config import DB_CONFIG
 from flask_cors import CORS
+from email.mime.text import MIMEText
+from email.header import Header
+from utils.database import get_db_connection, get_dict_cursor_connection
 
-product_bp = Blueprint('product', __name__, url_prefix='/product')
+user_bp = Blueprint('user', __name__)
 
-# 구독하기 (IOT 설정)
-@product_bp.route('/subscribe', methods=['POST'])
-def subscribe_iot():
+def get_db_conn():
+    return pymysql.connect(**DB_CONFIG)
+
+@user_bp.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        # JSON 요청 처리
+        try:
+            if request.is_json:
+                data = request.get_json()
+                user_id = data.get('id')
+                password = data.get('password')
+            else:
+                user_id = request.form.get('id')
+                password = request.form.get('password')
+
+            if not user_id or not password:
+                return jsonify({"success": False, "message": "모든 필드를 입력해주세요."}), 400
+
+            conn, cursor = get_dict_cursor_connection()
+            if conn and cursor:
+                try:
+                    cursor.execute("SELECT * FROM users WHERE id = %s AND password = %s", (user_id, password))
+                    user = cursor.fetchone()
+                    if user:
+                        session['user_id'] = user_id
+                        nickname = user['nickname']
+                        session['nickname'] = nickname
+                        is_admin = user['is_admin']
+
+                        response = {
+                            "success": True,
+                            "message": "로그인 성공!",
+                            "user_id": user_id,
+                            "nickname": nickname
+                        }
+
+                        if is_admin == 1:
+                            response["admin"] = True
+
+                        return jsonify(response), 200
+                    else:
+                        return jsonify({"success": False, "message": "아이디 또는 비밀번호가 일치하지 않습니다."}), 401
+                finally:
+                    cursor.close()
+                    conn.close()
+            else:
+                return jsonify({"success": False, "message": "DB 연결 실패"}), 500
+        except Exception as e:
+            return jsonify({"success": False, "message": f"오류가 발생했습니다: {str(e)}"}), 500
+
+    return jsonify({"success": True, "message": "로그인 API가 정상 작동 중입니다."}), 200
+
+@user_bp.route('/send_code', methods=['POST'])
+def send_code():
+    data = request.get_json()
+    email = data.get('email')
+
+    code = str(random.randint(100000, 999999))
+    session['verify_email'] = email
+    session['verify_code'] = code
     try:
-        user_id = session.get('user_id')
-        if not user_id:
-            return jsonify({"message": "로그인이 필요합니다", "success": False}), 401
+        msg = MIMEText(f'인증번호는 {code} 입니다.', _charset='utf-8')
+        msg['Subject'] = Header('이메일 인증번호', 'utf-8')
+        msg['From'] = '4642joung@yu.ac.kr'
+        msg['To'] = email
 
+        s = smtplib.SMTP_SSL('smtp.gmail.com', 465)
+        s.login('4642joung@yu.ac.kr', 'pqvk hxur beny bapi')
+        s.send_message(msg)
+        s.quit()
+
+        return jsonify({'status': 'ok', 'message': '인증번호 전송 완료'})
+    except Exception as e:
+        return jsonify({'message': f'메일 전송 실패: {str(e)}'}), 500
+
+#이메일 코드 일치/불일치 확인
+@user_bp.route('/check_code', methods=['POST'])
+def check_code():
+    data = request.get_json()
+    input_code = data.get('code')
+
+    if not input_code:
+        return jsonify({'verified': False, 'message': '인증번호가 입력되지 않았습니다.'}), 400
+
+    stored_code = session.get('verify_code')
+
+    if input_code == stored_code:
+        session['email_verified'] = True
+        return jsonify({'verified': True, 'message': '인증 성공'})
+    else:
+        return jsonify({'verified': False, 'message': '인증번호가 일치하지 않습니다.'})
+
+@user_bp.route('/logout', methods=['POST'])
+def logout():
+    session.pop('user_id', None)
+    return jsonify({
+        'success': True,
+        'message': '로그아웃 되었습니다.'
+    }), 200
+
+@user_bp.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
         data = request.get_json()
-        iot_name = data.get('iot_name')
-        gh_id = data.get('gh_id')
-        capture_interval = data.get('capture_interval', '15')
-        direction = data.get('direction', 'both')
-        resolution = data.get('resolution', '1280x720')
-        camera_on = data.get('camera_on', True)
+        user_id = data.get('id')
+        password = data.get('password')
+        password_confirm = data.get('password_confirm')
+        nickname = data.get('nickname')
+        email = data.get('email')
+        name = data.get('name')
+        
+        if not (user_id and password and password_confirm and nickname and email and name):
+            return jsonify({'success': False, 'message': '모든 필드를 입력해주세요.'}), 400
+
+        if password != password_confirm:
+            return jsonify({'success': False, 'message': '비밀번호가 일치하지 않습니다.'}), 400
 
         conn = get_db_connection()
-        cur = conn.cursor()
-        sql = """
-            INSERT INTO iot (iot_name, owner_id, gh_id, capture_interval, direction, resolution, camera_on)
-            VALUES (%s, %s, %s, %s, %s, %s, %s)
-        """
-        cur.execute(sql, (
-            iot_name, user_id, gh_id, capture_interval, direction, resolution, camera_on
-        ))
-        conn.commit()
-        conn.close()
+        if conn:
+            try:
+                with conn.cursor() as cursor:
+                    cursor.execute("SELECT * FROM users WHERE id = %s OR nickname = %s OR email = %s", 
+                                 (user_id, nickname, email))
+                    if cursor.fetchone():
+                        return jsonify({'success': False, 'message': '이미 등록된 아이디, 닉네임 또는 이메일입니다.'}), 400
 
-        return jsonify({"message": "IOT 구독이 완료되었습니다", "success": True}), 200
-
-    except Exception as e:
-        print(f"[에러] IOT 구독 중 오류 발생: {e}")
-        return jsonify({"message": "서버 내부 오류", "success": False}), 500
-
-
-
-# 내 구독 목록 조회
-@product_bp.route('/my_devices', methods=['GET'])
-def my_devices():
-    user_id = session.get('user_id')
-    if not user_id:
-        return jsonify({"message": "로그인이 필요합니다"}), 401
-
-    conn = get_db_connection()
-    cursor = conn.cursor(pymysql.cursors.DictCursor)
-    cursor.execute("""
-        SELECT i.*, g.greenhouse_name
-        FROM iot i
-        LEFT JOIN greenhouses g ON i.gh_id = g.id
-        WHERE i.owner_id = %s
-    """, (user_id,))
-    devices = cursor.fetchall()
-    conn.close()
-
-    return jsonify({"devices": devices})
-
-# 내 비닐하우스 목록 조회
-@product_bp.route('/my_greenhouses', methods=['GET'])
-def my_greenhouses():
-    user_id = session.get('user_id')
-    if not user_id:
-        return jsonify({"message": "로그인이 필요합니다"}), 401
-
-    conn = get_db_connection()
-    cursor = conn.cursor(pymysql.cursors.DictCursor)
-    sql = """
-        SELECT g.id, g.greenhouse_name, g.farm_id
-        FROM greenhouses g
-        JOIN farms f ON g.farm_id = f.id
-        WHERE f.owner_username = %s
-    """
-    cursor.execute(sql, (user_id,))
-    greenhouses = cursor.fetchall()
-    conn.close()
-
-    return jsonify({"greenhouses": greenhouses})
-
-# 설정 읽기용 get api
-@product_bp.route('/camera-config', methods=['GET'])
-def get_camera_config():
-    try:
-        with open("camera_config.json", "r") as f:
-            config = json.load(f)
-        return jsonify(config), 200
-    except Exception as e:
-        return jsonify({"error": f"설정 파일을 읽을 수 없습니다: {str(e)}"}), 500
-
-# IOT 카메라 설정 저장
-@product_bp.route('/camera-config', methods=['POST'])
-def save_camera_config():
-    config = request.get_json()
-    with open("camera_config.json", "w") as f:
-        json.dump(config, f)
-    return jsonify({"message": "설정 저장 완료"}), 200
-#이미지 파일 업로드
-@product_bp.route('/upload-image', methods=['POST'])
-def upload_image():
-    if 'file' not in request.files:
-        return "파일 없음", 400
-
-    file = request.files['file']
-    filename = file.filename
-    save_path = os.path.join("static", "images", filename)
-    file.save(save_path)
-
-    return f"저장 완료: {filename}", 200
-
-# 센서 데이터 수신
-@product_bp.route('/upload-sensor', methods=['POST'])
-def upload_sensor():
-    data = request.get_json()
-    temperature = data.get('temperature')
-    humidity = data.get('humidity')
-    timestamp = data.get('timestamp', datetime.now().isoformat())
-
-    try:
-        conn = get_db_connection()
-        with conn.cursor() as cursor:
-            sql = """
-                INSERT INTO sensor_log (temperature, humidity, timestamp)
-                VALUES (%s, %s, %s)
-            """
-            cursor.execute(sql, (temperature, humidity, timestamp))
-            conn.commit()  
-        return jsonify({"status": "success"}), 200
-    except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
-
-# 센서 데이터 값 띄우기 (실험용 코드입니다.)
-@product_bp.route("/last-sensor", methods=["GET"])
-def get_last_sensor():
-    try:
-        conn = get_db_connection()
-        with conn.cursor() as cursor:
-            cursor.execute("SELECT temperature, humidity, timestamp FROM sensor_log ORDER BY timestamp DESC LIMIT 1")
-            row = cursor.fetchone()
-
-        # 아래 사진 데이터 형식 지정 필요
-        if row:
-            response = {
-                "temperature": row[0],
-                "humidity": row[1],
-                "timestamp": row[2].isoformat(),  # JS에서 파싱 가능한 형태
-                "image_url": "/static/images/last.jpg"
-            }
+                    cursor.execute("""
+                        INSERT INTO users (id, password, nickname, email, name, is_black)
+                        VALUES (%s, %s, %s, %s, %s, %s)
+                    """, (user_id, password, nickname, email, name, False))
+                    conn.commit()
+                    return jsonify({'success': True, 'message': '회원가입에 성공했습니다!'}), 200
+            finally:
+                conn.close()
         else:
-            response = {
-                "temperature": None,
-                "humidity": None,
-                "timestamp": None,
-                "image_url": "/static/images/last.jpg"
-            }
+            return jsonify({'success': False, 'message': 'DB 연결 실패'}), 500
 
-        return jsonify(response)
+    # GET 요청에 대한 응답 (React 앱을 제공하는 경우)
+    return jsonify({'success': True, 'message': 'API is running'}), 200
 
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
 
-#구독 취소
-@product_bp.route('/unsubscribe/<int:iot_id>', methods=['DELETE'])
-def unsubscribe_iot(iot_id):
-    user_id = session.get('user_id')
-    if not user_id:
-        return jsonify({"message": "로그인이 필요합니다"}), 401
+#정보 수정
+@user_bp.route('/edit', methods=['GET', 'POST'])
+def edit_profile():
+    user_id = session['user_id']
+    conn = get_db_conn()
 
-    conn = get_db_connection()
-    cur = conn.cursor()
-    cur.execute("DELETE FROM iot WHERE id = %s AND owner_id = %s", (iot_id, user_id))
-    conn.commit()
-    conn.close()
+    if request.method == 'POST':
+        new_nickname = request.form.get('nickname')
+        new_email = request.form.get('email')
+        new_name = request.form.get('name')
+        current_password = request.form.get('current_password')
 
-    return jsonify({"message": "구독이 취소되었습니다"}), 200
+        if conn:
+            try:
+                with conn.cursor() as cursor:
+                    cursor.execute("SELECT password FROM users WHERE id = %s", (user_id,))
+                    user = cursor.fetchone()
+                    if not user or user[0] != current_password:
+                        flash("현재 비밀번호가 일치하지 않습니다.")
+                        return render_template('edit.html', nickname=new_nickname, email=new_email, name=new_name)
 
-#iot 설정 수정
-@product_bp.route('/update/<int:iot_id>', methods=['POST'])
-def update_iot(iot_id):
-    user_id = session.get('user_id')
-    if not user_id:
-        return jsonify({"message": "로그인이 필요합니다"}), 401
+                    update_query = """
+                        UPDATE users
+                        SET nickname = %s, email = %s, name = %s
+                        WHERE id = %s
+                    """
+                    cursor.execute(update_query, (new_nickname, new_email, new_name, user_id))
+                    conn.commit()
+                    flash("정보가 성공적으로 수정되었습니다.")
+                    return redirect(url_for('edit_profile'))
+            finally:
+                conn.close()
 
+    else:
+        if conn:
+            try:
+                with conn.cursor() as cursor:
+                    cursor.execute("SELECT nickname, email, name FROM users WHERE id = %s", (user_id,))
+                    user = cursor.fetchone()
+                    if user:
+                        return render_template('edit.html', nickname=user[0], email=user[1], name=user[2])
+                    else:
+                        flash("사용자 정보를 찾을 수 없습니다.")
+                        return redirect(url_for('index'))
+            finally:
+                conn.close()
+
+# 사용자 정보 조회
+@user_bp.route('/api/user/profile', methods=['GET'])
+def get_profile():
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'message': '로그인이 필요합니다.'}), 401
+
+    user_id = session['user_id']
+    conn, cursor = get_dict_cursor_connection()
+
+    if conn and cursor:
+        try:
+            cursor.execute(
+                "SELECT id, nickname, email, name FROM users WHERE id = %s",
+                (user_id,)
+            )
+            user = cursor.fetchone()
+            if user:
+                return jsonify({
+                    'success': True,
+                    'user': user
+                })
+            else:
+                return jsonify({
+                    'success': False,
+                    'message': '사용자 정보를 찾을 수 없습니다.'
+                }), 404
+        finally:
+            cursor.close()
+            conn.close()
+    return jsonify({'success': False, 'message': 'DB 연결 실패'}), 500
+
+# 사용자 정보 수정
+@user_bp.route('/api/user/profile', methods=['PUT'])
+def update_profile():
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'message': '로그인이 필요합니다.'}), 401
+
+    user_id = session['user_id']
     data = request.get_json()
-    iot_name = data.get('iot_name')
-    gh_id = data.get('gh_id')
-    capture_interval = data.get('capture_interval')
-    direction = data.get('direction')
-    resolution = data.get('resolution')
-    camera_on = data.get('camera_on')
+    
+    new_nickname = data.get('nickname')
+    new_email = data.get('email')
+    new_name = data.get('name')
+    current_password = data.get('current_password')
+
+    if not all([new_nickname, new_email, new_name, current_password]):
+        return jsonify({
+            'success': False,
+            'message': '모든 필드를 입력해주세요.'
+        }), 400
 
     conn = get_db_connection()
-    cur = conn.cursor()
-    cur.execute("""
-        UPDATE iot
-        SET iot_name = %s, gh_id = %s, capture_interval = %s,
-            direction = %s, resolution = %s, camera_on = %s
-        WHERE id = %s AND owner_id = %s
-    """, (iot_name, gh_id, capture_interval, direction, resolution, camera_on, iot_id, user_id))
-    conn.commit()
-    conn.close()
+    if conn:
+        try:
+            with conn.cursor() as cursor:
+                # 현재 비밀번호 확인
+                cursor.execute(
+                    "SELECT password FROM users WHERE id = %s",
+                    (user_id,)
+                )
+                user = cursor.fetchone()
+                if not user or user[0] != current_password:
+                    return jsonify({
+                        'success': False,
+                        'message': '현재 비밀번호가 일치하지 않습니다.'
+                    }), 401
 
-    return jsonify({"message": "IOT 정보가 수정되었습니다"}), 200
+                # 닉네임과 이메일 중복 확인
+                cursor.execute(
+                    "SELECT id FROM users WHERE (nickname = %s OR email = %s) AND id != %s",
+                    (new_nickname, new_email, user_id)
+                )
+                if cursor.fetchone():
+                    return jsonify({
+                        'success': False,
+                        'message': '이미 사용 중인 닉네임 또는 이메일입니다.'
+                    }), 400
 
+                cursor.execute("""
+                    UPDATE users
+                    SET nickname = %s, email = %s, name = %s
+                    WHERE id = %s
+                """, (new_nickname, new_email, new_name, user_id))
+                conn.commit()
 
+                return jsonify({
+                    'success': True,
+                    'message': '정보가 성공적으로 수정되었습니다.'
+                })
+        finally:
+            conn.close()
+    return jsonify({'success': False, 'message': 'DB 연결 실패'}), 500
+
+# 비밀번호 변경
+@user_bp.route('/api/user/password', methods=['PUT'])
+def change_password():
+    if 'user_id' not in session:
+        return jsonify({'success': False, 'message': '로그인이 필요합니다.'}), 401
+
+    user_id = session['user_id']
+    data = request.get_json()
+    
+    current_password = data.get('current_password')
+    new_password = data.get('new_password')
+    confirm_password = data.get('confirm_password')
+
+    if not all([current_password, new_password, confirm_password]):
+        return jsonify({
+            'success': False,
+            'message': '모든 필드를 입력해주세요.'
+        }), 400
+
+    if new_password != confirm_password:
+        return jsonify({
+            'success': False,
+            'message': '새 비밀번호가 일치하지 않습니다.'
+        }), 400
+
+    conn = get_db_connection()
+    if conn:
+        try:
+            with conn.cursor() as cursor:
+                cursor.execute(
+                    "SELECT password FROM users WHERE id = %s",
+                    (user_id,)
+                )
+                user = cursor.fetchone()
+                if not user or user[0] != current_password:
+                    return jsonify({
+                        'success': False,
+                        'message': '현재 비밀번호가 일치하지 않습니다.'
+                    }), 401
+
+                cursor.execute(
+                    "UPDATE users SET password = %s WHERE id = %s",
+                    (new_password, user_id)
+                )
+                conn.commit()
+
+                return jsonify({
+                    'success': True,
+                    'message': '비밀번호가 성공적으로 변경되었습니다.'
+                })
+        finally:
+            conn.close()
+    return jsonify({'success': False, 'message': 'DB 연결 실패'}), 500
+
+@user_bp.route('/check_login', methods=['GET'])
+def check_login():
+    user_id = session.get('user_id')
+    if user_id:
+        return jsonify({
+            'logged_in': True,
+            'user_id': user_id
+        }), 200
+    return jsonify({
+        'logged_in': False
+    }), 200

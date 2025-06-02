@@ -23,7 +23,7 @@ cur = conn.cursor()
 UPLOAD_FOLDER = 'static/uploads/farms'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-app = Flask(__name__)
+app = Flask(__name__, static_url_path='/static', static_folder='static')
 
 app.config['SESSION_COOKIE_SAMESITE'] = 'None'
 app.config['SESSION_COOKIE_SECURE'] = True
@@ -111,6 +111,12 @@ def create_greenhouse():
     except Exception as e:
         print("❌ 저장 오류:", e)
         return jsonify({"message": "서버 오류 발생"}), 500
+    
+# 센서 및 추론 테스트 페이지
+@app.route("/sensor")
+def sensor_page():
+    return render_template("sensor.html")
+
 
 if __name__ == '__main__':
     app.run(host="0.0.0.0", port=5001, debug=True)

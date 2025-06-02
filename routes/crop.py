@@ -1,9 +1,7 @@
 from flask import Blueprint, jsonify
 import requests
-from flask_cors import CORS
 
 crop_bp = Blueprint('crop', __name__, url_prefix='/api')
-
 
 API_KEY = "20253105e956e7f172ff09e237ed92508153"
 BASE_URL = "http://ncpms.rda.go.kr/npmsAPI/service"
@@ -13,7 +11,8 @@ def fetch_disease_data(crop_name):
         "apiKey": API_KEY,
         "serviceCode": "SVC01",
         "serviceType": "AA003",
-        "cropName": crop_name
+        "cropName": crop_name,
+        "displayCount": 100
     }
     res = requests.get(BASE_URL, params=params)
     data = res.json()
@@ -102,7 +101,8 @@ def fetch_predator_data(crop_name):
         "apiKey": API_KEY,
         "serviceCode": "SVC14",
         "serviceType": "AA003", 
-        "cropName": crop_name
+        "cropName": crop_name,
+        "displayCount": 100
     }
     response = requests.get(BASE_URL, params=params)
     data = response.json()
@@ -113,7 +113,8 @@ def fetch_insect_data(crop_name):
         "apiKey": API_KEY,
         "serviceCode": "SVC03",
         "serviceType": "AA003",
-        "cropName": crop_name
+        "cropName": crop_name,
+        "displayCount": 100
     }
     response = requests.get(BASE_URL, params=params)
     data = response.json()

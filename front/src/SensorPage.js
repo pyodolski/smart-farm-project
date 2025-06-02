@@ -9,7 +9,7 @@ function SensorPage() {
   });
 
   useEffect(() => {
-    fetch("/product/last-sensor")
+    fetch("https://mature-grub-climbing.ngrok-free.app/product/last-sensor")
       .then((res) => res.json())
       .then((data) => {
         setSensorData({
