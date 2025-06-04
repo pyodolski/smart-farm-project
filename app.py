@@ -167,6 +167,30 @@ def update_greenhouse(greenhouse_id):
         print("❌ 업데이트 오류:", e)
         return jsonify({"message": "서버 오류 발생"}), 500
 
+@app.route('/api/greenhouses/delete/<int:greenhouse_id>', methods=['DELETE'])
+def delete_greenhouse(greenhouse_id):
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+
+        # 먼저 존재하는지 확인
+        cur.execute("SELECT id FROM greenhouses WHERE id = %s", (greenhouse_id,))
+        if not cur.fetchone():
+            conn.close()
+            return jsonify({"message": "해당 하우스가 존재하지 않습니다."}), 404
+
+        # 삭제 쿼리
+        cur.execute("DELETE FROM greenhouses WHERE id = %s", (greenhouse_id,))
+        conn.commit()
+        conn.close()
+
+        return jsonify({"message": "✅ 하우스 삭제 완료"}), 200
+
+    except Exception as e:
+        print("❌ 삭제 오류:", e)
+        return jsonify({"message": "서버 오류 발생"}), 500
+
+
 
 @app.route('/api/greenhouses/list/<int:farm_id>', methods=['GET'])
 def list_greenhouses(farm_id):
