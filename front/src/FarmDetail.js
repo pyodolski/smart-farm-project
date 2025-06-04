@@ -7,10 +7,13 @@ function FarmDetail() {
   const [greenhouses, setGreenhouses] = useState([]);
 
   useEffect(() => {
-    fetch(`/api/greenhouses/list/${farmId}`)
+    fetch(`${API_BASE_URL}/api/greenhouses/list/${farmId}`, { credentials: 'include' })
       .then((res) => res.json())
       .then((data) => {
-        setGreenhouses(data.greenhouses);
+        const ghList = Array.isArray(data)
+          ? data
+          : data.greenhouses || [];
+        setGreenhouses(ghList);
       })
       .catch(() => alert('비닐하우스 목록 불러오기 실패'));
   }, [farmId]);
