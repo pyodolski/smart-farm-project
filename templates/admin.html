@@ -79,6 +79,18 @@
                         댓글 내용: {{ comment.content }}<br>
                         댓글 신고 수: {{ comment.report }}<br>
                         댓글 작성자: {{ comment.author }}
+
+                        <form
+                        action="{{ url_for('admin.delete_comment', comment_id=comment.id) }}"
+                        method="post"
+                        onsubmit="return confirm('이 댓글을 정말 삭제하시겠습니까?');"
+                      >
+                            <button type="submit"
+                                style="background: #e74c3c; color: #fff; border: none; 
+                                       padding: 0.3em 0.6em; border-radius: 4px; cursor: pointer;">
+                                ❌ 삭제
+                            </button>
+                      </form>                        
                     </li>
                 {% else %}
                     <li>신고된 댓글이 없습니다.</li>
