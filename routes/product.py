@@ -55,11 +55,12 @@ def my_devices():
 
     try:
         cursor.execute("""
-            SELECT i.*, g.greenhouse_name
+            SELECT i.*, g.name AS greenhouse_name
             FROM iot i
             LEFT JOIN greenhouses g ON i.gh_id = g.id
             WHERE i.owner_id = %s
         """, (session['user_id'],))
+
         devices = cursor.fetchall()
         return jsonify({"devices": devices})
     finally:
