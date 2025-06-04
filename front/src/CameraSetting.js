@@ -62,7 +62,6 @@ function CameraSetting() {
             setDirection(data.device.direction);
             setResolution(data.device.resolution);
             setEnabled(data.device.camera_on);
-            // device에 farm_id가 있다면 세팅
             if (data.device.farm_id) setFarmId(data.device.farm_id);
           } else {
             throw new Error('기기 정보가 없습니다');
@@ -80,7 +79,7 @@ function CameraSetting() {
   useEffect(() => {
     if (farmId) {
       setGreenhouseList(allGreenhouses.filter(gh => String(gh.farm_id) === String(farmId)));
-      setGhId(''); // 농장 바뀌면 비닐하우스 선택 초기화
+      setGhId('');
     } else {
       setGreenhouseList([]);
       setGhId('');
@@ -104,10 +103,10 @@ function CameraSetting() {
     };
 
     try {
-      const url = deviceId 
+      const url = deviceId
         ? `${API_BASE_URL}/product/update/${deviceId}`
         : `${API_BASE_URL}/product/subscribe`;
-      
+
       const res = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -165,7 +164,7 @@ function CameraSetting() {
               <option value="">비닐하우스 선택</option>
               {greenhouseList.map(gh => (
                 <option key={gh.id} value={gh.id}>
-                  {gh.greenhouse_name} (ID: {gh.id})
+                  {gh.name}
                 </option>
               ))}
             </select>

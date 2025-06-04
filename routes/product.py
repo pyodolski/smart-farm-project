@@ -66,7 +66,7 @@ def my_devices():
         cursor.close()
         conn.close()
 
-# 내 비닐하우스 목록 조회
+# ✅ 내 비닐하우스 목록 조회 (farm_id, greenhouse_name 포함)
 @product_bp.route('/my_greenhouses', methods=['GET'])
 def my_greenhouses():
     if 'user_id' not in session:
@@ -78,14 +78,15 @@ def my_greenhouses():
 
     try:
         sql = """
-            SELECT g.id, g.greenhouse_name, g.farm_id
+            SELECT g.id, g.farm_id, g.name  
             FROM greenhouses g
             JOIN farms f ON g.farm_id = f.id
             WHERE f.owner_username = %s
         """
+
         cursor.execute(sql, (session['user_id'],))
         greenhouses = cursor.fetchall()
-        return jsonify({"greenhouses": greenhouses})
+        return jsonify({"greenhouses": greenhouses}), 200
     finally:
         cursor.close()
         conn.close()
@@ -108,7 +109,7 @@ def save_camera_config():
         json.dump(config, f)
     return jsonify({"message": "설정 저장 완료"}), 200
 
-#이미지 파일 업로드
+# 이미지 파일 업로드
 @product_bp.route('/upload-image', methods=['POST'])
 def upload_image():
     if 'file' not in request.files:
@@ -147,7 +148,7 @@ def upload_sensor():
     finally:
         conn.close()
 
-#구독 취소
+# 구독 취소
 @product_bp.route('/unsubscribe/<int:iot_id>', methods=['DELETE'])
 def unsubscribe_iot(iot_id):
     if 'user_id' not in session:
@@ -165,7 +166,7 @@ def unsubscribe_iot(iot_id):
     finally:
         conn.close()
 
-#iot 설정 수정
+# IOT 설정 수정
 @product_bp.route('/update/<int:iot_id>', methods=['POST'])
 def update_iot(iot_id):
     if 'user_id' not in session:
@@ -196,7 +197,7 @@ def update_iot(iot_id):
     finally:
         conn.close()
 
-#iot 조회
+# IOT 단일 조회
 @product_bp.route('/my_devices/<int:device_id>', methods=['GET'])
 def get_device(device_id):
     if 'user_id' not in session:
@@ -225,5 +226,3 @@ def get_device(device_id):
     finally:
         cursor.close()
         conn.close()
-
-
