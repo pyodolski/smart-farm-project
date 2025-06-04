@@ -63,6 +63,25 @@ def admin_page():
         cursor.close()
         conn.close()
 
+# 댓글 하드 딜리트 라우트
+@admin_bp.route('/admin/delete_comment/<int:comment_id>', methods=['POST'])
+def delete_comment(comment_id):
+    conn = get_db_connection()
+    if not conn:
+        return "DB 연결 실패", 500
+
+    try:
+        with conn.cursor() as cursor:
+            # comments 테이블에서 해당 id의 댓글 레코드 삭제
+            cursor.execute("DELETE FROM comments WHERE id = %s", (comment_id,))
+            conn.commit()
+            return redirect(url_for('admin.admin_page'))
+    except Exception as e:
+        print(f"댓글 삭제 오류: {e}")
+        return "댓글 삭제 중 오류 발생", 500
+    finally:
+        conn.close()
+
 @admin_bp.route('/admin/delete_post/<int:post_id>', methods=['POST'])
 def delete_post(post_id):
     conn = get_db_connection()
