@@ -73,9 +73,12 @@ CREATE TABLE iot (
 );
 
 CREATE TABLE greenhouses (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    farm_id INT NOT NULL,
-    greenhouse_name VARCHAR(100) NOT NULL,
-    area JSON NOT NULL,
-    FOREIGN KEY (farm_id) REFERENCES farms(id) ON DELETE CASCADE
-)
+    id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    farm_id INT,
+    name VARCHAR(100),
+    num_rows INT,
+    num_cols INT,
+    grid_data JSON,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
