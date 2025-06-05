@@ -1,0 +1,154 @@
+html, body {
+  height: 100%;
+  min-height: 100vh;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  background-color: #f7f7f7;
+  margin: 0;
+  padding: 0;
+  /* display: flex; */
+  /* justify-content: center; */
+  /* align-items: center; */
+  /* height: 100vh; */
+}
+
+
+.container {
+  background: #fff;
+  padding: 40px;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+h1 {
+  margin-top: 20px;
+  color: #333;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.form-row {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: 100%;
+  max-width: 350px;
+  margin-bottom: 18px;
+}
+
+.form-row label {
+  margin-bottom: 6px;
+  font-weight: bold;
+}
+
+input[type="text"],
+input[type="password"],
+input[type="email"] {
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 16px;
+  width: 100%;
+  max-width: 350px;
+}
+
+button {
+  margin-top: 20px;
+  padding: 15px;
+  border: none;
+  border-radius: 4px;
+  background-color: #6ed155;
+  color: #000000;
+  font-size: 16px;
+  cursor: pointer;
+  width: 100%;
+  max-width: 350px;
+  margin-bottom: 15px;
+}
+
+button:hover{
+  background-color: #47bd4d;
+}
+
+.error-message {
+  color: #ff0000;
+  margin-top: 10px;
+  font-size: 14px;
+}
+
+.success-message {
+  color: #008000;
+  margin-top: 10px;
+  font-size: 14px;
+}
+
+.email-verification,
+.verification-input {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  width: 100%;
+  gap: 10px;
+}
+
+.email-verification input[type="email"] {
+  flex: 1;
+  min-width: 0;
+}
+
+.verification-button {
+  padding: 6px 8px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  height: 40px;
+  width: 70px;
+  white-space: nowrap;
+  text-align: center;
+  font-size: 15px;
+}
+
+.verification-button:hover {
+  background-color: #45a049;
+}
+
+.verification-code {
+  width: 100%;
+  max-width: 350px;
+}
+
+.verification-input input[type="text"] {
+  flex: 1;
+  min-width: 0;
+}
+
+.verify-button {
+  padding: 6px 6px;
+  background-color: #2196F3;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+  height: 40px;
+  width: 70px;
+  white-space: nowrap;
+}
+
+.verify-button:hover {
+  background-color: #0b7dda;
+}

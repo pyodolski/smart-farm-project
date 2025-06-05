@@ -1,0 +1,85 @@
+.products-flex-container {
+  display: flex;
+  gap: 32px;
+  max-width: 900px;
+  margin: 40px auto;
+  padding: 32px 24px;
+  background: #fff;
+  border-radius: 16px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.10);
+}
+
+.products-list-section {
+  flex: 0 0 50%;
+  min-width: 0;
+}
+
+.products-subscribe-section {
+  flex: 0 0 50%;
+  min-width: 0;
+  max-width: none;
+  text-align: center;
+}
+
+.products-title, .products-subscribe-title {
+  margin-top: 10px;
+  font-size: 1.4rem;
+  font-weight: bold;
+  margin-bottom: 18px;
+  color: #222;
+  text-align: center;
+}
+
+.products-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.products-list li {
+  background: #eaf6e9;
+  border-radius: 8px;
+  padding: 12px 18px;
+  margin-bottom: 10px;
+  color: #222;
+  font-size: 1rem;
+  text-align: left;
+}
+
+.products-subscribe-btn {
+  padding: 14px 38px;
+  background: linear-gradient(90deg, #81d27a 60%, #a8e49b 100%);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-size: 1.15rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.2s;
+  margin-top: 18px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+}
+
+.products-subscribe-btn:hover {
+  background: linear-gradient(90deg, #5cb85c 60%, #a8e49b 100%);
+  transform: translateY(-2px) scale(1.04);
+}
+
+.products-list-btns {
+  display: flex;
+  gap: 8px;
+  margin-top: 5px;
+}
+
+@media (max-width: 700px) {
+  .products-flex-container {
+    flex-direction: column;
+    padding: 12px 2px;
+  }
+  .products-list-section, .products-subscribe-section {
+    width: 100%;
+    min-width: unset;
+    padding-left: 0;
+    margin-top: 24px;
+  }
+}

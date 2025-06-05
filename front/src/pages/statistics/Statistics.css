@@ -1,0 +1,108 @@
+.statistics-container {
+    display: flex;
+    min-height: calc(100vh - 80px);
+    width: 100%;
+    background: #f6f7fa;
+    justify-content: flex-start;
+    align-items: flex-start;
+}
+
+.sidebar {
+    width: 260px;
+    background: #fff;
+    color: #222;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding-top: 40px;
+    height: 100%;
+    position: sticky;
+    top: 80px;
+}
+
+.sidebar h2 {
+    color: #222;
+    font-size: 20px;
+    margin-left: 24px;
+    margin-bottom: 24px;
+}
+
+.sidebar a {
+    color: #222;
+    text-decoration: none;
+    padding: 14px 24px;
+    width: 100%;
+    display: block;
+    font-size: 17px;
+    border-left: 4px solid transparent;
+    transition: 0.2s;
+}
+
+.sidebar a.active,
+.sidebar a:hover {
+    background: #f0f0f0;
+    color: #222;
+    border-left: 4px solid #4CAF50;
+}
+
+.statistics-content {
+    padding: 30px 10px;
+    flex: 1;
+    max-width: 100%;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    overflow-y: auto;
+}
+
+.js-plotly-plot {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-left: auto;
+    margin-right: auto;
+    display: block;
+}
+
+.graph-title {
+    font-size: 2rem;
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+.year-select-form {
+    margin-bottom: 20px;
+}
+
+.year-select-form label {
+    margin-right: 10px;
+}
+
+.year-select-form select {
+    padding: 5px 10px;
+    border-radius: 4px;
+    border: 1px solid #ddd;
+}
+
+@media (max-width: 900px) {
+    .statistics-content {
+        padding: 10px 2px;
+        max-width: 99vw;
+    }
+    .graph-title {
+        font-size: 1.2rem;
+    }
+}
+
+@media (max-width: 700px) {
+    .statistics-container {
+        flex-direction: column;
+    }
+    .sidebar {
+        width: 100%;
+        height: auto;
+        flex-direction: row;
+        padding-top: 0;
+        position: static;
+    }
+} 

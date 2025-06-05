@@ -1,0 +1,141 @@
+.camera-setting-container {
+  width: 900px;
+  margin: 30px auto;
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+  padding: 20px;
+  font-family: 'Pretendard', 'Noto Sans KR', sans-serif;
+}
+
+.camera-setting-flex {
+  display: flex;
+  flex-direction: row;
+  gap: 32px;
+  justify-content: space-between;
+}
+.farm-house-section {
+  flex: 0 0 270px;
+  max-width: 270px;
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+  border-right: 1.5px solid #e0e0e0;
+  margin-left: 20px;
+  margin-right: 20px;
+  padding-right: 20px;
+}
+.farm-house-section h4 {
+  margin-bottom: 16px;
+  font-size: 1.1rem;
+  color: #3a3a3a;
+}
+.select-row {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  margin-bottom: 18px;
+}
+.select-row label {
+  margin-bottom: 6px;
+}
+.select-box {
+  width: 100%;
+  margin-left: 0;
+  padding: 6px 14px;
+  border-radius: 6px;
+  border: 1px solid #bdbdbd;
+  font-size: 1rem;
+  background: #f8f8f8;
+  transition: border 0.2s;
+}
+.select-box:focus {
+  border: 1.5px solid #59c02a;
+  outline: none;
+}
+
+.camera-section {
+  flex: 2 1 320px;
+  min-width: 0;
+}
+.camera-section h2 {
+  margin-bottom: 18px;
+  font-size: 1.3rem;
+  color: #2e7d32;
+}
+.setting-group {
+  margin-bottom: 18px;
+}
+.button-row {
+  display: flex;
+  gap: 10px;
+  margin-top: 7px;
+}
+.setting-btn {
+  background: #eee;
+  color: #333;
+  border: none;
+  border-radius: 6px;
+  padding: 7px 18px;
+  font-size: 0.97rem;
+  cursor: pointer;
+  transition: background 0.18s, color 0.18s;
+}
+.setting-btn.active {
+  background: #59c02a;
+  color: #fff;
+  font-weight: bold;
+}
+.submit-btn {
+  margin-top: 22px;
+  padding: 10px 28px;
+  background: #388e3c;
+  color: #fff;
+  font-weight: bold;
+  font-size: 1.05rem;
+  border: none;
+  border-radius: 7px;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(88,192,42,0.08);
+  transition: background 0.18s;
+}
+.submit-btn:hover {
+  background: #2e7d32;
+}
+.message-text {
+  margin-top: 14px;
+  color: #388e3c;
+  font-size: 1rem;
+  font-weight: 500;
+}
+@media (max-width: 900px) {
+  .camera-setting-flex {
+    flex-direction: column;
+    gap: 18px;
+  }
+  .farm-house-section {
+    max-width: 100%;
+    border-right: none;
+    border-bottom: 1.5px solid #e0e0e0;
+    margin-right: 10%;
+    margin-left: 10%;
+    margin-bottom: 18px;
+    padding-bottom: 18px;
+  }
+  .camera-section {
+    min-width: 0;
+  }
+}
+@media (max-width: 600px) {
+  .camera-setting-container {
+    padding: 16px 4vw 18px 4vw;
+    max-width: 98vw;
+  }
+  .farm-house-section, .camera-section h2 {
+    font-size: 1rem;
+  }
+  .setting-btn, .submit-btn {
+    font-size: 0.93rem;
+    padding: 7px 10px;
+  }
+} 

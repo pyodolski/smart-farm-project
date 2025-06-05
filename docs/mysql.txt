@@ -1,0 +1,83 @@
+CREATE TABLE IF NOT EXISTS users (
+    id VARCHAR(50) NOT NULL,
+    password VARCHAR(100) NOT NULL,
+    nickname VARCHAR(50) NOT NULL UNIQUE,
+    email VARCHAR(100) NOT NULL UNIQUE,
+    name VARCHAR(50) NOT NULL,
+    is_black TINYINT NOT NULL DEFAULT 0,  -- BOOLEAN 대신 TINYINT(1) 사용
+    is_admin TINYINT NOT NULL DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id)
+);
+
+CREATE TABLE board (
+  id INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,
+  name VARCHAR(20) NOT NULL,                 
+  title VARCHAR(70) NOT NULL,       
+  content TEXT NOT NULL,             
+  wdate TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, 
+  view INT(11) NOT NULL DEFAULT 0,
+  report INT(10) NoT NULL DEFAULT 0,
+  PRIMARY KEY (id)
+);
+
+CREATE TABLE comments (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  board_id INT UNSIGNED NOT NULL,
+  commenter VARCHAR(20) NOT NULL,
+  content TEXT NOT NULL,
+  report INT(10) NoT NULL DEFAULT 0,
+  cdate TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (board_id) REFERENCES board(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE likes (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  board_id INT UNSIGNED NOT NULL,         
+  user_name VARCHAR(20) NOT NULL,         
+  ldate TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE (board_id, user_name),           
+  FOREIGN KEY (board_id) REFERENCES board(id) ON DELETE CASCADE
+) ENGINE=InnoDB;
+
+CREATE TABLE farms (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100),
+    location VARCHAR(255),
+    owner_username VARCHAR(100),
+    document_path VARCHAR(255),
+    is_approved TINYINT(1) DEFAULT 0
+);
+
+CREATE TABLE report_log (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  user_id VARCHAR(50) NOT NULL,
+  target_type ENUM('post', 'comment') NOT NULL,
+  target_id INT NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY unique_report (user_id, target_type, target_id)
+);
+
+CREATE TABLE iot (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    iot_name VARCHAR(100) NOT NULL,
+    owner_id VARCHAR(50) NOT NULL,
+    gh_id INT,
+    start_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    capture_interval ENUM('5', '15', '30') DEFAULT '15',
+    direction ENUM('left', 'right', 'both') DEFAULT 'both',
+    resolution ENUM('640x480', '1280x720', '1920x1080') DEFAULT '1280x720',
+    camera_on BOOLEAN DEFAULT TRUE,
+    FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (gh_id) REFERENCES greenhouses(id) ON DELETE SET NULL
+);
+
+CREATE TABLE greenhouses (
+    id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    farm_id INT,
+    name VARCHAR(100),
+    num_rows INT,
+    num_cols INT,
+    grid_data JSON,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
