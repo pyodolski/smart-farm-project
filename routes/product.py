@@ -210,7 +210,7 @@ def get_device(device_id):
 
     try:
         cursor.execute("""
-            SELECT i.*, g.greenhouse_name, g.farm_id
+            SELECT i.*, g.name AS greenhouse_name, g.farm_id
             FROM iot i
             LEFT JOIN greenhouses g ON i.gh_id = g.id
             WHERE i.id = %s AND i.owner_id = %s

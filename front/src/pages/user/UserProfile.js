@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './UserProfile.css';
-import API_BASE_URL from './config';
+import API_BASE_URL from '../../utils/config';
 
 function UserProfile() {
   const navigate = useNavigate();

@@ -1,6 +1,7 @@
-.products-container {
+.products-flex-container {
+  display: flex;
+  gap: 32px;
   max-width: 900px;
-  height: 220px;
   margin: 40px auto;
   padding: 32px 24px;
   background: #fff;
@@ -8,19 +9,16 @@
   box-shadow: 0 4px 16px rgba(0,0,0,0.10);
 }
 
-.products-table {
-  width: 100%;
-  border-collapse: separate;
-  border-spacing: 32px 0;
+.products-list-section {
+  flex: 0 0 50%;
+  min-width: 0;
 }
 
-.products-table td {
-  vertical-align: top;
-  padding: 0 24px;
-  background: #f7f7fa;
-  border-radius: 14px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-  min-width: 260px;
+.products-subscribe-section {
+  flex: 0 0 50%;
+  min-width: 0;
+  max-width: none;
+  text-align: center;
 }
 
 .products-title, .products-subscribe-title {
@@ -48,11 +46,6 @@
   text-align: left;
 }
 
-.products-subscribe-section {
-  padding-left: 40px;
-  text-align: center;
-}
-
 .products-subscribe-btn {
   padding: 14px 38px;
   background: linear-gradient(90deg, #81d27a 60%, #a8e49b 100%);
@@ -72,21 +65,20 @@
   transform: translateY(-2px) scale(1.04);
 }
 
+.products-list-btns {
+  display: flex;
+  gap: 8px;
+  margin-top: 5px;
+}
+
 @media (max-width: 700px) {
-  .products-container {
+  .products-flex-container {
+    flex-direction: column;
     padding: 12px 2px;
   }
-  .products-table, .products-table td {
-    display: block;
+  .products-list-section, .products-subscribe-section {
     width: 100%;
-    padding: 0;
-    margin-bottom: 24px;
-  }
-  .products-table td {
     min-width: unset;
-    margin-bottom: 18px;
-  }
-  .products-subscribe-section {
     padding-left: 0;
     margin-top: 24px;
   }

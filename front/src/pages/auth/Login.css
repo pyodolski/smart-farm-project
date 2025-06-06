@@ -6,7 +6,7 @@ html, body {
     display: flex;
     justify-content: center;
     align-items: center;
-    background: url("./image_with_more_transparency.png") center center / cover no-repeat fixed;
+    background: url("../../image/image_with_more_transparency.png") center center / cover no-repeat fixed;
     overflow: hidden;
 }
   

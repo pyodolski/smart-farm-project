@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useContext } from 'react';
-import { AuthContext } from './contexts/AuthContext';
+import { AuthContext } from '../../contexts/AuthContext';
 import './MainPage.css';
 import { useNavigate } from 'react-router-dom';
-import API_BASE_URL from './config';
+import API_BASE_URL from '../../utils/config';
 
 // 별도의 모달 컴포넌트
 function FarmModal({ show, onClose, title, onSubmit, initialData }) {
@@ -242,7 +242,7 @@ function MainPage() {
       <aside className="weather-aside">
         <div className="weather-card">
           <div className="weather-header">
-            <h3>오늘의 날씨</h3>
+            <h3 className="weather-title">오늘의 날씨</h3>
             <select
               className="city-select"
               value={selectedCity}
@@ -274,9 +274,7 @@ function MainPage() {
           </div>
         </div>
       </aside>
-      
-
-      <main className="main-content">
+      <main className="mainpage-content">
         <h1>내 농장 목록</h1>
         <p>농장을 추가하거나 관리하세요</p>
         {!isLoggedIn ? (
@@ -296,7 +294,7 @@ function MainPage() {
                   <div
                     key={farm.id}
                     className="farm-card"
-                    onClick={() => navigate(`/farm-card-tail/${farm.id}`)}
+                    onClick={() => navigate(`/farm/${farm.id}`)}
                     style={{ cursor: 'pointer' }}
                   >
                     <h3>{farm.name}</h3>

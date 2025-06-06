@@ -1,8 +1,8 @@
 import React, { useState, useContext, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { AuthContext } from './contexts/AuthContext';
+import { AuthContext } from '../../contexts/AuthContext';
 import './Login.css';
-import API_BASE_URL from './config';
+import API_BASE_URL from '../../utils/config';
 
 function Login() {
   const [id, setId] = useState('');
@@ -53,6 +53,7 @@ function Login() {
         console.log('로그인 성공:', data);
         sessionStorage.setItem('isLoggedIn', 'true');
         sessionStorage.setItem('userId', data.user_id);
+        sessionStorage.setItem('nickname', data.nickname);
         setIsLoggedIn(true);
 
         if (data.admin) {

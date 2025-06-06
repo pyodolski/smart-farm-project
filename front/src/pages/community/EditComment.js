@@ -1,31 +1,40 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import API_BASE_URL from './config';
+import API_BASE_URL from '../../utils/config';
 
-function EditPost() {
-  const [title, setTitle] = useState('');
+function EditComment() {
   const [content, setContent] = useState('');
-  const { postId } = useParams();
+  const [postId, setPostId] = useState(null);
+  const { commentId } = useParams();
   const navigate = useNavigate();
 
   useEffect(() => {
-    fetchPost();
-  }, [postId]);
+    fetchComment();
+  }, [commentId]);
 
-  const fetchPost = async () => {
+  const fetchComment = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/api/posts/${postId}`, {
+      const response = await fetch(`${API_BASE_URL}/api/comments/${commentId}`, {
         credentials: 'include'
       });
       if (response.ok) {
         const data = await response.json();
-        setTitle(data.post.title);
-        setContent(data.post.content);
+        setContent(data.content);
+        setPostId(data.board_id);
+        
+        if (!data.board_id) {
+          console.error('게시글 ID를 찾을 수 없습니다.');
+          navigate('/community');
+          return;
+        }
       } else {
+        const errorData = await response.json();
+        alert(errorData.message || '댓글을 불러올 수 없습니다.');
         navigate('/community');
       }
     } catch (error) {
-      console.error('게시글 로딩 실패:', error);
+      console.error('댓글 로딩 실패:', error);
+      alert('댓글을 불러오는 중 오류가 발생했습니다.');
       navigate('/community');
     }
   };
@@ -33,47 +42,44 @@ function EditPost() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
+    if (!postId) {
+      alert('게시글 정보를 찾을 수 없습니다.');
+      return;
+    }
+
     try {
-      const response = await fetch(`${API_BASE_URL}/api/posts/${postId}`, {
+      const response = await fetch(`${API_BASE_URL}/api/comments/${commentId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
         credentials: 'include',
-        body: JSON.stringify({
-          title,
-          content
+        body: JSON.stringify({ 
+          content,
+          board_id: postId
         })
       });
 
       if (response.ok) {
         navigate(`/community/post/${postId}`);
       } else {
-        const data = await response.json();
-        alert(data.message || '게시글 수정에 실패했습니다.');
+        const errorData = await response.json();
+        alert(errorData.message || '댓글 수정에 실패했습니다.');
       }
     } catch (error) {
-      console.error('게시글 수정 실패:', error);
-      alert('게시글 수정에 실패했습니다.');
+      console.error('댓글 수정 실패:', error);
+      alert('댓글 수정 중 오류가 발생했습니다.');
     }
   };
 
+  if (!postId) {
+    return <div>로딩 중...</div>;
+  }
+
   return (
     <div className="write-post-container">
-      <h2>게시글 수정</h2>
+      <h2>댓글 수정</h2>
       <form onSubmit={handleSubmit}>
-        <div className="form-group">
-          <label htmlFor="title">제목</label>
-          <input
-            type="text"
-            id="title"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            required
-            placeholder="제목을 입력하세요"
-          />
-        </div>
-
         <div className="form-group">
           <label htmlFor="content">내용</label>
           <textarea
@@ -100,4 +106,4 @@ function EditPost() {
   );
 }
 
-export default EditPost; 
+export default EditComment; 

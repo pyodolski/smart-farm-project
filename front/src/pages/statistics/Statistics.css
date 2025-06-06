@@ -1,7 +1,7 @@
 .statistics-container {
     display: flex;
-    min-height: 100vh;
-    width: 100vw;
+    min-height: calc(100vh - 80px);
+    width: 100%;
     background: #f6f7fa;
     justify-content: flex-start;
     align-items: flex-start;
@@ -15,7 +15,9 @@
     flex-direction: column;
     align-items: flex-start;
     padding-top: 40px;
-    min-height: 100vh;
+    height: 100%;
+    position: sticky;
+    top: 80px;
 }
 
 .sidebar h2 {
@@ -43,7 +45,7 @@
     border-left: 4px solid #4CAF50;
 }
 
-.main-content {
+.statistics-content {
     padding: 30px 10px;
     flex: 1;
     max-width: 100%;
@@ -51,6 +53,7 @@
     display: flex;
     flex-direction: column;
     align-items: stretch;
+    overflow-y: auto;
 }
 
 .js-plotly-plot {
@@ -82,7 +85,7 @@
 }
 
 @media (max-width: 900px) {
-    .main-content {
+    .statistics-content {
         padding: 10px 2px;
         max-width: 99vw;
     }
@@ -96,10 +99,10 @@
         flex-direction: column;
     }
     .sidebar {
-        width: 100vw;
+        width: 100%;
         height: auto;
         flex-direction: row;
         padding-top: 0;
-        min-height: unset;
+        position: static;
     }
 } 

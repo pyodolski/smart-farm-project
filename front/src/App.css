@@ -4,6 +4,11 @@
   box-sizing: border-box;
 }
 
+html, body {
+  height: 100%;
+  /* overflow: hidden; */
+}
+
 body {
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
@@ -11,20 +16,18 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background-color: #f7f7f7;
-  margin: 0;
-  padding: 0;
 }
 
 .App {
-  min-height: 100vh;
+  height: 100%;
   display: flex;
   flex-direction: column;
 }
 
 /* 공통 스타일 */
 .container {
-  max-width: 1800px;
-  min-width: 765px;
+  max-width: 1920px;
+  min-width: 600px;
   margin: 0 auto;
   padding: 20px 40px;
 }
@@ -210,24 +213,16 @@ body {
   transform: scale(1);
 }
 
-/* 메인 컨텐츠 영역 */
-.app-container {
-  padding-top: 80px;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: row;
-  background: #f7f7f7;
-}
+/* app-content, app-root, app-container 등 레이아웃 관련 dead code, 중복, 미사용 스타일 정리 */
 
 /* 로그인 페이지 스타일 */
 .login-container {
-  width: 100vw;
-  height: calc(100vh - 80px);
+  width: 100%;
+  min-height: calc(100vh - 80px);
   display: flex;
   justify-content: center;
   align-items: center;
   background-color: #f7f7f7;
-  padding-top: 0;
 }
 
 .login-box {

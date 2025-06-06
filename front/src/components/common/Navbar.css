@@ -1,0 +1,100 @@
+.navbar {
+  position: sticky;
+  top: 0; left: 0; right: 0;
+  z-index: 1000;
+  transition: transform 0.4s cubic-bezier(0.77,0,0.175,1);
+}
+.navbar-show {
+  transform: translateY(0);
+}
+.navbar-hide {
+  transform: translateY(-100%);
+}
+.nav-brand {
+  display: flex;
+  align-items: center;
+  cursor: pointer;
+}
+.brand-text {
+  margin-left: 8px;
+  font-weight: bold;
+}
+.nav-menu {
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+.menu-items {
+  display: flex;
+  gap: 18px;
+  align-items: center;
+}
+.hamburger-menu {
+  display: none;
+  background: none;
+  border: none;
+  cursor: pointer;
+  margin-left: 12px;
+}
+.dropdown-menu {
+  display: none;
+  position: absolute;
+  top: 48px;
+  right: 0;
+  background: #fff;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.10);
+  border-radius: 10px;
+  padding: 18px 24px;
+  z-index: 2000;
+  flex-direction: column;
+  gap: 16px;
+}
+.dropdown-menu a,
+.dropdown-menu button {
+  display: block;
+  width: 100%;
+  padding: 12px 0;
+  margin: 0;
+  background: none;
+  border: none;
+  color: #222;
+  font-size: 1.1rem;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 0;
+  font-weight: normal;
+  transition: none;
+}
+.dropdown-menu a:hover,
+.dropdown-menu button:hover {
+  background: none;
+  color: #222;
+  text-decoration: none;
+}
+/* 드롭다운 메뉴 안에서는 hover 효과 제거 */
+.dropdown-menu .login-btn:hover,
+.dropdown-menu .logout-btn:hover {
+  color: #222 !important;
+  background: none !important;
+}
+/* 드롭다운 메뉴 안에서는 after 자체를 완전히 숨김 */
+.dropdown-menu .login-btn::after,
+.dropdown-menu .logout-btn::after {
+  display: none !important;
+  content: none !important;
+}
+@media (max-width: 900px) {
+  .brand-text {
+    display: none;
+  }
+  .desktop-menu {
+    display: none !important;
+  }
+  .hamburger-menu {
+    display: block;
+  }
+  .dropdown-menu {
+    display: flex;
+  }
+} 

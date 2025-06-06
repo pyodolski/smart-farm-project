@@ -150,7 +150,7 @@ def create_post():
         
     cursor.execute(
         'INSERT INTO board (name, title, content) VALUES (%s, %s, %s)',
-        (session['user_id'], title, content)
+        (session['nickname'], title, content)
     )
     conn.commit()
     cursor.close()
@@ -173,7 +173,7 @@ def get_post(post_id):
                b.name = %s as is_author
         FROM board b
         WHERE b.id = %s
-    ''', (session['user_id'], post_id))
+    ''', (session['nickname'], post_id))
     post = cursor.fetchone()
 
     if not post:
@@ -221,7 +221,7 @@ def update_post(post_id):
         conn.close()
         return jsonify({'message': '게시글을 찾을 수 없습니다.'}), 404
 
-    if post['name'] != session['user_id']:
+    if post['name'] != session['nickname']:
         cursor.close()
         conn.close()
         return jsonify({'message': '수정 권한이 없습니다.'}), 403
@@ -262,7 +262,7 @@ def delete_post(post_id):
         conn.close()
         return jsonify({'message': '게시글을 찾을 수 없습니다.'}), 404
 
-    if post['name'] != session['user_id']:
+    if post['name'] != session['nickname']:
         cursor.close()
         conn.close()
         return jsonify({'message': '삭제 권한이 없습니다.'}), 403

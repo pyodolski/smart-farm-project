@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Plot from 'react-plotly.js';
 import './Statistics.css';
-import API_BASE_URL from './config';
+import API_BASE_URL from '../../utils/config';
 
 const Statistics = () => {
     const [graph, setGraph] = useState('tomato_annual');
@@ -134,7 +134,7 @@ const Statistics = () => {
                     딸기 월간 소매
                 </a>
             </div>
-            <div className="main-content">
+            <div className="statistics-content">
                 <div className="graph-title">{graphTitle}</div>
                 {renderYearSelect()}
                 {loading && <div>로딩 중...</div>}

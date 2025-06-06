@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import './PostDetail.css';
-import API_BASE_URL from './config';
+import API_BASE_URL from '../../utils/config';
+import EditComment from './EditComment';
 
 function PostDetail() {
   const [post, setPost] = useState(null);

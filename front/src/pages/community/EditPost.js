@@ -1,19 +1,41 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import './WritePost.css';
-import API_BASE_URL from './config';
+import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import API_BASE_URL from '../../utils/config';
 
-function WritePost() {
+function EditPost() {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
+  const { postId } = useParams();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    fetchPost();
+  }, [postId]);
+
+  const fetchPost = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/posts/${postId}`, {
+        credentials: 'include'
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setTitle(data.post.title);
+        setContent(data.post.content);
+      } else {
+        navigate('/community');
+      }
+    } catch (error) {
+      console.error('게시글 로딩 실패:', error);
+      navigate('/community');
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     
     try {
-      const response = await fetch(`${API_BASE_URL}/api/posts`, {
-        method: 'POST',
+      const response = await fetch(`${API_BASE_URL}/api/posts/${postId}`, {
+        method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
@@ -25,20 +47,20 @@ function WritePost() {
       });
 
       if (response.ok) {
-        navigate('/community');
+        navigate(`/community/post/${postId}`);
       } else {
         const data = await response.json();
-        alert(data.message || '게시글 작성에 실패했습니다.');
+        alert(data.message || '게시글 수정에 실패했습니다.');
       }
     } catch (error) {
-      console.error('게시글 작성 실패:', error);
-      alert('게시글 작성에 실패했습니다.');
+      console.error('게시글 수정 실패:', error);
+      alert('게시글 수정에 실패했습니다.');
     }
   };
 
   return (
     <div className="write-post-container">
-      <h2>새 게시글 작성</h2>
+      <h2>게시글 수정</h2>
       <form onSubmit={handleSubmit}>
         <div className="form-group">
           <label htmlFor="title">제목</label>
@@ -64,13 +86,13 @@ function WritePost() {
         </div>
 
         <div className="button-group">
-          <button type="submit">작성하기</button>
+          <button type="submit">수정하기</button>
           <button 
             type="button" 
-            onClick={() => navigate('/community')}
+            onClick={() => navigate(`/community/post/${postId}`)}
             className="cancel-button"
           >
-          취소
+            취소
           </button>
         </div>
       </form>
@@ -78,4 +100,4 @@ function WritePost() {
   );
 }
 
-export default WritePost; 
+export default EditPost; 

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import './CameraSetting.css';
-import API_BASE_URL from './config';
+import API_BASE_URL from '../../utils/config';
 
 function CameraSetting() {
   const [interval, setInterval] = useState(60);
@@ -15,6 +15,7 @@ function CameraSetting() {
   const [ghId, setGhId] = useState('');
   const [greenhouseList, setGreenhouseList] = useState([]);
   const [allGreenhouses, setAllGreenhouses] = useState([]);
+  const [device, setDevice] = useState(null);
   const navigate = useNavigate();
   const { deviceId } = useParams();
 
@@ -63,6 +64,7 @@ function CameraSetting() {
             setResolution(data.device.resolution);
             setEnabled(data.device.camera_on);
             if (data.device.farm_id) setFarmId(data.device.farm_id);
+            setDevice(data.device);
           } else {
             throw new Error('기기 정보가 없습니다');
           }
@@ -78,8 +80,11 @@ function CameraSetting() {
   // 농장 선택 시 해당 농장의 비닐하우스만 필터링
   useEffect(() => {
     if (farmId) {
-      setGreenhouseList(allGreenhouses.filter(gh => String(gh.farm_id) === String(farmId)));
-      setGhId('');
+      const filtered = allGreenhouses.filter(gh => String(gh.farm_id) === String(farmId));
+      setGreenhouseList(filtered);
+      if (ghId && !filtered.some(gh => String(gh.id) === String(ghId))) {
+        setGhId('');
+      }
     } else {
       setGreenhouseList([]);
       setGhId('');
@@ -156,17 +161,22 @@ function CameraSetting() {
             <label htmlFor="house-select"><strong>비닐하우스 선택:</strong></label>
             <select
               id="house-select"
-              value={ghId}
-              onChange={(e) => setGhId(e.target.value)}
+              value={String(ghId)}
+              onChange={e => setGhId(e.target.value)}
               className="select-box"
               disabled={!farmId}
             >
               <option value="">비닐하우스 선택</option>
               {greenhouseList.map(gh => (
-                <option key={gh.id} value={gh.id}>
+                <option key={gh.id} value={String(gh.id)}>
                   {gh.name}
                 </option>
               ))}
+              {ghId && !greenhouseList.some(gh => String(gh.id) === String(ghId)) && (
+                <option value={String(ghId)}>
+                  {device?.greenhouse_name || "이전 비닐하우스"}
+                </option>
+              )}
             </select>
           </div>
         </div>
