@@ -15,7 +15,6 @@ def subscribe_iot():
     try:
         data = request.get_json()
         iot_name = data.get('iot_name')
-        gh_id = data.get('gh_id')
         capture_interval = data.get('capture_interval', '15')
         direction = data.get('direction', 'both')
         resolution = data.get('resolution', '1280x720')
@@ -28,11 +27,11 @@ def subscribe_iot():
         try:
             with conn.cursor() as cur:
                 sql = """
-                    INSERT INTO iot (iot_name, owner_id, gh_id, capture_interval, direction, resolution, camera_on)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s)
+                    INSERT INTO iot (iot_name, owner_id, capture_interval, direction, resolution, camera_on)
+                    VALUES (%s, %s, %s, %s, %s, %s)
                 """
                 cur.execute(sql, (
-                    iot_name, session['user_id'], gh_id, capture_interval, direction, resolution, camera_on
+                    iot_name, session['user_id'], capture_interval, direction, resolution, camera_on
                 ))
                 conn.commit()
                 return jsonify({"message": "IOT 구독이 완료되었습니다", "success": True}), 200
@@ -55,39 +54,13 @@ def my_devices():
 
     try:
         cursor.execute("""
-            SELECT i.*, g.name AS greenhouse_name
+            SELECT i.*
             FROM iot i
-            LEFT JOIN greenhouses g ON i.gh_id = g.id
             WHERE i.owner_id = %s
         """, (session['user_id'],))
 
         devices = cursor.fetchall()
         return jsonify({"devices": devices})
-    finally:
-        cursor.close()
-        conn.close()
-
-# ✅ 내 비닐하우스 목록 조회 (farm_id, greenhouse_name 포함)
-@product_bp.route('/my_greenhouses', methods=['GET'])
-def my_greenhouses():
-    if 'user_id' not in session:
-        return jsonify({"message": "로그인이 필요합니다"}), 401
-
-    conn, cursor = get_dict_cursor_connection()
-    if not conn or not cursor:
-        return jsonify({"message": "DB 연결 실패"}), 500
-
-    try:
-        sql = """
-            SELECT g.id, g.farm_id, g.name  
-            FROM greenhouses g
-            JOIN farms f ON g.farm_id = f.id
-            WHERE f.owner_username = %s
-        """
-
-        cursor.execute(sql, (session['user_id'],))
-        greenhouses = cursor.fetchall()
-        return jsonify({"greenhouses": greenhouses}), 200
     finally:
         cursor.close()
         conn.close()
@@ -175,7 +148,6 @@ def update_iot(iot_id):
 
     data = request.get_json()
     iot_name = data.get('iot_name')
-    gh_id = data.get('gh_id')
     capture_interval = data.get('capture_interval')
     direction = data.get('direction')
     resolution = data.get('resolution')
@@ -189,10 +161,10 @@ def update_iot(iot_id):
         with conn.cursor() as cur:
             cur.execute("""
                 UPDATE iot
-                SET iot_name = %s, gh_id = %s, capture_interval = %s,
+                SET iot_name = %s, capture_interval = %s,
                     direction = %s, resolution = %s, camera_on = %s
                 WHERE id = %s AND owner_id = %s
-            """, (iot_name, gh_id, capture_interval, direction, resolution, camera_on, iot_id, session['user_id']))
+            """, (iot_name, capture_interval, direction, resolution, camera_on, iot_id, session['user_id']))
             conn.commit()
             return jsonify({"message": "IOT 정보가 수정되었습니다"}), 200
     finally:
@@ -210,9 +182,8 @@ def get_device(device_id):
 
     try:
         cursor.execute("""
-            SELECT i.*, g.name AS greenhouse_name, g.farm_id
+            SELECT i.*
             FROM iot i
-            LEFT JOIN greenhouses g ON i.gh_id = g.id
             WHERE i.id = %s AND i.owner_id = %s
         """, (device_id, session['user_id']))
         device = cursor.fetchone()
