@@ -4,7 +4,7 @@ import './CameraSetting.css';
 import API_BASE_URL from '../../utils/config';
 
 function CameraSetting() {
-  const [interval, setInterval] = useState(60);
+  const [interval, setInterval] = useState(15);
   const [direction, setDirection] = useState('both');
   const [resolution, setResolution] = useState('640x480');
   const [enabled, setEnabled] = useState(true);
