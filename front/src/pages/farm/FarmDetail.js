@@ -7,16 +7,40 @@ function FarmDetail() {
   const { farmId } = useParams();
   const [greenhouses, setGreenhouses] = useState([]);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [weather, setWeather] = useState({ temperature: null, description: '' });
+  const [error, setError] = useState('');
   const navigate = useNavigate();
 
   useEffect(() => {
     fetch(`/api/greenhouses/list/${farmId}`)
       .then((res) => res.json())
       .then((data) => {
+        console.log('Greenhouses API response:', data);
         const greenhousesData = data && data.greenhouses ? data.greenhouses : [];
         setGreenhouses(greenhousesData);
       })
       .catch(() => setGreenhouses([]));
+  }, [farmId]);
+
+  useEffect(() => {
+    fetch(`/api/farms/${farmId}/weather`, {
+      credentials: 'include'
+    })
+      .then(res => {
+        if (!res.ok) throw new Error(`Status ${res.status}`);
+        return res.json();
+      })
+      .then(data => {
+        console.log('Weather API response:', data);
+        setWeather({
+          temperature: data.temperature,
+          description: data.description
+        });
+      })
+      .catch(err => {
+        console.error('날씨 조회 실패', err);
+        setError('날씨 정보를 불러올 수 없습니다.');
+      });
   }, [farmId]);
 
   const handleSidebarToggle = () => {

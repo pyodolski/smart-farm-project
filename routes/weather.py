@@ -26,6 +26,26 @@ cities = ['서울특별시',
     # 특별자치도
     '제주특별자치도' ]
 
+def normalize_kor_city(kor_name: str) -> str:
+    mapping = {
+        '서울': '서울특별시', '부산': '부산광역시', '대구': '대구광역시',
+        '인천': '인천광역시', '광주': '광주광역시', '대전': '대전광역시',
+        '울산': '울산광역시', '세종': '세종특별자치시',
+        '경기': '경기도', '강원': '강원특별자치도', '충북': '충청북도',
+        '충남': '충청남도', '전북': '전라북도', '전남': '전라남도',
+        '경북': '경상북도', '경남': '경상남도', '제주': '제주특별자치도',
+    }
+
+    if kor_name in mapping.values():
+        return kor_name
+
+    if kor_name in mapping:
+        return mapping[kor_name]
+
+    key = kor_name.rstrip('도시')
+    return mapping.get(key, kor_name)
+
+
 def city_kor_to_eng(kor_name):
     mapping = {
         # 특별시·광역시
@@ -54,9 +74,11 @@ def city_kor_to_eng(kor_name):
 
 #지금 해당 도시의 기온 날씨를 가져오는 함수
 def fetch_weather(kor_city: str) -> dict:
-    city_eng = city_kor_to_eng(kor_city)
+    kor_city_full = normalize_kor_city(kor_city)
+    city_eng = city_kor_to_eng(kor_city_full)
     url = (f"http://api.openweathermap.org/data/2.5/weather"
            f"?q={city_eng}&appid={API_KEY}&units=metric&lang=kr")
+    print(f"[DEBUG] OpenWeatherMap 요청 URL: {url}")
     try:
         res = requests.get(url); res.raise_for_status()
         d = res.json()
