@@ -1,11 +1,17 @@
+import matplotlib
+matplotlib.use('Agg')  # 반드시 추가
 import requests
 import xml.etree.ElementTree as ET
-from flask import Flask, render_template, request, jsonify, Blueprint
-import plotly.graph_objs as go
+from flask import Flask, request, jsonify, Blueprint
 import pandas as pd
 from flask_cors import CORS
-# 연간 시세 :  https://www.kamis.or.kr/customer/reference/openapi_list.do?action=detail&boardno=9
-# 월간 도소매 사새 :
+import matplotlib.pyplot as plt
+import matplotlib.font_manager as fm
+import seaborn as sns
+import base64
+from io import BytesIO
+import platform
+import os
 
 p_cert_key = '2d4f611d-7307-4e9c-a61a-441d707dc833'
 p_cert_id = '5428'
@@ -13,6 +19,49 @@ url = 'https://www.kamis.or.kr/service/price/xml.do'
 YEARS = list(range(2016, 2026))
 
 chart_bp = Blueprint('chart', __name__)
+
+# ✅ 운영체제별 한글 폰트 설정 후 반환
+font_prop = None
+
+def set_korean_font():
+    global font_prop
+    system = platform.system()
+    font_candidates = []
+
+    if system == 'Windows':
+        font_candidates = ['C:/Windows/Fonts/malgun.ttf']
+    elif system == 'Darwin':
+        font_candidates = [
+            '/System/Library/Fonts/Supplemental/AppleGothic.ttf',
+            '/System/Library/Fonts/Supplemental/Arial Unicode.ttf'
+        ]
+    else:
+        font_candidates = [
+            '/usr/share/fonts/truetype/nanum/NanumGothic.ttf',
+            '/usr/share/fonts/truetype/unfonts-core/UnDotum.ttf'
+        ]
+
+    for path in font_candidates:
+        if os.path.exists(path):
+            try:
+                font_prop = fm.FontProperties(fname=path)
+                font_name = font_prop.get_name()
+                plt.rcParams['font.family'] = font_name
+                plt.rcParams['axes.unicode_minus'] = False
+                print(f"[INFO] 한글 폰트 설정 완료: {font_name}")
+                return
+            except Exception as e:
+                print(f"[WARN] 폰트 설정 실패: {e}")
+
+set_korean_font()
+sns.set_theme(style="ticks")
+
+def encode_plot_to_base64():
+    buf = BytesIO()
+    plt.savefig(buf, format='png', bbox_inches='tight', dpi=100)
+    plt.close()
+    buf.seek(0)
+    return f"data:image/png;base64,{base64.b64encode(buf.read()).decode()}"
 
 def fetch_annual_trend(productno, title, unit):
     years = []
@@ -43,32 +92,18 @@ def fetch_annual_trend(productno, title, unit):
                         min_values.append(int(mn))
             except:
                 continue
-    trace_max = go.Scatter(
-        x=years,
-        y=max_values,
-        mode='lines+markers',
-        name='최고가',
-        marker=dict(color='red'),
-        hovertemplate='연도: %{x}<br>최고가: %{y:,}원'
-    )
-    trace_min = go.Scatter(
-        x=years,
-        y=min_values,
-        mode='lines+markers',
-        name='최저가',
-        marker=dict(color='blue'),
-        hovertemplate='연도: %{x}<br>최저가: %{y:,}원'
-    )
-    layout = go.Layout(
-        title=title,
-        xaxis=dict(title='연도', dtick=1),
-        yaxis=dict(title=f'가격({unit})'),
-        legend=dict(x=0.01, y=0.99),
-        hovermode='closest',
-        margin=dict(l=60, r=20, t=60, b=60)
-    )
-    fig = go.Figure(data=[trace_max, trace_min], layout=layout)
-    return fig.to_json()
+    plt.figure(figsize=(10, 6))
+    sns.lineplot(x=years, y=max_values, label='최고가', marker='o', color='#e74c3c', linewidth=2.5, markersize=8)
+    sns.lineplot(x=years, y=min_values, label='최저가', marker='o', color='#3498db', linewidth=2.5, markersize=8)
+    plt.title(title, fontsize=18, fontweight='bold', pad=20, fontproperties=font_prop)
+    plt.xlabel('연도', fontsize=14, fontproperties=font_prop)
+    plt.ylabel(f'가격 ({unit})', fontsize=14, fontproperties=font_prop)
+    plt.xticks(fontsize=12, fontproperties=font_prop)
+    plt.yticks(fontsize=12, fontproperties=font_prop)
+    plt.grid(True, linestyle='--', alpha=0.3)
+    plt.legend(prop=font_prop)
+    plt.tight_layout()
+    return encode_plot_to_base64()
 
 def fetch_monthly_price(year, itemcode, title, is_retail=False):
     params = {
@@ -86,7 +121,6 @@ def fetch_monthly_price(year, itemcode, title, is_retail=False):
     }
     productclscode = '01' if is_retail else '02'
     months = []
-    yearavg = None
     response = requests.get(url, params=params)
     root = ET.fromstring(response.content)
     for price in root.findall('.//price'):
@@ -98,55 +132,18 @@ def fetch_monthly_price(year, itemcode, title, is_retail=False):
                         months.append(0)
                     else:
                         months.append(int(val.replace(',', '')))
-                yearavg_text = item.find('yearavg').text if item.find('yearavg') is not None else None
-                if yearavg_text and yearavg_text != '-':
-                    yearavg = float(yearavg_text.replace(',', ''))
                 break
-    valid_months = [v for v in months if v > 0]
-    if valid_months:
-        yearavg = sum(valid_months) / len(valid_months)
-    else:
-        yearavg = 0
-    df = pd.DataFrame({'Month': range(1, 13), 'Price': months})
-    df['MoM_Change'] = df['Price'].pct_change().replace([float('inf'), float('-inf')], 0) * 100
-    df['MoM_Change'] = df['MoM_Change'].fillna(0).round(2)
-    if yearavg > 0:
-        df['DiffFromAvg'] = ((df['Price'] - yearavg) / yearavg * 100).round(2)
-    else:
-        df['DiffFromAvg'] = 0
-    hovertexts = []
-    for i, row in df.iterrows():
-        m = int(row['Month'])
-        price = int(row['Price'])
-        mom = row['MoM_Change']
-        diff = row['DiffFromAvg']
-        if price == 0:
-            hovertexts.append(f"{m}월: 데이터 없음")
-        else:
-            hovertexts.append(
-                f"{m}월: {price:,}원<br>"
-                f"전월 대비: {mom:+.2f}%<br>"
-                f"연평균 대비: {diff:+.2f}%"
-            )
-    x = [f"{m}월" for m in range(1, 13)]
-    trace = go.Scatter(
-        x=x,
-        y=months,
-        mode='lines+markers',
-        marker=dict(size=10, color='royalblue'),
-        line=dict(width=2),
-        hovertext=hovertexts,
-        hoverinfo='text',
-        name='소매가' if is_retail else '도매가'
-    )
-    layout = dict(
-        title=f'{year}년 {title}',
-        xaxis=dict(title='월'),
-        yaxis=dict(title='가격(원)'),
-        hovermode='closest'
-    )
-    fig = go.Figure(data=[trace], layout=layout)
-    return fig.to_json()
+    plt.figure(figsize=(10, 6))
+    sns.lineplot(x=list(range(1, 13)), y=months, marker='o', color='#2ecc71', linewidth=2.5, markersize=8)
+    plt.title(f'{year}년 {title}', fontsize=18, fontweight='bold', pad=20, fontproperties=font_prop)
+    plt.xlabel('월', fontsize=14, fontproperties=font_prop)
+    plt.ylabel('가격 (원)', fontsize=14, fontproperties=font_prop)
+    plt.xticks(fontsize=12, fontproperties=font_prop)
+    plt.yticks(fontsize=12, fontproperties=font_prop)
+    plt.grid(True, linestyle='--', alpha=0.3)
+    plt.legend(prop=font_prop)
+    plt.tight_layout()
+    return encode_plot_to_base64()
 
 @chart_bp.route('/api/statistics', methods=['GET'])
 def statistics_api():
@@ -156,56 +153,30 @@ def statistics_api():
     tomato_selected_year_retail = int(request.args.get('tomato_year_retail', YEARS[-1]))
     strawberry_selected_year_retail = int(request.args.get('strawberry_year_retail', YEARS[-1]))
 
-    plot_json = None
-    extra = {}
+    plot_base64 = None
     if graph == 'tomato_annual':
-        plot_json = fetch_annual_trend('321', '토마토 연간 시세 변동 그래프 (1kg)', '원')
+        plot_base64 = fetch_annual_trend('321', '토마토 연간 시세 변동 그래프 (1kg)', '원')
         graph_title = "토마토 연간 시세 변동 그래프 (1kg)"
     elif graph == 'strawberry_annual':
-        plot_json = fetch_annual_trend('323', '딸기 연간 시세 변동 그래프 (100g)', '원')
+        plot_base64 = fetch_annual_trend('323', '딸기 연간 시세 변동 그래프 (100g)', '원')
         graph_title = "딸기 연간 시세 변동 그래프 (100g)"
     elif graph == 'tomato_monthly_wholesale':
-        plot_json = fetch_monthly_price(tomato_selected_year, 225, "토마토 월간 도매가(5kg 상자 기준)", is_retail=False)
+        plot_base64 = fetch_monthly_price(tomato_selected_year, 225, "토마토 월간 도매가(5kg 상자 기준)", is_retail=False)
         graph_title = f"{tomato_selected_year}년 토마토 월간 도매가 변동"
-        extra['year_select'] = {
-            'name': 'tomato_year',
-            'selected': tomato_selected_year,
-            'other': strawberry_selected_year,
-            'label': '토마토 월 선택 연도:'
-        }
     elif graph == 'strawberry_monthly_wholesale':
-        plot_json = fetch_monthly_price(strawberry_selected_year, 226, "딸기 월간 도매가(500g 상자 기준)", is_retail=False)
+        plot_base64 = fetch_monthly_price(strawberry_selected_year, 226, "딸기 월간 도매가(500g 상자 기준)", is_retail=False)
         graph_title = f"{strawberry_selected_year}년 딸기 월간 도매가 변동"
-        extra['year_select'] = {
-            'name': 'strawberry_year',
-            'selected': strawberry_selected_year,
-            'other': tomato_selected_year,
-            'label': '딸기 월 선택 연도:'
-        }
     elif graph == 'tomato_monthly_retail':
-        plot_json = fetch_monthly_price(tomato_selected_year_retail, 225, "토마토 월간 소매가(1kg)", is_retail=True)
+        plot_base64 = fetch_monthly_price(tomato_selected_year_retail, 225, "토마토 월간 소매가(1kg)", is_retail=True)
         graph_title = f"{tomato_selected_year_retail}년 토마토 월간 소매가 변동"
-        extra['year_select'] = {
-            'name': 'tomato_year_retail',
-            'selected': tomato_selected_year_retail,
-            'other': strawberry_selected_year_retail,
-            'label': '토마토 월 선택 연도:'
-        }
     elif graph == 'strawberry_monthly_retail':
-        plot_json = fetch_monthly_price(strawberry_selected_year_retail, 226, "딸기 월간 소매가(100g)", is_retail=True)
+        plot_base64 = fetch_monthly_price(strawberry_selected_year_retail, 226, "딸기 월간 소매가(100g)", is_retail=True)
         graph_title = f"{strawberry_selected_year_retail}년 딸기 월간 소매가 변동"
-        extra['year_select'] = {
-            'name': 'strawberry_year_retail',
-            'selected': strawberry_selected_year_retail,
-            'other': tomato_selected_year_retail,
-            'label': '딸기 월 선택 연도:'
-        }
     else:
-        plot_json = fetch_annual_trend('321', '토마토 연간 시세 변동 그래프 (1kg)', '원')
+        plot_base64 = fetch_annual_trend('321', '토마토 연간 시세 변동 그래프 (1kg)', '원')
         graph_title = "토마토 연간 시세 변동 그래프 (1kg)"
 
     return jsonify({
-        'plot_json': plot_json,
+        'plot_base64': plot_base64,
         'graph_title': graph_title
     })
-

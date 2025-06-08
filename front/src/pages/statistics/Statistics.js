@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import Plot from 'react-plotly.js';
 import './Statistics.css';
 import API_BASE_URL from '../../utils/config';
 
@@ -32,7 +31,7 @@ const Statistics = () => {
             const response = await fetch(`${API_BASE_URL}/api/statistics?${params}`);
             if (!response.ok) throw new Error('API 오류');
             const data = await response.json();
-            setPlotData(JSON.parse(data.plot_json));
+            setPlotData(data.plot_base64); // <- 변경된 부분
             setGraphTitle(data.graph_title);
         } catch (error) {
             setError('데이터를 불러오는 중 오류가 발생했습니다.');
@@ -91,44 +90,44 @@ const Statistics = () => {
         <div className="statistics-container">
             <div className="sidebar">
                 <h2>그래프 선택</h2>
-                <a 
-                    href="#" 
-                    className={graph === 'tomato_annual' ? 'active' : ''} 
+                <a
+                    href="#"
+                    className={graph === 'tomato_annual' ? 'active' : ''}
                     onClick={(e) => { e.preventDefault(); setGraph('tomato_annual'); }}
                 >
                     토마토 연간 시세
                 </a>
-                <a 
-                    href="#" 
-                    className={graph === 'strawberry_annual' ? 'active' : ''} 
+                <a
+                    href="#"
+                    className={graph === 'strawberry_annual' ? 'active' : ''}
                     onClick={(e) => { e.preventDefault(); setGraph('strawberry_annual'); }}
                 >
                     딸기 연간 시세
                 </a>
-                <a 
-                    href="#" 
-                    className={graph === 'tomato_monthly_wholesale' ? 'active' : ''} 
+                <a
+                    href="#"
+                    className={graph === 'tomato_monthly_wholesale' ? 'active' : ''}
                     onClick={(e) => { e.preventDefault(); setGraph('tomato_monthly_wholesale'); }}
                 >
                     토마토 월간 도매
                 </a>
-                <a 
-                    href="#" 
-                    className={graph === 'strawberry_monthly_wholesale' ? 'active' : ''} 
+                <a
+                    href="#"
+                    className={graph === 'strawberry_monthly_wholesale' ? 'active' : ''}
                     onClick={(e) => { e.preventDefault(); setGraph('strawberry_monthly_wholesale'); }}
                 >
                     딸기 월간 도매
                 </a>
-                <a 
-                    href="#" 
-                    className={graph === 'tomato_monthly_retail' ? 'active' : ''} 
+                <a
+                    href="#"
+                    className={graph === 'tomato_monthly_retail' ? 'active' : ''}
                     onClick={(e) => { e.preventDefault(); setGraph('tomato_monthly_retail'); }}
                 >
                     토마토 월간 소매
                 </a>
-                <a 
-                    href="#" 
-                    className={graph === 'strawberry_monthly_retail' ? 'active' : ''} 
+                <a
+                    href="#"
+                    className={graph === 'strawberry_monthly_retail' ? 'active' : ''}
                     onClick={(e) => { e.preventDefault(); setGraph('strawberry_monthly_retail'); }}
                 >
                     딸기 월간 소매
@@ -140,16 +139,7 @@ const Statistics = () => {
                 {loading && <div>로딩 중...</div>}
                 {error && <div style={{color:'red'}}>{error}</div>}
                 {plotData && !loading && !error && (
-                    <Plot
-                        data={plotData.data}
-                        layout={{
-                            ...plotData.layout,
-                            autosize: true,
-                            responsive: true
-                        }}
-                        style={{ width: '100%', height: '600px' }}
-                        config={{ responsive: true }}
-                    />
+                    <img src={plotData} alt="시세 그래프" className="chart-image" />
                 )}
             </div>
         </div>
