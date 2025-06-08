@@ -6,6 +6,8 @@ CREATE TABLE IF NOT EXISTS users (
     name VARCHAR(50) NOT NULL,
     is_black TINYINT NOT NULL DEFAULT 0,  -- BOOLEAN 대신 TINYINT(1) 사용
     is_admin TINYINT NOT NULL DEFAULT 0,
+    kakao_id VARCHAR(64) UNIQUE NULL,
+    oauth_provider VARCHAR(16) NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id)
 );

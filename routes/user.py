@@ -407,23 +407,40 @@ def kakao_callback():
     kakao_profile = profile_json.get("kakao_account", {}).get("profile", {})
     nickname = kakao_profile.get("nickname", f"kakao_{kakao_id}")
     
-    # DB에 사용자 있는지 조회 → 없으면 새로 INSERT
-    user_id = f'kakao_{kakao_id}'
     conn = get_db_connection()
-    with conn.cursor() as cursor:
-        cursor.execute("SELECT * FROM users WHERE id = %s", (user_id,))
-        user = cursor.fetchone()
-        if not user:
-            dummy_password = 'kakao_login'
-            cursor.execute("""
-                INSERT INTO users (id, password, nickname, email, name, is_black, is_admin)
-                VALUES (%s, %s, %s, %s, %s, %s, %s)
-            """, (user_id, dummy_password, nickname, '', nickname, 0, 0))
-            conn.commit()
-    conn.close()
+    try:
+        with conn.cursor() as cursor:
+            current_user = session.get('user_id')
 
-    # Flask 세션에 사용자 ID 저장
-    session['user_id'] = user_id
+            if current_user:
+                # 연동 모드
+                # 이미 로그인된 계정에 kakao_id만 저장
+                cursor.execute(
+                    "UPDATE users SET kakao_id=%s, oauth_provider='kakao' WHERE id=%s",
+                    (kakao_id, current_user)
+                )
+                conn.commit()
+                # React 쪽에 성공 메시지 전달용 리다이렉트
+                return redirect('http://localhost:3000/profile?linked=kakao')
 
-    #    React 쪽에서 /oauth/success 라우트를 두고, 쿼리에 user_id를 받아 처리하도록 할 수 있음.
-    return redirect(f'http://localhost:3000/')
+            else:
+                # 로그인 모드
+                # kakao_id 로 기존 계정 조회
+                cursor.execute(
+                    "SELECT id, nickname FROM users WHERE kakao_id=%s",
+                    (kakao_id,)
+                )
+                row = cursor.fetchone()
+
+                if row:
+                    # 이미 연동된 계정 → 로그인 처리
+                    session['user_id'] = row[0]
+                    session['nickname'] = row[1]
+                    return redirect('http://localhost:3000/?login=kakao')
+
+                else:
+                    # 연동된 계정 없으면 에러 페이지 또는 가입 유도
+                    # 예: React 쪽에서 `/signup` 으로 이동
+                    return redirect('http://localhost:3000/login')
+    finally:
+        conn.close()
