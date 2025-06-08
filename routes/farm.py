@@ -3,6 +3,7 @@ import os
 from config import DB_CONFIG
 from werkzeug.utils import secure_filename
 from utils.database import get_db_connection, get_dict_cursor_connection
+from routes.weather import fetch_weather
 
 UPLOAD_FOLDER = 'static/uploads/farms'
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
@@ -179,4 +180,37 @@ def delete_farm(farm_id):
         finally:
             conn.close()
     return '데이터베이스 연결 실패', 500
+
+
+#농장별 날씨 조회
+@farm_bp.route('/<int:farm_id>/weather', methods=['GET'])
+def farm_weather(farm_id):
+    conn, cursor = get_dict_cursor_connection()
+    if not (conn and cursor):
+        return jsonify({'error': 'DB 연결 실패'}), 500
+    try:
+        cursor.execute(
+            "SELECT id, name, location FROM farms WHERE id = %s AND is_approved = 1",
+            (farm_id,)
+        )
+        farm = cursor.fetchone()
+    finally:
+        cursor.close()
+        conn.close()
+
+    if not farm:
+        abort(404, description="Farm not found")
+
+    # OpenWeatherMap API로 현재 날씨(온도, 설명) 가져오기
+    weather = fetch_weather(farm['location'])
+    if 'error' in weather:
+        abort(502, description=weather['error'])
+
+    return jsonify({
+        'farmId':      farm['id'],
+        'farmName':    farm['name'],
+        'location':    farm['location'],
+        'temperature': weather['temperature'],
+        'description': weather['description']
+    })
 

@@ -67,7 +67,7 @@ CREATE TABLE iot (
     direction ENUM('left', 'right', 'both') DEFAULT 'both',
     resolution ENUM('640x480', '1280x720', '1920x1080') DEFAULT '1280x720',
     camera_on BOOLEAN DEFAULT TRUE,
-    FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
 CREATE TABLE greenhouses (
