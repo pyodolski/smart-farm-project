@@ -1,142 +1,296 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-    <meta charset="UTF-8">
-    <title>관리자 페이지</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f6f6f6;
-            margin: 0;
-            padding: 0;
-        }
-        header {
-            background-color: #2c3e50;
-            color: white;
-            padding: 1rem;
-            text-align: center;
-            position: relative;
-        }
-        main {
-            max-width: 800px;
-            margin: 2rem auto;
-            background: white;
-            padding: 2rem;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-        }
-        h2 {
-            color: #34495e;
-        }
-        ul {
-            list-style: none;
-            padding: 0;
-        }
-        li {
-            margin: 1rem 0;
-            padding: 1rem;
-            background: #ecf0f1;
-            border-radius: 5px;
-        }
-        .section-title {
-            margin-top: 2rem;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>관리자 페이지</title>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg-color: #f4f6fb;
+      --card-bg: #ffffff;
+      --text-color: #2d3436;
+      --button-bg: #d63031;
+      --button-hover: #b71540;
+      --approve-bg: #00b894;
+      --approve-hover: #019875;
+      --accent-blue: #0984e3;
+      --accent-blue-hover: #0652dd;
+    }
+
+    body {
+      font-family: 'Noto Sans KR', sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-color);
+      margin: 0;
+      padding: 0;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    body.dark-mode {
+      --bg-color: #181818;
+      --card-bg: #242424;
+      --text-color: #ecf0f1;
+      --button-bg: #ff7675;
+      --button-hover: #e17055;
+      --approve-bg: #55efc4;
+      --approve-hover: #00cec9;
+      --accent-blue: #74b9ff;
+      --accent-blue-hover: #0984e3;
+    }
+
+    header {
+      background-color: var(--accent-blue);
+      color: white;
+      padding: 1rem 2rem;
+      text-align: center;
+      position: relative;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 1.8rem;
+    }
+
+    main {
+      max-width: 960px;
+      margin: 2rem auto;
+      background: var(--card-bg);
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+    }
+
+    h2 {
+      color: var(--text-color);
+      margin-bottom: 1rem;
+      border-bottom: 2px solid var(--accent-blue);
+      padding-bottom: 0.5rem;
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    li {
+      margin: 1.5rem 0;
+      padding: 1.5rem;
+      background: var(--card-bg);
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+    }
+
+    .section-title {
+      margin-top: 3rem;
+    }
+
+    form {
+      margin-top: 1rem;
+    }
+
+    button {
+      background-color: var(--button-bg);
+      color: white;
+      border: none;
+      padding: 0.5rem 1.2rem;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.2s ease, transform 0.1s ease;
+    }
+
+    button:hover {
+      background-color: var(--button-hover);
+      transform: scale(1.03);
+    }
+
+    .approve-btn {
+      background-color: var(--approve-bg);
+      margin-right: 0.5rem;
+    }
+
+    .approve-btn:hover {
+      background-color: var(--approve-hover);
+    }
+
+    .reject-btn {
+      background-color: var(--button-bg);
+    }
+
+    .pending-farms .farm-card {
+      margin-bottom: 2rem;
+      padding: 1.5rem;
+      background: var(--card-bg);
+      border-left: 5px solid var(--approve-bg);
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+    }
+
+    body.dark-mode .pending-farms .farm-card {
+      background: #2d3436;
+    }
+
+    .logout-button,
+    .theme-toggle-button {
+      position: absolute;
+      top: 1rem;
+      padding: 0.5rem 1.2rem;
+      border: none;
+      border-radius: 5px;
+      color: white;
+      cursor: pointer;
+    }
+
+    .logout-button {
+      right: 1rem;
+      background-color: var(--button-bg);
+    }
+
+    .logout-button:hover {
+      background-color: var(--button-hover);
+    }
+
+    .theme-toggle-button {
+      left: 1rem;
+      background-color: var(--accent-blue);
+    }
+
+    .theme-toggle-button:hover {
+      background-color: var(--accent-blue-hover);
+    }
+
+    @media (max-width: 768px) {
+      main {
+        padding: 1.5rem;
+        margin: 1rem;
+      }
+      header h1 {
+        font-size: 1.5rem;
+      }
+      .logout-button,
+      .theme-toggle-button {
+        font-size: 0.9rem;
+        padding: 0.4rem 0.8rem;
+      }
+      li {
+        padding: 1rem;
+      }
+    }
+  </style>
 </head>
 <body>
-    <header>
-        <h1>관리자 대시보드</h1>
-        <button onclick="logout()" style="position: absolute; top: 1rem; right: 1rem; background-color: #e74c3c; color: white; border: none; padding: 0.5rem 1rem; border-radius: 5px; cursor: pointer;">
-            로그아웃
-        </button>
-    </header>
-    <main>
-        <section>
-            <h2>🚨 신고된 게시글</h2>
-            <ul>
-                {% for board in reported_boards %}
-                    <li>
-                        <strong>게시글 제목: {{ board.title }}</strong><br>
-                        게시글 내용: {{ board.content }}<br>
-                        게시글 신고 수: {{ board.report }}<br>
-                        게시글 작성자: {{ board.author }}
-                        <form action="{{ url_for('admin.delete_post', post_id=board.id) }}" method="post" onsubmit="return confirm('정말 삭제하시겠습니까?');">
-                            <button type="submit">❌ 게시글 삭제</button>
-                        </form>
-                    </li>
-                {% else %}
-                    <li>신고된 게시글이 없습니다.</li>
-                {% endfor %}
-            </ul>
-        </section>
+  <header>
+    <h1>관리자 대시보드</h1>
+    <button onclick="logout()" class="logout-button">로그아웃</button>
+    <button onclick="toggleTheme()" class="theme-toggle-button">🌙 다크 모드</button>
+  </header>
+  <main>
+    <section>
+      <h2>🚨 신고된 게시글</h2>
+      <ul>
+        {% for board in reported_boards %}
+        <li>
+          <strong>📌 제목:</strong> {{ board.title }}<br />
+          <strong>📝 내용:</strong> {{ board.content }}<br />
+          <strong>🚨 신고수:</strong> {{ board.report }}<br />
+          <strong>✍ 작성자:</strong> {{ board.author }}
+          <form action="{{ url_for('admin.delete_post', post_id=board.id) }}" method="post" onsubmit="return confirm('정말 삭제하시겠습니까?');">
+            <button type="submit">❌ 게시글 삭제</button>
+          </form>
+        </li>
+        {% else %}
+        <li>신고된 게시글이 없습니다.</li>
+        {% endfor %}
+      </ul>
+    </section>
 
-        <section class="section-title">
-            <h2>💬 신고된 댓글</h2>
-            <ul>
-                {% for comment in reported_comments %}
-                    <li>
-                        <strong>게시글 제목: {{ comment.board_title }}</strong><br>
-                        게시글 작성자: {{ comment.board_author }}<br>
-                        댓글 내용: {{ comment.content }}<br>
-                        댓글 신고 수: {{ comment.report }}<br>
-                        댓글 작성자: {{ comment.author }}
-                    </li>
-                {% else %}
-                    <li>신고된 댓글이 없습니다.</li>
-                {% endfor %}
-            </ul>
-        </section>
+    <section class="section-title">
+      <h2>💬 신고된 댓글</h2>
+      <ul>
+        {% for comment in reported_comments %}
+        <li>
+          <strong>📄 게시글:</strong> {{ comment.board_title }} ({{ comment.board_author }})<br />
+          <strong>💬 댓글 내용:</strong> {{ comment.content }}<br />
+          <strong>🚨 신고수:</strong> {{ comment.report }}<br />
+          <strong>✍ 작성자:</strong> {{ comment.author }}
+          <form action="{{ url_for('admin.delete_comment', comment_id=comment.id) }}" method="post" onsubmit="return confirm('정말 댓글을 삭제하시겠습니까?');">
+            <button type="submit">❌ 댓글 삭제</button>
+          </form>
+        </li>
+        {% else %}
+        <li>신고된 댓글이 없습니다.</li>
+        {% endfor %}
+      </ul>
+    </section>
 
-        <section class="section-title">
-            <h2>🌱 농장 추가 승인</h2>
-            <ul>
-                <li>농장 추가 신청 목록 보기</li>
-                <li>승인 / 거부 선택</li>
-            </ul>
-        </section>
-        
-        <section class="pending-farms">
-            {% if pending_farms %}
-                {% for farm in pending_farms %}
-                    <div class="farm-card">
-                        <p><strong>농장 이름:</strong> {{ farm.name }}</p>
-                        <p><strong>위치:</strong> {{ farm.location }}</p>
-                        <p><strong>소유자:</strong> {{ farm.owner_username }}</p>
-                        <p><strong>증명 서류:</strong> 
-                            <a href="{{ url_for('static', filename=farm.document_url) }}" target="_blank">[문서 보기]</a>
-                        </p>
-                        <form action="{{ url_for('admin.approve_farm', farm_id=farm.id) }}" method="post" style="display:inline;">
-                            <button type="submit" class="approve-btn">✅ 승인</button>
-                        </form>
-                        <form action="{{ url_for('admin.reject_farm', farm_id=farm.id) }}" method="post" style="display:inline;">
-                            <button type="submit" class="reject-btn">❌ 거부</button>
-                        </form>
-                    </div>
-                {% endfor %}
-            {% else %}
-                <p>현재 승인 대기 중인 농장이 없습니다.</p>
-            {% endif %}
-        </section>
-    </main>
+    <section class="section-title">
+      <h2>🌱 농장 추가 승인</h2>
+    </section>
 
-    <script>
+    <section class="pending-farms">
+      {% if pending_farms %}
+      {% for farm in pending_farms %}
+      <div class="farm-card">
+        <p><strong>🏡 농장 이름:</strong> {{ farm.name }}</p>
+        <p><strong>📍 위치:</strong> {{ farm.location }}</p>
+        <p><strong>👤 소유자:</strong> {{ farm.owner_username }}</p>
+        <p><strong>📎 증명 서류:</strong>
+          <a href="{{ url_for('static', filename=farm.document_url) }}" target="_blank">[문서 보기]</a>
+        </p>
+        <form action="{{ url_for('admin.approve_farm', farm_id=farm.id) }}" method="post" style="display: inline;">
+          <button type="submit" class="approve-btn">✅ 승인</button>
+        </form>
+        <form action="{{ url_for('admin.reject_farm', farm_id=farm.id) }}" method="post" style="display: inline;">
+          <button type="submit" class="reject-btn">❌ 거부</button>
+        </form>
+      </div>
+      {% endfor %}
+      {% else %}
+      <p>현재 승인 대기 중인 농장이 없습니다.</p>
+      {% endif %}
+    </section>
+  </main>
+  <script>
     function logout() {
-        fetch("/logout", {
-            method: "POST",
-            credentials: "include"
-        })
+      fetch("/logout", {
+        method: "POST",
+        credentials: "include"
+      })
         .then(res => res.json())
         .then(data => {
-            if (data.success) {
-                alert(data.message);
-                window.location.href = "http://localhost:3000/login";  // 로그인 페이지 경로에 맞게 수정
-            } else {
-                alert("로그아웃 실패");
-            }
+          if (data.success) {
+            alert(data.message);
+            window.location.href = "/login";
+          } else {
+            alert("로그아웃 실패");
+          }
         })
         .catch(err => {
-            alert("에러 발생");
+          alert("에러 발생");
         });
     }
-    </script>
+
+    function toggleTheme() {
+      const body = document.body;
+      const isDark = body.classList.toggle('dark-mode');
+      localStorage.setItem('theme', isDark ? 'dark' : 'light');
+      updateThemeButton();
+    }
+
+    function updateThemeButton() {
+      const button = document.querySelector('.theme-toggle-button');
+      const isDark = document.body.classList.contains('dark-mode');
+      button.textContent = isDark ? '☀️ 라이트 모드' : '🌙 다크 모드';
+    }
+
+    window.onload = () => {
+      const savedTheme = localStorage.getItem('theme');
+      if (savedTheme === 'dark') {
+        document.body.classList.add('dark-mode');
+      }
+      updateThemeButton();
+    };
+  </script>
 </body>
 </html>
