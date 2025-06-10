@@ -21,9 +21,11 @@ def get_greenhouse_groups(gh_id):
     finally:
         conn.close()
 
-    # 그룹화 기준 판단
-    standard = find_standard(grid)  # 0: row, 1: col
-    if standard == 0:
+    # 첫 번째 행의 모든 요소가 같은지 확인
+    first_row = grid[0]
+    is_row_merge = all(x == first_row[0] for x in first_row)
+
+    if is_row_merge:
         groups = find_row_groups(grid)
         axis = 'row'
     else:
@@ -33,8 +35,8 @@ def get_greenhouse_groups(gh_id):
     # JSON 형태로 반환
     return jsonify({
         'greenhouseId': gh_id,
-        'axis':        axis,
-        'groups':      groups
+        'axis': axis,
+        'groups': groups
     })
 
 def find_contiguous_segments(line):
@@ -43,33 +45,25 @@ def find_contiguous_segments(line):
     val = line[0]
     for i in range(1, len(line)):
         if line[i] != val:
-            segments.append(list(range(start, i)))
+            segments.append((start, i-1, val))  # (시작 인덱스, 끝 인덱스, 값)
             start = i
             val = line[i]
-    segments.append(list(range(start, len(line))))
+    segments.append((start, len(line)-1, val))  # 마지막 세그먼트
     return segments
 
 def find_row_groups(grid):
-    rows_as_tuples = [tuple(row) for row in grid]
-    return find_contiguous_segments(rows_as_tuples)
+    groups = []
+    for row_idx, row in enumerate(grid):
+        segments = find_contiguous_segments(row)
+        for start, end, val in segments:
+            groups.append((row_idx, start, end, val))  # (행 인덱스, 시작 열, 끝 열, 값)
+    return groups
 
 def find_col_groups(grid):
-    # 모든 행이 서로 같아야 열 기준 그룹화
-    if not all(tuple(row) == tuple(grid[0]) for row in grid):
-        return None
-    
-    template = grid[0]
-    return find_contiguous_segments(template)
-
-def find_standard(grid):
-    """
-    0을 반환하면 행 기준
-    1을 반환하면 열 기준
-    """
-    row_groups = find_row_groups(grid)
-    row_count = len(row_groups)
-
-    col_groups = find_col_groups(grid)
-    col_count = len(col_groups) if col_groups is not None else 0
-
-    return 0 if row_count >= col_count else 1
+    groups = []
+    for col_idx in range(len(grid[0])):
+        col = [row[col_idx] for row in grid]
+        segments = find_contiguous_segments(col)
+        for start, end, val in segments:
+            groups.append((start, col_idx, end, val))  # (시작 행, 열 인덱스, 끝 행, 값)
+    return groups

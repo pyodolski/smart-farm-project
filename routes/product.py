@@ -198,3 +198,15 @@ def get_device(device_id):
     finally:
         cursor.close()
         conn.close()
+
+
+@product_bp.route('/api/iot/list', methods=['GET'])
+def iot_list():
+    if 'user_id' not in session:
+        return jsonify({'iot_list': []}), 200
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT id, iot_name as name, 'camera' as type FROM iot WHERE owner_id = %s", (session['user_id'],))
+    iots = [{'id': row[0], 'name': row[1], 'type': row[2]} for row in cur.fetchall()]
+    conn.close()
+    return jsonify({'iot_list': iots}), 200

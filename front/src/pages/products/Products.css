@@ -36,14 +36,66 @@
   margin: 0;
 }
 
-.products-list li {
-  background: #eaf6e9;
-  border-radius: 8px;
-  padding: 12px 18px;
-  margin-bottom: 10px;
+.products-list-item {
+  background: #f8fafc;
+  border-radius: 12px;
+  padding: 18px 20px;
+  margin-bottom: 14px;
   color: #222;
-  font-size: 1rem;
-  text-align: left;
+  font-size: 1.08rem;
+  box-shadow: 0 1px 4px rgba(60,80,180,0.04);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+.products-list-item:hover {
+  box-shadow: 0 4px 16px rgba(60,80,180,0.10);
+  transform: translateY(-2px) scale(1.01);
+}
+.products-list-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  font-size: 1.13rem;
+}
+.products-list-icon {
+  font-size: 1.5rem;
+}
+.products-list-name {
+  color: #222;
+}
+.products-list-btns {
+  display: flex;
+  gap: 10px;
+  margin-top: 8px;
+}
+.products-list-edit-btn {
+  padding: 6px 16px;
+  background: #eef0f3;
+  color: #3a4a5d;
+  border: 1.5px solid #e6eaf2;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.18s, border 0.18s;
+}
+.products-list-edit-btn:hover {
+  background: #e6eaf2;  
+}
+.products-list-unsub-btn {
+  padding: 6px 16px;
+  background: #fff1f1;
+  color: #ff4d4d;
+  border: 1.5px solid #ffe6e6;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.18s, border 0.18s;
+}
+.products-list-unsub-btn:hover {
+  background: #ffe6e6;
 }
 
 .products-subscribe-btn {
@@ -63,12 +115,6 @@
 .products-subscribe-btn:hover {
   background: linear-gradient(90deg, #5cb85c 60%, #a8e49b 100%);
   transform: translateY(-2px) scale(1.04);
-}
-
-.products-list-btns {
-  display: flex;
-  gap: 8px;
-  margin-top: 5px;
 }
 
 @media (max-width: 700px) {

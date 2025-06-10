@@ -55,23 +55,20 @@ function Products() {
         ) : (
           <ul className="products-list">
             {devices.map((device) => (
-              <li key={device.id} style={{ marginBottom: '15px' }}>
-                <strong>📷 {device.iot_name}</strong>
+              <li key={device.id} className="products-list-item">
+                <div className="products-list-header">
+                  <span className="products-list-icon">📷</span>
+                  <span className="products-list-name">{device.iot_name}</span>
+                </div>
                 <div className="products-list-btns">
                   <button
-                    style={{ marginRight: '8px', padding: '4px 8px' }}
+                    className="products-list-edit-btn"
                     onClick={() => navigate(`/iot-setting/${device.id}`)}
                   >
                     수정
                   </button>
                   <button
-                    style={{
-                      padding: '4px 8px',
-                      backgroundColor: '#ff5c5c',
-                      color: 'white',
-                      border: 'none',
-                      borderRadius: '4px'
-                    }}
+                    className="products-list-unsub-btn"
                     onClick={() => handleUnsubscribe(device.id)}
                   >
                     구독 취소

@@ -134,6 +134,10 @@ function UserProfile() {
     }
   };
 
+  const handleKakaoConnect = () => {
+    window.location.href = `${API_BASE_URL}/auth/kakao`;
+  };
+
   if (!userInfo) {
     return <div className="loading">로딩 중...</div>;
   }
@@ -169,6 +173,9 @@ function UserProfile() {
             </button>
             <button onClick={() => setIsPasswordMode(true)}>
               비밀번호 변경
+            </button>
+            <button onClick={handleKakaoConnect} className="kakao-btn">
+              카카오톡 연동
             </button>
           </div>
         </div>

@@ -1,59 +1,54 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
-import API_BASE_URL from '../../utils/config';
+import { useGrid } from '../../utils/useGrid';
+import { useError } from '../../utils/useError';
+import { greenhouseService } from '../../utils/api';
 import './GreenhouseGrid.css';
 
 function GreenhouseGrid() {
   const navigate = useNavigate();
-  const { farmId, greenhouseId } = useParams();
+  const { farmId } = useParams();
   const location = useLocation();
-  // location.state로 farmId, greenhouseId, houseName, numRows, numCols, gridData 등을 받을 수 있음
+  const { error, handleError } = useError();
+  
+  // URL 파라미터 처리
+  const urlParams = new URLSearchParams(location.search);
+  const greenhouseId = location.state?.greenhouseId || urlParams.get('edit');
+  const initialData = location.state;
 
-  // 초기값 세팅
-  const [houseName, setHouseName] = useState(location.state?.houseName || '');
-  const [rows, setRows] = useState(location.state?.numRows || 10);
-  const [cols, setCols] = useState(location.state?.numCols || 10);
-  const [gridData, setGridData] = useState(location.state?.gridData || Array.from({length: rows}, () => Array(cols).fill(0)));
+  // 상태 관리
+  const [houseName, setHouseName] = useState(initialData?.houseName || '');
   const [currentValue, setCurrentValue] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
 
-  useEffect(() => {
-    // 행/열 변경 시 그리드 크기 조정
-    setGridData(prev => {
-      const newGrid = [];
-      for (let r = 0; r < rows; r++) {
-        const row = [];
-        for (let c = 0; c < cols; c++) {
-          row.push((prev[r] && prev[r][c] !== undefined) ? prev[r][c] : 0);
-        }
-        newGrid.push(row);
-      }
-      return newGrid;
-    });
-  }, [rows, cols]);
+  // 그리드 관리
+  const {
+    dimensions,
+    grid,
+    setGrid,
+    updateDimensions,
+    updateCell
+  } = useGrid(
+    initialData?.numRows || 10,
+    initialData?.numCols || 10,
+    initialData?.gridData
+  );
 
-  const getColor = (value) => {
-    if (value === 0) return 'red';
-    if (value === 1) return 'black';
-    if (value === 2) return 'blue';
-    return 'lightgray';
+  // 그리드 타입 매핑
+  const gridTypeMapping = {
+    0: { label: '길', color: '#F9F7E8' },
+    1: { label: '딸기', color: '#FF8B8B' },
+    2: { label: '토마토', color: '#61BFAD' }
   };
 
-  const handleCellClick = (r, c) => {
-    setGridData(prev => {
-      const copy = prev.map(row => [...row]);
-      copy[r][c] = currentValue;
-      return copy;
-    });
-  };
-
+  // 마우스 이벤트 핸들러
   const handleCellMouseDown = (r, c) => {
     setIsDragging(true);
-    handleCellClick(r, c);
+    updateCell(r, c, currentValue);
   };
 
   const handleCellMouseEnter = (r, c) => {
-    if (isDragging) handleCellClick(r, c);
+    if (isDragging) updateCell(r, c, currentValue);
   };
 
   useEffect(() => {
@@ -62,27 +57,27 @@ function GreenhouseGrid() {
     return () => document.removeEventListener('mouseup', handleMouseUp);
   }, []);
 
+  // 저장 핸들러
   const handleSubmit = async () => {
-    const payload = {
-      farm_id: parseInt(farmId),
-      name: houseName,
-      num_rows: rows,
-      num_cols: cols,
-      grid_data: gridData
-    };
-    console.log(payload);
-    const endpoint = greenhouseId ? `/api/greenhouses/update/${greenhouseId}` : '/api/greenhouses/create';
     try {
-      const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      const data = await response.json();
-      alert(data.message);
-      if (response.ok) navigate(-1); // 저장 후 뒤로가기
+      const payload = {
+        farm_id: parseInt(farmId),
+        name: houseName,
+        num_rows: dimensions.rows,
+        num_cols: dimensions.cols,
+        grid_data: grid
+      };
+
+      const endpoint = greenhouseId ? `/update/${greenhouseId}` : '/create';
+      const response = await greenhouseService[greenhouseId ? 'updateGrid' : 'createGreenhouse'](
+        greenhouseId || payload,
+        payload
+      );
+
+      alert(response.message);
+      navigate(-1);
     } catch (err) {
-      alert('저장 중 오류 발생');
+      handleError(err);
     }
   };
 
@@ -92,6 +87,8 @@ function GreenhouseGrid() {
         <button className="farm-back-button" onClick={() => navigate(-1)}>⬅ 뒤로가기</button>
         <h2 className="greenhouse-title">🧱 비닐하우스 그리드 생성기</h2>
       </div>
+      
+      {error && <div className="error-message">{error}</div>}
       
       <div className="controls-container">
         <div className="control-group">
@@ -109,9 +106,9 @@ function GreenhouseGrid() {
           <input 
             type="number" 
             className="control-input"
-            value={rows} 
+            value={dimensions.rows} 
             min={1} 
-            onChange={e => setRows(Number(e.target.value))} 
+            onChange={e => updateDimensions(Number(e.target.value), dimensions.cols)} 
           />
         </div>
         <div className="control-group">
@@ -119,25 +116,25 @@ function GreenhouseGrid() {
           <input 
             type="number" 
             className="control-input"
-            value={cols} 
+            value={dimensions.cols} 
             min={1} 
-            onChange={e => setCols(Number(e.target.value))} 
+            onChange={e => updateDimensions(dimensions.rows, Number(e.target.value))} 
           />
         </div>
         <div className="control-group right-controls">
           <div className="value-selector">
             <label>선택 값:</label>
             {[
-              { value: 0, color: 'red' },
-              { value: 1, color: 'black' },
-              { value: 2, color: 'blue' }
-            ].map(({ value, color }) => (
+              { value: 0, label: '길' },
+              { value: 1, label: '딸기' },
+              { value: 2, label: '토마토' }
+            ].map(({ value, label }) => (
               <button
                 key={value}
-                className={`value-button ${currentValue === value ? 'active' : ''} ${color}`}
+                className={`value-button type-${value} ${currentValue === value ? 'active' : ''}`}
                 onClick={() => setCurrentValue(value)}
               >
-                {value}
+                {label}
               </button>
             ))}
           </div>
@@ -153,20 +150,19 @@ function GreenhouseGrid() {
       <div
         className="grid-container"
         style={{
-          gridTemplateColumns: `repeat(${cols}, 35px)`,
-          gridTemplateRows: `repeat(${rows}, 35px)`,
+          gridTemplateColumns: `repeat(${dimensions.cols}, 45px)`,
+          gridTemplateRows: `repeat(${dimensions.rows}, 45px)`,
         }}
       >
-        {gridData.map((row, r) =>
+        {grid.map((row, r) =>
           row.map((value, c) => (
             <div
               key={`${r}-${c}`}
-              className={`grid-cell ${getColor(value)}`}
+              className={`grid-cell type-${value}`}
               onMouseDown={() => handleCellMouseDown(r, c)}
               onMouseEnter={() => handleCellMouseEnter(r, c)}
-              onClick={() => handleCellClick(r, c)}
             >
-              {value}
+              {gridTypeMapping[value].label}
             </div>
           ))
         )}

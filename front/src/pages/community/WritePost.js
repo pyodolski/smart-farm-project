@@ -40,7 +40,7 @@ function WritePost() {
     <div className="write-post-container">
       <h2>새 게시글 작성</h2>
       <form onSubmit={handleSubmit}>
-        <div className="form-group">
+        <div className="write-form-group">
           <label htmlFor="title">제목</label>
           <input
             type="text"
@@ -52,7 +52,7 @@ function WritePost() {
           />
         </div>
 
-        <div className="form-group">
+        <div className="write-form-group">
           <label htmlFor="content">내용</label>
           <textarea
             id="content"
