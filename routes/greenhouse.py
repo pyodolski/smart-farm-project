@@ -79,7 +79,7 @@ def update_greenhouse(greenhouse_id):
         print("❌ 업데이트 오류:", e)
         return jsonify({"message": "서버 오류 발생"}), 500
 
-@greenhouse_bp.route('/delete/<int:greenhouse_id>', methods=['DELETE'])
+@greenhouse_bp.route('/<int:greenhouse_id>', methods=['DELETE'])
 def delete_greenhouse(greenhouse_id):
     try:
         conn = get_db_connection()
@@ -159,3 +159,24 @@ def grid_generator():
                            num_rows=num_rows,
                            num_cols=num_cols,
                            grid_data=json.dumps(grid_data))
+
+@greenhouse_bp.route('/api/grid', methods=['GET'])
+def get_grid_data():
+    greenhouse_id = request.args.get('id')
+    if not greenhouse_id:
+        return jsonify({'error': 'greenhouse_id required'}), 400
+
+    conn = get_db_connection()
+    cur = conn.cursor(pymysql.cursors.DictCursor)
+    cur.execute("SELECT num_rows, num_cols, grid_data FROM greenhouses WHERE id = %s", (greenhouse_id,))
+    greenhouse = cur.fetchone()
+    conn.close()
+
+    if not greenhouse:
+        return jsonify({'error': '존재하지 않는 비닐하우스입니다.'}), 404
+
+    return jsonify({
+        'num_rows': greenhouse['num_rows'],
+        'num_cols': greenhouse['num_cols'],
+        'grid_data': json.loads(greenhouse['grid_data'])
+    })

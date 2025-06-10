@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import API_BASE_URL from '../../utils/config';
 
 // 별도의 모달 컴포넌트
-function FarmModal({ show, onClose, title, onSubmit, initialData }) {
+function FarmModal({ show, onClose, title, onSubmit, initialData, cities }) {
   const [localFormData, setLocalFormData] = useState({ name: '', location: '' });
 
   // 모달이 열릴 때 초기 데이터 설정
@@ -61,14 +61,18 @@ function FarmModal({ show, onClose, title, onSubmit, initialData }) {
           </div>
           <div className="form-group">
             <label htmlFor="location">위치:</label>
-            <input
+            <select
               id="location"
               name="location"
-              type="text"
               value={localFormData.location}
               onChange={handleLocalInputChange}
               required
-            />
+            >
+              <option value="">지역 선택</option>
+              {cities && cities.map(city => (
+                <option key={city} value={city}>{city}</option>
+              ))}
+            </select>
           </div>
           {!initialData && ( //변경사항
             <div className="form-group">
@@ -239,41 +243,6 @@ function MainPage() {
 
   return (
     <div className="mainpage-layout">
-      <aside className="weather-aside">
-        <div className="weather-card">
-          <div className="weather-header">
-            <h3 className="weather-title">오늘의 날씨</h3>
-            <select
-              className="city-select"
-              value={selectedCity}
-              onChange={e => setSelectedCity(e.target.value)}
-            >
-              {cities.map(city => (
-                <option key={city} value={city}>{city}</option>
-              ))}
-            </select>
-          </div>
-          {weather && (
-            <div className="weather-today">
-              <div className="weather-icon">{weatherIcon(weather.description)}</div>
-              <div className="weather-info">
-                <div className="weather-temp">{weather.temperature}°C</div>
-                <div className="weather-desc">{weather.description}</div>
-              </div>
-            </div>
-          )}
-          <div className="weather-forecast-title">내일/모레 예보</div>
-          <div className="weather-forecast-row">
-            {twoDay.map(day => (
-              <div className="forecast-card" key={day.date}>
-                <div className="forecast-date">{day.date}</div>
-                <div className="forecast-temp">{day.min_temp}°C ~ {day.max_temp}°C</div>
-                <div className="forecast-desc">{day.description} {weatherIcon(day.description)}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </aside>
       <main className="mainpage-content">
         <h1>내 농장 목록</h1>
         <p>농장을 추가하거나 관리하세요</p>
@@ -320,6 +289,7 @@ function MainPage() {
           title="농장 추가"
           onSubmit={handleAddFarm}
           initialData={null}
+          cities={cities}
         />
         <FarmModal
           show={showEditModal}
@@ -327,6 +297,7 @@ function MainPage() {
           title="농장 수정"
           onSubmit={handleEditFarm}
           initialData={selectedFarm}
+          cities={cities}
         />
       </main>
     </div>

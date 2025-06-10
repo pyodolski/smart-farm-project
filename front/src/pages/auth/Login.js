@@ -11,6 +11,7 @@ function Login() {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const [isLoggedIn, setIsLoggedIn] = useContext(AuthContext);
+  const [showKakaoModal, setShowKakaoModal] = useState(false);
 
   useEffect(() => {
     // 이미 로그인된 상태라면 메인 페이지로 리다이렉트
@@ -74,7 +75,18 @@ function Login() {
   };
 
   const handleKakaoLogin = () => {
+    setShowKakaoModal(true);
+  };
+
+  const handleKakaoModalYes = () => {
+    setShowKakaoModal(false);
     window.location.href = `${API_BASE_URL}/auth/kakao`;
+  };
+
+  const handleKakaoModalNo = () => {
+    setShowKakaoModal(false);
+    alert('마이페이지에서 연동한 후 이용해 주세요');
+    navigate('/');
   };
 
   return (
@@ -123,11 +135,21 @@ function Login() {
             className="kakao-login-button"
             onClick={handleKakaoLogin}
             disabled={isLoading}
+            type="button"
           >
             카카오로 로그인
           </button>
 
         </form>
+        {showKakaoModal && (
+          <div className="modal-overlay">
+            <div className="modal-box">
+              <p>카카오톡 로그인을 클릭하셨습니다.<br/>카카오톡 연동을 하셨나요?</p>
+              <auth-button onClick={handleKakaoModalYes}>네</auth-button>
+              <auth-button onClick={handleKakaoModalNo}>아니요</auth-button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -111,6 +111,16 @@
   background-color: #5a6268;
 }
 
+.button-group .kakao-btn {
+  background-color: #FEE500;
+  color: #333;
+  font-weight: bold;
+}
+
+.button-group .kakao-btn:hover {
+  background-color: #ffe066;
+}
+
 .loading {
   text-align: center;
   padding: 2rem;

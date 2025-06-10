@@ -108,4 +108,60 @@ html, body {
 .kakao-login-button:disabled {
   background-color: #CCCCCC;
   cursor: not-allowed;
+}
+
+/* 카카오 연동 여부 모달 스타일 */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-box {
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.18);
+  padding: 2rem 2.5rem;
+  text-align: center;
+  min-width: 300px;
+  max-width: 90vw;
+}
+
+.modal-box p {
+  font-size: 1.1rem;
+  color: #333;
+  margin-bottom: 1.5rem;
+}
+
+.modal-box auth-button {
+  margin: 0 0.5rem;
+  padding: 0.6rem 1.5rem;
+  border: none;
+  border-radius: 5px;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  background: #8BC34A;
+  color: #fff;
+  transition: background 0.2s;
+}
+
+.auth-button {
+    margin-bottom: 10px;
+}
+
+.modal-box auth-button:last-child {
+  background: #EEEEEE;
+  color: #333;
+}
+
+.modal-box auth-button:hover {
+  opacity: 0.9;
 } 
