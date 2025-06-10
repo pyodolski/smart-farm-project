@@ -382,225 +382,235 @@ function FarmDetail() {
         )}
       </aside>
       <main className="farmdetail-main">
-        <div className="farm-info-card-col">
-          {farm && (
-            <div className="farm-info-card">
-              <div className="farm-info-header">
-                <h2>{farm.name}농장</h2>
-                <div className="location">위치: {farm.location}</div>
-              </div>
-              <div className="farm-info-content">
-                <h3 className="grid-title">{selectedGh?.name} 하우스</h3>
-                {isEditMode ? (
-                  <div className="grid-container">
-                    {editGrid && editGrid.map((row, rowIdx) => (
-                      <div key={rowIdx} style={{ display: 'flex' }}>
-                        {row.map((cell, colIdx) => (
-                          <input
-                            key={colIdx}
-                            type="number"
-                            value={cell}
-                            min={0}
-                            max={2}
-                            style={{ width: 40, height: 40, textAlign: 'center', margin: 2, borderRadius: 6, border: '1px solid #ccc' }}
-                            onChange={e => handleGridCellChange(rowIdx, colIdx, Number(e.target.value))}
-                          />
+        {greenhouses.length === 0 ? (
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+            <button className="farmdetail-empty-btn" onClick={handleAddGreenhouse}>
+              + 비닐하우스 추가
+            </button>
+          </div>
+        ) : (
+          <>
+            <div className="farm-info-card-col">
+              {farm && (
+                <div className="farm-info-card">
+                  <div className="farm-info-header">
+                    <h2>{farm.name}농장</h2>
+                    <div className="location">위치: {farm.location}</div>
+                  </div>
+                  <div className="farm-info-content">
+                    <h3 className="grid-title">{selectedGh?.name} 하우스</h3>
+                    {isEditMode ? (
+                      <div className="grid-container">
+                        {editGrid && editGrid.map((row, rowIdx) => (
+                          <div key={rowIdx} style={{ display: 'flex' }}>
+                            {row.map((cell, colIdx) => (
+                              <input
+                                key={colIdx}
+                                type="number"
+                                value={cell}
+                                min={0}
+                                max={2}
+                                style={{ width: 40, height: 40, textAlign: 'center', margin: 2, borderRadius: 6, border: '1px solid #ccc' }}
+                                onChange={e => handleGridCellChange(rowIdx, colIdx, Number(e.target.value))}
+                              />
+                            ))}
+                          </div>
                         ))}
+                        <div style={{ marginTop: 16, display: 'flex', gap: 12 }}>
+                          <button className="control-btn edit" onClick={handleSaveGrid}>저장</button>
+                          <button className="control-btn delete" onClick={handleCancelEdit}>취소</button>
+                        </div>
                       </div>
-                    ))}
-                    <div style={{ marginTop: 16, display: 'flex', gap: 12 }}>
-                      <button className="control-btn edit" onClick={handleSaveGrid}>저장</button>
-                      <button className="control-btn delete" onClick={handleCancelEdit}>취소</button>
-                    </div>
-                  </div>
-                ) : (
-                  (groups && groupAxis) && (
-                    <div className="merged-bar-container">
-                      {groupAxis === 'row' && (
+                    ) : (
+                      (groups && groupAxis) && (
                         <div className="merged-bar-container">
-                          {groups.map((group, idx) => {
-                            const [rowIdx, startCol, endCol, value] = group;
-                            return (
-                              <div
-                                key={`row-${idx}`}
-                                className={`merged-bar type-${value}`}
-                                style={{
-                                  width: `${(endCol - startCol + 1) * 45}px`,
-                                  height: '45px',
-                                  marginBottom: '6px',
-                                  marginLeft: `${startCol * 45}px`,
-                                  cursor: 'pointer'
-                                }}
-                                onClick={() => {
-                                  setBarDetailDirection(1);
-                                  setSelectedBar({ group, axis: groupAxis });
-                                }}
-                              >
-                                {gridTypeMapping[value].label}
-                              </div>
-                            );
-                          })}
+                          {groupAxis === 'row' && (
+                            <div className="merged-bar-container">
+                              {groups.map((group, idx) => {
+                                const [rowIdx, startCol, endCol, value] = group;
+                                return (
+                                  <div
+                                    key={`row-${idx}`}
+                                    className={`merged-bar type-${value}`}
+                                    style={{
+                                      width: `${(endCol - startCol + 1) * 45}px`,
+                                      height: '45px',
+                                      marginBottom: '6px',
+                                      marginLeft: `${startCol * 45}px`,
+                                      cursor: 'pointer'
+                                    }}
+                                    onClick={() => {
+                                      setBarDetailDirection(1);
+                                      setSelectedBar({ group, axis: groupAxis });
+                                    }}
+                                  >
+                                    {gridTypeMapping[value].label}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                          {groupAxis === 'col' && (
+                            <div className="merged-bar-col-wrapper">
+                              {groups.map((group, idx) => {
+                                const [startRow, colIdx, endRow, value] = group;
+                                return (
+                                  <div
+                                    key={`col-${idx}`}
+                                    className={`merged-bar type-${value}`}
+                                    style={{
+                                      width: '45px',
+                                      height: `${(endRow - startRow + 1) * 45}px`,
+                                      marginRight: '6px',
+                                      marginTop: `${startRow * 45}px`,
+                                      writingMode: 'vertical-rl',
+                                      textAlign: 'center',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      cursor: 'pointer'
+                                    }}
+                                    onClick={() => {
+                                      setBarDetailDirection(1);
+                                      setSelectedBar({ group, axis: groupAxis });
+                                    }}
+                                  >
+                                    {gridTypeMapping[value].label}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
                         </div>
-                      )}
-                      {groupAxis === 'col' && (
-                        <div className="merged-bar-col-wrapper">
-                          {groups.map((group, idx) => {
-                            const [startRow, colIdx, endRow, value] = group;
-                            return (
-                              <div
-                                key={`col-${idx}`}
-                                className={`merged-bar type-${value}`}
-                                style={{
-                                  width: '45px',
-                                  height: `${(endRow - startRow + 1) * 45}px`,
-                                  marginRight: '6px',
-                                  marginTop: `${startRow * 45}px`,
-                                  writingMode: 'vertical-rl',
-                                  textAlign: 'center',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  cursor: 'pointer'
-                                }}
-                                onClick={() => {
-                                  setBarDetailDirection(1);
-                                  setSelectedBar({ group, axis: groupAxis });
-                                }}
-                              >
-                                {gridTypeMapping[value].label}
-                              </div>
-                            );
-                          })}
-                        </div>
+                      )
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+            <div className="weather-card-col">
+              <AnimatePresence initial={false} custom={barDetailDirection}>
+                {(!selectedBar && weather) ? (
+                  <motion.div
+                    key="weather"
+                    initial={{ opacity: 0, x: barDetailDirection === -1 ? 80 : -80 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: barDetailDirection === -1 ? -80 : 80 }}
+                    transition={{ type: "spring", bounce: 0.3, duration: 0.8 }}
+                    className="weather-card"
+                    style={{ position: "absolute", width: "100%" }}
+                  >
+                    <div className="weather-header">
+                      <h3 className="weather-title">오늘의 날씨</h3>
+                      <select className="city-select" value={farm?.location || ''} disabled>
+                        <option>{farm?.location || ''}</option>
+                      </select>
+                    </div>
+                    <div className="weather-today">
+                      <div className="weather-icon">{weatherIcon(weather.description)}</div>
+                      <div className="weather-info">
+                        <div className="weather-temp">{weather.temperature}°C</div>
+                        <div className="weather-desc">{weather.description}</div>
+                      </div>
+                    </div>
+                    <div className="weather-forecast-title">내일/모레 예보</div>
+                    <div className="weather-forecast-row">
+                      {twoDay && twoDay.length > 0 && twoDay.some(day => day.min_temp !== '-') ? (
+                        twoDay.map(day => (
+                          <div className="forecast-card" key={day.date}>
+                            <div className="forecast-date">{day.date}</div>
+                            <div className="forecast-temp">
+                              {day.min_temp !== '-' ? `${day.min_temp}°C ~ ${day.max_temp}°C` : '예보 없음'}
+                            </div>
+                            <div className="forecast-desc">{day.description} {weatherIcon(day.description)}</div>
+                          </div>
+                        ))
+                      ) : (
+                        <>
+                          <div className="forecast-card">내일 예보 없음</div>
+                          <div className="forecast-card">모레 예보 없음</div>
+                        </>
                       )}
                     </div>
-                  )
-                )}
-              </div>
-            </div>
-          )}
-        </div>
-        <div className="weather-card-col">
-          <AnimatePresence initial={false} custom={barDetailDirection}>
-            {(!selectedBar && weather) ? (
-              <motion.div
-                key="weather"
-                initial={{ opacity: 0, x: barDetailDirection === -1 ? 80 : -80 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: barDetailDirection === -1 ? -80 : 80 }}
-                transition={{ type: "spring", bounce: 0.3, duration: 0.8 }}
-                className="weather-card"
-                style={{ position: "absolute", width: "100%" }}
-              >
-                <div className="weather-header">
-                  <h3 className="weather-title">오늘의 날씨</h3>
-                  <select className="city-select" value={farm?.location || ''} disabled>
-                    <option>{farm?.location || ''}</option>
-                  </select>
-                </div>
-                <div className="weather-today">
-                  <div className="weather-icon">{weatherIcon(weather.description)}</div>
-                  <div className="weather-info">
-                    <div className="weather-temp">{weather.temperature}°C</div>
-                    <div className="weather-desc">{weather.description}</div>
-                  </div>
-                </div>
-                <div className="weather-forecast-title">내일/모레 예보</div>
-                <div className="weather-forecast-row">
-                  {twoDay && twoDay.length > 0 && twoDay.some(day => day.min_temp !== '-') ? (
-                    twoDay.map(day => (
-                      <div className="forecast-card" key={day.date}>
-                        <div className="forecast-date">{day.date}</div>
-                        <div className="forecast-temp">
-                          {day.min_temp !== '-' ? `${day.min_temp}°C ~ ${day.max_temp}°C` : '예보 없음'}
-                        </div>
-                        <div className="forecast-desc">{day.description} {weatherIcon(day.description)}</div>
+                    <hr className="weather-divider" />
+                    <div className="env-card">
+                      <div className="env-title">하우스 환경</div>
+                      <div className="env-info-row">
+                        <span className="env-label">온도</span>
+                        <span className="env-value">25.5°C</span>
                       </div>
-                    ))
-                  ) : (
-                    <>
-                      <div className="forecast-card">내일 예보 없음</div>
-                      <div className="forecast-card">모레 예보 없음</div>
-                    </>
-                  )}
-                </div>
-                <hr className="weather-divider" />
-                <div className="env-card">
-                  <div className="env-title">하우스 환경</div>
-                  <div className="env-info-row">
-                    <span className="env-label">온도</span>
-                    <span className="env-value">25.5°C</span>
-                  </div>
-                  <div className="env-info-row">
-                    <span className="env-label">습도</span>
-                    <span className="env-value">64%</span>
-                  </div>
-                  <div className="env-info-row">
-                    <span className="env-label">측정 시간</span>
-                    <span className="env-value">2024-06-12 15:30:00</span>
-                  </div>
-                </div>
-              </motion.div>
-            ) : null}
-            {selectedBar && selectedBar.group ? (
-              <motion.div
-                key="bar-detail"
-                initial={false}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: barDetailDirection === -1 ? 80 : -80 }}
-                transition={{ type: "spring", bounce: 0.3, duration: 0.8 }}
-                className="bar-detail-card"
-                style={{ position: "absolute", width: "100%" }}
-              >
-                <div className="bar-detail-back" onClick={() => {
-                  setBarDetailDirection(-1);
-                  setSelectedBar(null);
-                }}>
-                  <GrFormPrevious size={30} />
-                </div>
-                <div className="bar-detail-content">
-                  {selectedBar.axis === 'row' ? (
-                    <h2>{selectedBar.group[0] + 1}행 상세 정보</h2>
-                  ) : (
-                    <h2>{selectedBar.group[1] + 1}열 상세 정보</h2>
-                  )}
-                  <div>타입: <b
-                    className={selectedBar.group[3] === 0 ? "bar-label-outline" : ""}
-                    style={{ color: gridTypeMapping[selectedBar.group[3]].color }}
+                      <div className="env-info-row">
+                        <span className="env-label">습도</span>
+                        <span className="env-value">64%</span>
+                      </div>
+                      <div className="env-info-row">
+                        <span className="env-label">측정 시간</span>
+                        <span className="env-value">2024-06-12 15:30:00</span>
+                      </div>
+                    </div>
+                  </motion.div>
+                ) : null}
+                {selectedBar && selectedBar.group ? (
+                  <motion.div
+                    key="bar-detail"
+                    initial={false}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: barDetailDirection === -1 ? 80 : -80 }}
+                    transition={{ type: "spring", bounce: 0.3, duration: 0.8 }}
+                    className="bar-detail-card"
+                    style={{ position: "absolute", width: "100%" }}
                   >
-                    {gridTypeMapping[selectedBar.group[3]].label}
-                  </b></div>
-                  {selectedBar.axis === 'row' ? (
-                    <>
-                      <div>행: {selectedBar.group[0] + 1}행</div>
-                      <div>길이: {selectedBar.group[2] - selectedBar.group[1] + 1}m</div>
-                    </>
-                  ) : (
-                    <>
-                      <div>열: {selectedBar.group[1] + 1}열</div>
-                      <div>길이: {selectedBar.group[2] - selectedBar.group[0] + 1}m</div>
-                    </>
-                  )}
-                </div>
-              </motion.div>
-            ) : null}
-          </AnimatePresence>
-        </div>
-        <div className="control-card-col">
-          {selectedGh && (
-            <div className="control-card">
-              <button className="control-btn capture" onClick={handleCapture}>
-                <FaCamera /> 촬영
-              </button>
-              <button className="control-btn edit" onClick={handleEdit}>
-                <FaEdit /> 수정
-              </button>
-              <button className="control-btn delete" onClick={handleDelete}>
-                <FaTrash /> 삭제
-        </button>
+                    <div className="bar-detail-back" onClick={() => {
+                      setBarDetailDirection(-1);
+                      setSelectedBar(null);
+                    }}>
+                      <GrFormPrevious size={30} />
+                    </div>
+                    <div className="bar-detail-content">
+                      {selectedBar.axis === 'row' ? (
+                        <h2>{selectedBar.group[0] + 1}행 상세 정보</h2>
+                      ) : (
+                        <h2>{selectedBar.group[1] + 1}열 상세 정보</h2>
+                      )}
+                      <div>타입: <b
+                        className={selectedBar.group[3] === 0 ? "bar-label-outline" : ""}
+                        style={{ color: gridTypeMapping[selectedBar.group[3]].color }}
+                      >
+                        {gridTypeMapping[selectedBar.group[3]].label}
+                      </b></div>
+                      {selectedBar.axis === 'row' ? (
+                        <>
+                          <div>행: {selectedBar.group[0] + 1}행</div>
+                          <div>길이: {selectedBar.group[2] - selectedBar.group[1] + 1}m</div>
+                        </>
+                      ) : (
+                        <>
+                          <div>열: {selectedBar.group[1] + 1}열</div>
+                          <div>길이: {selectedBar.group[2] - selectedBar.group[0] + 1}m</div>
+                        </>
+                      )}
+                    </div>
+                  </motion.div>
+                ) : null}
+              </AnimatePresence>
             </div>
-          )}
-        </div>
+            <div className="control-card-col">
+              {selectedGh && (
+                <div className="control-card">
+                  <button className="control-btn capture" onClick={handleCapture}>
+                    <FaCamera /> 촬영
+                  </button>
+                  <button className="control-btn edit" onClick={handleEdit}>
+                    <FaEdit /> 수정
+                  </button>
+                  <button className="control-btn delete" onClick={handleDelete}>
+                    <FaTrash /> 삭제
+                  </button>
+                </div>
+              )}
+            </div>
+          </>
+        )}
       </main>
 
       {showIotModal && (

@@ -87,6 +87,9 @@ body {
   transition: all 0.3s ease;
 }
 
+
+
+
 .farmdetail-list li:hover {
   background: #e6eaf2;
   color: #1a7f2e;
@@ -115,6 +118,32 @@ body {
   box-shadow: none;
   transition: background 0.18s, border 0.18s;
 }
+
+.farmdetail-empty-btn{
+  width: 270px;
+  height: 190px;
+  margin: 0 auto;
+  border-radius: 22px;
+  border: 1.5px dashed #ccc;
+  background: #f8fafc;
+  border-radius: 22px;
+  display: flex;
+  font-size: 1.2rem;  
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.farmdetail-empty-btn:hover{
+  background: #e6f2d6;
+  color: #000000;
+  font-size: 1.3rem;
+  border: 1.5px solid #4ac55a;
+  transform: translateY(-5px);
+}
+
 
 .farmdetail-add-btn:hover {
   background: #e6f2d6;
