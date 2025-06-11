@@ -90,3 +90,26 @@ CREATE TABLE sensor_log (
     timestamp DATETIME,
     FOREIGN KEY (gh_id) REFERENCES greenhouses(id) ON DELETE SET NULL
 );
+
+CREATE TABLE notification (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    receiver_id VARCHAR(50) NOT NULL,
+    message TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    type ENUM('iot 탐색 종료', '병해충 발생', '새 댓글', '승인 허가') NOT NULL,
+    image_url VARCHAR(255),                       -- (병해충 발생 시)
+    target_id INT NOT NULL,                       -- url에 사용할 해당 id(탐색 종료/병해충 -> 비닐하우스, 새 댓글 -> 게시물, 승인 허가 -> 농장)
+    is_read BOOLEAN DEFAULT FALSE,
+    FOREIGN KEY (receiver_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE crop_groups (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    greenhouse_id INT NOT NULL,
+    group_cells JSON NOT NULL,
+    crop_type INT NOT NULL,
+    is_horizontal BOOLEAN NOT NULL,
+    harvest_amount INT DEFAULT 0,
+    is_read BOOLEAN DEFAULT FALSE,
+    FOREIGN KEY (greenhouse_id) REFERENCES greenhouses(id) ON DELETE CASCADE
+);

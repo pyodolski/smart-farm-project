@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session, jsonify
 import pymysql.cursors
 from config import DB_CONFIG
+from utils.notification import NotificationManager
 
 post_bp = Blueprint('post', __name__)
 
@@ -148,15 +149,21 @@ def create_post():
     if not conn:
         return jsonify({'message': 'DB 연결 실패'}), 500
         
-    cursor.execute(
-        'INSERT INTO board (name, title, content) VALUES (%s, %s, %s)',
-        (session['nickname'], title, content)
-    )
-    conn.commit()
-    cursor.close()
-    conn.close()
-
-    return jsonify({'message': '게시글이 작성되었습니다.'})
+    try:
+        # user_id를 저장 (nickname 대신)
+        cursor.execute(
+            'INSERT INTO board (name, title, content) VALUES (%s, %s, %s)',
+            (session['user_id'], title, content)
+        )
+        conn.commit()
+        return jsonify({'message': '게시글이 작성되었습니다.'})
+    except Exception as e:
+        conn.rollback()
+        print(f"게시글 작성 오류: {e}")
+        return jsonify({'message': '게시글 작성 실패', 'error': str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
 
 @post_bp.route('/api/posts/<int:post_id>', methods=['GET'])
 def get_post(post_id):
@@ -331,15 +338,52 @@ def create_comment(post_id):
     if not conn:
         return jsonify({'message': 'DB 연결 실패'}), 500
         
-    cursor.execute(
-        'INSERT INTO comments (board_id, commenter, content) VALUES (%s, %s, %s)',
-        (post_id, session['user_id'], content)
-    )
-    conn.commit()
-    cursor.close()
-    conn.close()
+    try:
+        print(f"댓글 작성 시도: post_id={post_id}, user_id={session['user_id']}")
+        
+        # 게시글 작성자 정보 조회
+        cursor.execute("""
+            SELECT b.name as author_id, b.title
+            FROM board b
+            WHERE b.id = %s
+        """, (post_id,))
+        post = cursor.fetchone()
+        
+        if not post:
+            print(f"게시글을 찾을 수 없음: post_id={post_id}")
+            return jsonify({'message': '게시글을 찾을 수 없습니다.'}), 404
 
-    return jsonify({'message': '댓글이 작성되었습니다.'})
+        print(f"게시글 정보: author_id={post['author_id']}, title={post['title']}")
+
+        # 댓글 작성
+        cursor.execute(
+            'INSERT INTO comments (board_id, commenter, content) VALUES (%s, %s, %s)',
+            (post_id, session['user_id'], content)
+        )
+        
+        # 자신의 게시글이 아닐 경우에만 알림 생성
+        if post['author_id'] != session['user_id']:
+            print(f"알림 생성 시도: receiver={post['author_id']}")
+            notification_mgr = NotificationManager()
+            success = notification_mgr.create_new_comment_notification(
+                receiver_id=post['author_id'],
+                post_id=post_id,
+                post_title=post['title']
+            )
+            print(f"알림 생성 결과: {'성공' if success else '실패'}")
+        else:
+            print("자신의 게시글에 댓글 작성 - 알림 생성 안 함")
+        
+        conn.commit()
+        return jsonify({'message': '댓글이 작성되었습니다.'})
+        
+    except Exception as e:
+        conn.rollback()
+        print(f"댓글 작성 오류: {e}")
+        return jsonify({'message': '댓글 작성 실패', 'error': str(e)}), 500
+    finally:
+        cursor.close()
+        conn.close()
 
 @post_bp.route('/api/comments/<int:comment_id>', methods=['GET'])
 def get_comment(comment_id):

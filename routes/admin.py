@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for
 from utils.database import get_db_connection, get_dict_cursor_connection
+from utils.notification import NotificationManager
 
 admin_bp = Blueprint('admin', __name__)
 
@@ -112,11 +113,33 @@ def approve_farm(farm_id):
 
     try:
         with conn.cursor() as cursor:
+            # 농장 정보 조회
+            cursor.execute("""
+                SELECT name, owner_username 
+                FROM farms 
+                WHERE id = %s
+            """, (farm_id,))
+            farm = cursor.fetchone()
+            
+            if not farm:
+                return "농장을 찾을 수 없습니다", 404
+
+            # 농장 승인 상태 업데이트
             cursor.execute("UPDATE farms SET is_approved = 1 WHERE id = %s", (farm_id,))
+            
+            # 알림 생성
+            notification_mgr = NotificationManager()
+            notification_mgr.create_approval_notification(
+                receiver_id=farm[1],  # owner_username
+                farm_id=farm_id,
+                farm_name=farm[0]  # farm name
+            )
+            
             conn.commit()
             return redirect(url_for('admin.admin_page'))
     except Exception as e:
         print(f"승인 오류: {e}")
+        conn.rollback()
         return "승인 실패", 500
     finally:
         conn.close()
