@@ -28,7 +28,7 @@ class NotificationManager:
         try:
             sql = """
                 SELECT * FROM notification 
-                WHERE receiver_id = %s 
+                WHERE receiver_id = %s AND is_read = FALSE
                 ORDER BY created_at DESC 
                 LIMIT %s
             """
@@ -43,6 +43,17 @@ class NotificationManager:
         except Exception as e:
             print(f"Error fetching notifications: {e}")
             return []
+
+    def mark_as_read(self, notification_id: int):
+        try:
+            sql = "UPDATE notification SET is_read = TRUE WHERE id = %s"
+            self.cursor.execute(sql, (notification_id,))
+            self.db.commit()
+            return True
+        except Exception as e:
+            print(f"Error marking notification as read: {e}")
+            self.db.rollback()
+            return False
 
     #알림 삭제
     def delete_notification(self, notification_id: int):
@@ -123,6 +134,15 @@ class NotificationManager:
             type="승인 허가",
             target_id=farm_id
         )
+
+    def get_notification_by_id(self, notification_id: int):
+        try:
+            sql = "SELECT * FROM notification WHERE id = %s"
+            self.cursor.execute(sql, (notification_id,))
+            return self.cursor.fetchone()
+        except Exception as e:
+            print(f"Error fetching notification: {e}")
+            return None
 
     def __del__(self):
         try:

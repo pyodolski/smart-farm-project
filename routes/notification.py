@@ -18,17 +18,30 @@ def get_notifications():
         return jsonify({"error": "알림 조회 실패"}), 500
 
 @notification_bp.route('/api/notifications/<int:notification_id>', methods=['DELETE'])
-def delete_notification(notification_id):
+def handle_notification(notification_id):
     try:
         user_id = session.get('user_id')
         if not user_id:
             return jsonify({"error": "로그인이 필요합니다"}), 401
 
         notification_mgr = NotificationManager()
-        success = notification_mgr.delete_notification(notification_id)
+        
+        # 알림 정보 가져오기
+        notification = notification_mgr.get_notification_by_id(notification_id)
+        if not notification:
+            return jsonify({"error": "알림을 찾을 수 없습니다"}), 404
+            
+        # URL 생성
+        redirect_url = notification_mgr.get_notification_url(notification['type'], notification['target_id'])
+        
+        # 읽음 표시
+        success = notification_mgr.mark_as_read(notification_id)
         if success:
-            return jsonify({"message": "알림이 삭제되었습니다."})
-        return jsonify({"error": "알림 삭제 실패"}), 400
+            return jsonify({
+                "message": "알림을 읽음 표시했습니다.",
+                "redirect_url": redirect_url
+            })
+        return jsonify({"error": "알림 읽음 표시 실패"}), 400
     except Exception as e:
-        print(f"알림 삭제 오류: {e}")
-        return jsonify({"error": "알림 삭제 실패"}), 500 
+        print(f"알림 읽음 표시 오류: {e}")
+        return jsonify({"error": "알림 읽음 표시 실패"}), 500 
