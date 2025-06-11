@@ -15,4 +15,25 @@
 .back-button:hover {
   background-color: #e9ecef;
   transform: translateX(-2px);
-} 
+}
+
+
+
+body {
+  overflow-y: overlay; /* 반드시 overlay 처리 */
+}
+
+/* WebKit 브라우저용 */
+::-webkit-scrollbar {
+  width: 10px; /* 스크롤바 너비 */
+  border-radius: 15px;
+}
+
+::-webkit-scrollbar-track {
+  background: #333333ad; 
+}
+
+::-webkit-scrollbar-thumb {
+  background-color: #4CAF50; 
+  border-radius: 4px;
+}
