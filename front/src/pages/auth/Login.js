@@ -13,7 +13,9 @@ function Login() {
   const [isLoggedIn, setIsLoggedIn] = useContext(AuthContext);
   const [showKakaoModal, setShowKakaoModal] = useState(false);
   const waveRef = useRef(null);
-  const waveText = "Smart Farm Hub에 오신 것을 환영합니다";
+  const waveText = "스마트한 농업의 시작, Smart Farm Hub";
+  const waveText2 = "농장의 데이터를 시각화하고 언제 어디서나 쉽게 모니터링하세요!";
+  const waveRef2 = useRef(null);
 
   useEffect(() => {
     // 이미 로그인된 상태라면 메인 페이지로 리다이렉트
@@ -37,14 +39,25 @@ function Login() {
 
   useEffect(() => {
     const wave = waveRef.current;
-    if (!wave) return;
-    wave.innerHTML = waveText
-      .split("")
-      .map((letter, idx) => {
-        if (letter === " ") return " ";
-        return `<span style="animation-delay:${idx * 15}ms" class="letter">${letter}</span>`;
-      })
-      .join("");
+    if (wave) {
+      wave.innerHTML = waveText
+        .split("")
+        .map((letter, idx) => {
+          if (letter === " ") return " ";
+          return `<span style="animation-delay:${idx * 15}ms" class="letter">${letter}</span>`;
+        })
+        .join("");
+    }
+    const wave2 = waveRef2.current;
+    if (wave2) {
+      wave2.innerHTML = waveText2
+        .split("")
+        .map((letter, idx) => {
+          if (letter === " ") return " ";
+          return `<span style="animation-delay:${idx * 15}ms" class="letter">${letter}</span>`;
+        })
+        .join("");
+    }
   }, []);
 
   const handleLogin = async (e) => {
@@ -107,6 +120,7 @@ function Login() {
     <>
       <div className="wave-text-area">
         <div ref={waveRef} className="wave title" />
+        <div ref={waveRef2} className="wave subtitle" style={{fontSize: "2rem", marginTop: "24px"}} />
       </div>
       <div className="login-container">
       </div>

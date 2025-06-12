@@ -237,8 +237,21 @@ html, body {
 }
 
 .wave-text-area .wave,
-.wave-text-area .title {
-  font-family: 'Pretendard', sans-serif;
+.wave-text-area .title,
+.wave-text-area .subtitle,
+.letter {
+  color: #fff !important;
+  font-family: 'Pretendard', 'Noto Sans KR', 'Apple SD Gothic Neo', Arial, sans-serif !important;
   font-weight: 900;
+  text-shadow: 0 2px 8px rgba(78,140,255,0.25), 0 1px 0 #fff, 0 0px 2px #4e8cff;
+}
+
+.wave-text-area .title {
   font-size: 70px;
+}
+
+.wave-text-area .subtitle {
+  font-size: 2rem;
+  margin-top: 24px;
+  font-weight: 700;
 }

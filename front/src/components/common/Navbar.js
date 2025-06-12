@@ -100,6 +100,8 @@ function Navbar() {
         sessionStorage.removeItem('isLoggedIn');
         sessionStorage.removeItem('userId');
         setIsLoggedIn(false);
+        setId('');
+        setPassword('');
         navigate('/login');
       }
     } catch (error) {
@@ -249,8 +251,8 @@ function Navbar() {
                 </button>
               </>
             ) : (
-              <button className="nav-login-btn" onClick={() => setShowLoginForm(true)}>
-                로그인하기
+              <button className="nav-login-btn" onClick={() => {setShowLoginForm(true); setMenuOpen(false);}}>
+                로그인
               </button>
             )}
           </div>
@@ -290,7 +292,7 @@ function Navbar() {
                 </>
               ) : (
                 <button className="login-btn" onClick={() => {setShowLoginForm(true); setMenuOpen(false);}}>
-                  로그인하기
+                  로그인
                 </button>
               )}
             </div>
