@@ -113,3 +113,7 @@ CREATE TABLE crop_groups (
     is_read BOOLEAN DEFAULT FALSE,
     FOREIGN KEY (greenhouse_id) REFERENCES greenhouses(id) ON DELETE CASCADE
 );
+
+ALTER TABLE `smartfarm`.`crop_groups`
+ADD COLUMN `total_amount` INT NULL DEFAULT '0' AFTER `harvest_amount`,
+CHANGE COLUMN `id` `id` INT NOT NULL ;
