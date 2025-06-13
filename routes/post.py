@@ -150,10 +150,10 @@ def create_post():
         return jsonify({'message': 'DB 연결 실패'}), 500
         
     try:
-        # user_id를 저장 (nickname 대신)
+        # user_id와 nickname을 함께 저장
         cursor.execute(
-            'INSERT INTO board (name, title, content) VALUES (%s, %s, %s)',
-            (session['user_id'], title, content)
+            'INSERT INTO board (user_id, nickname, title, content) VALUES (%s, %s, %s, %s)',
+            (session['user_id'], session['nickname'], title, content)
         )
         conn.commit()
         return jsonify({'message': '게시글이 작성되었습니다.'})
@@ -177,10 +177,10 @@ def get_post(post_id):
     cursor.execute('''
         SELECT b.*, 
                (SELECT COUNT(*) FROM likes WHERE board_id = b.id) as like_count,
-               b.name = %s as is_author
+               b.user_id = %s as is_author
         FROM board b
         WHERE b.id = %s
-    ''', (session['nickname'], post_id))
+    ''', (session['user_id'], post_id))
     post = cursor.fetchone()
 
     if not post:
@@ -228,7 +228,7 @@ def update_post(post_id):
         conn.close()
         return jsonify({'message': '게시글을 찾을 수 없습니다.'}), 404
 
-    if post['name'] != session['nickname']:
+    if post['user_id'] != session['user_id']:
         cursor.close()
         conn.close()
         return jsonify({'message': '수정 권한이 없습니다.'}), 403
@@ -269,7 +269,7 @@ def delete_post(post_id):
         conn.close()
         return jsonify({'message': '게시글을 찾을 수 없습니다.'}), 404
 
-    if post['name'] != session['nickname']:
+    if post['user_id'] != session['user_id']:
         cursor.close()
         conn.close()
         return jsonify({'message': '삭제 권한이 없습니다.'}), 403
@@ -291,7 +291,7 @@ def toggle_like(post_id):
         return jsonify({'message': 'DB 연결 실패'}), 500
         
     cursor.execute(
-        'SELECT * FROM likes WHERE board_id = %s AND user_name = %s',
+        'SELECT * FROM likes WHERE board_id = %s AND user_id = %s',
         (post_id, session['user_id'])
     )
     existing_like = cursor.fetchone()
@@ -299,13 +299,13 @@ def toggle_like(post_id):
     if existing_like:
         # 좋아요 취소
         cursor.execute(
-            'DELETE FROM likes WHERE board_id = %s AND user_name = %s',
+            'DELETE FROM likes WHERE board_id = %s AND user_id = %s',
             (post_id, session['user_id'])
         )
     else:
         # 좋아요 추가
         cursor.execute(
-            'INSERT INTO likes (board_id, user_name) VALUES (%s, %s)',
+            'INSERT INTO likes (board_id, user_id) VALUES (%s, %s)',
             (post_id, session['user_id'])
         )
 
