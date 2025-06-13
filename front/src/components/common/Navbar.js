@@ -6,6 +6,7 @@ import { AuthContext } from '../../contexts/AuthContext';
 import API_BASE_URL from '../../utils/config';
 import { FaBars } from 'react-icons/fa';
 import { VscBell, VscBellDot } from "react-icons/vsc";
+import { LuListX, LuListPlus } from "react-icons/lu";
 import Login from '../../pages/auth/Login';
 
 function Navbar() {
@@ -22,6 +23,8 @@ function Navbar() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [showKakaoModal, setShowKakaoModal] = useState(false);
+  const [pendingFarms, setPendingFarms] = useState([]);
+  const [showPendingFarms, setShowPendingFarms] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -186,6 +189,43 @@ function Navbar() {
     navigate('/');
   };
 
+  // 승인 대기 목록 가져오기
+  const fetchPendingFarms = async () => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/farms/pending`, {
+        credentials: 'include'
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setPendingFarms(data.pending_farms || []);
+      }
+    } catch (error) {
+      console.error('승인 대기 목록 가져오기 실패:', error);
+    }
+  };
+
+  // 로그인 상태가 변경되거나 컴포넌트가 마운트될 때 승인 대기 목록 가져오기
+  useEffect(() => {
+    if (isLoggedIn) {
+      fetchPendingFarms();
+      // 60초마다 갱신
+      const interval = setInterval(fetchPendingFarms, 60000);
+      return () => clearInterval(interval);
+    }
+  }, [isLoggedIn]);
+
+  // 승인 대기 목록 팝업 외부 클릭 시 닫기
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showPendingFarms && !event.target.closest('.pending-farms-container')) {
+        setShowPendingFarms(false);
+      }
+    };
+
+    document.addEventListener('click', handleClickOutside);
+    return () => document.removeEventListener('click', handleClickOutside);
+  }, [showPendingFarms]);
+
   return (
     <>
       <nav className={`navbar ${show ? 'navbar-show' : 'navbar-hide'}`}>
@@ -243,6 +283,37 @@ function Navbar() {
                     </div>
                   )}
                 </div>
+                <div className="pending-farms-container">
+                  <button 
+                    className="pending-farms-btn" 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowPendingFarms(!showPendingFarms);
+                    }}
+                    title="승인 대기 목록"
+                  >
+                    {pendingFarms.length > 0 ? <LuListPlus size={24} /> : <LuListX size={24} />}
+                  </button>
+                  {showPendingFarms && (
+                    <div className="pending-farms-popup">
+                      {pendingFarms.length > 0 ? (
+                        pendingFarms.map((farm) => (
+                          <div
+                            key={farm.id}
+                            className="pending-farm-item"
+                          >
+                            <p>농장명: {farm.name}</p>
+                            <p>위치: {farm.location}</p>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="no-pending-farms">
+                          승인 대기 중인 농장이 없습니다
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
                 <button className="login-btn" onClick={()=> navigate('/profile')}>
                   {sessionStorage.getItem('nickname')}님 환영합니다
                 </button>
@@ -283,6 +354,37 @@ function Navbar() {
                       )}
                     </button>
                   </div>
+                  <div className="pending-farms-container">
+                    <button 
+                      className="pending-farms-btn" 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setShowPendingFarms(!showPendingFarms);
+                      }}
+                      title="승인 대기 목록"
+                    >
+                      {pendingFarms.length > 0 ? <LuListPlus size={24} /> : <LuListX size={24} />}
+                    </button>
+                  </div>
+                  {showPendingFarms && (
+                    <div className="pending-farms-popup">
+                      {pendingFarms.length > 0 ? (
+                        pendingFarms.map((farm) => (
+                          <div
+                            key={farm.id}
+                            className="pending-farm-item"
+                          >
+                            <p>농장명: {farm.name}</p>
+                            <p>위치: {farm.location}</p>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="no-pending-farms">
+                          승인 대기 중인 농장이 없습니다
+                        </div>
+                      )}
+                    </div>
+                  )}
                   <button className="login-btn" onClick={()=> {navigate('/profile'); setMenuOpen(false);}}>
                     {sessionStorage.getItem('nickname')}님 환영합니다
                   </button>

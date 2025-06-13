@@ -1,0 +1,22 @@
+import paho.mqtt.client as mqtt
+
+def on_connect(client, userdata, flag, rc, prop=None):
+	client.subscribe("room/temp") 
+
+def on_message(client, userdata, msg):
+	print(msg.topic, end=", ") 
+	print(int(msg.payload)) 
+
+ip = input("브로커의 IP 주소>>") 
+client = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2) 
+client.on_connect=on_connect 
+client.on_message=on_message
+client.connect(ip, 1883) 
+client.loop_start() 
+while True:
+	command = input("전송 시작/중단(start/stop 입력)>>")
+	if command == "start" or command == "stop":
+		client.publish("command", command)
+
+client.loop_stop()
+client.disconnect()
