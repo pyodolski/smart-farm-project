@@ -3,6 +3,12 @@
   top: 0; left: 0; right: 0;
   z-index: 1000;
   transition: transform 0.4s cubic-bezier(0.77,0,0.175,1);
+  background: white;
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 .navbar-show {
   transform: translateY(0);
@@ -99,12 +105,7 @@
   }
 }
 
-.notification-container {
-  position: relative;
-  margin-right: 10px;
-}
-
-.notification-btn {
+button.notification-btn {
   background: none;
   border: none;
   color: #333;
@@ -113,10 +114,17 @@
   position: relative;
   display: flex;
   align-items: center;
+  transition: color 0.3s;
 }
 
-.notification-btn:hover {
-  color: #4CAF50;
+.notification-container {
+  position: relative;
+  margin-right: 10px;
+}
+
+
+button.notification-btn:hover {
+  color: #22b904;
 }
 
 .notification-badge {
@@ -186,4 +194,50 @@
     max-height: calc(100vh - 60px);
     border-radius: 0;
   }
-} 
+}
+
+.login-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+}
+
+.login-modal-content {
+  position: relative;
+  z-index: 2001;
+  transform: none !important;
+  animation: none !important;
+}
+
+.login-modal-content .login-form-box {
+  transform: none !important;
+  animation: none !important;
+  background: white;
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  width: 350px;
+  text-align: center;
+}
+
+.nav-login-btn {
+  background-color: #ffffff;
+  color: rgb(0, 0, 0);
+  border: none;
+  padding: 0.5rem 2rem;
+  border-radius: 25px;
+  border: 1.76px solid #000000;
+  cursor: pointer;
+  font-weight: 600;
+}
+.nav-login-btn:hover {
+  color:#000000;
+
+}

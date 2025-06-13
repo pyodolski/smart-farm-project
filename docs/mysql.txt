@@ -60,6 +60,16 @@ CREATE TABLE report_log (
   UNIQUE KEY unique_report (user_id, target_type, target_id)
 );
 
+CREATE TABLE greenhouses (
+    id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    farm_id INT,
+    name VARCHAR(100),
+    num_rows INT,
+    num_cols INT,
+    grid_data JSON,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
 CREATE TABLE iot (
     id INT AUTO_INCREMENT PRIMARY KEY,
     iot_name VARCHAR(100) NOT NULL,
@@ -70,16 +80,6 @@ CREATE TABLE iot (
     resolution ENUM('640x480', '1280x720', '1920x1080') DEFAULT '1280x720',
     camera_on BOOLEAN DEFAULT TRUE,
     FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE CASCADE
-);
-
-CREATE TABLE greenhouses (
-    id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    farm_id INT,
-    name VARCHAR(100),
-    num_rows INT,
-    num_cols INT,
-    grid_data JSON,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE sensor_log (
@@ -115,5 +115,5 @@ CREATE TABLE crop_groups (
 );
 
 ALTER TABLE `smartfarm`.`crop_groups`
-ADD COLUMN `total_amount` INT NULL DEFAULT '0' AFTER `harvest_amount`,
-CHANGE COLUMN `id` `id` INT NOT NULL ;
+ADD COLUMN `total_amount` INT NULL DEFAULT '0' AFTER `harvest_amount`;
+ALTER TABLE `smartfarm`.`crop_groups` MODIFY COLUMN `id` INT NOT NULL AUTO_INCREMENT;

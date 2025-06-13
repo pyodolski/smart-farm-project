@@ -1,4 +1,4 @@
-import React, { useState, useContext, useEffect } from 'react';
+import React, { useState, useContext, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthContext } from '../../contexts/AuthContext';
 import './Login.css';
@@ -12,6 +12,10 @@ function Login() {
   const navigate = useNavigate();
   const [isLoggedIn, setIsLoggedIn] = useContext(AuthContext);
   const [showKakaoModal, setShowKakaoModal] = useState(false);
+  const waveRef = useRef(null);
+  const waveText = "스마트한 농업의 시작, Smart Farm Hub";
+  const waveText2 = "농장의 데이터를 시각화하고 언제 어디서나 쉽게 모니터링하세요!";
+  const waveRef2 = useRef(null);
 
   useEffect(() => {
     // 이미 로그인된 상태라면 메인 페이지로 리다이렉트
@@ -32,6 +36,29 @@ function Login() {
 
     checkLoginStatus();
   }, [navigate]);
+
+  useEffect(() => {
+    const wave = waveRef.current;
+    if (wave) {
+      wave.innerHTML = waveText
+        .split("")
+        .map((letter, idx) => {
+          if (letter === " ") return " ";
+          return `<span style="animation-delay:${idx * 15}ms" class="letter">${letter}</span>`;
+        })
+        .join("");
+    }
+    const wave2 = waveRef2.current;
+    if (wave2) {
+      wave2.innerHTML = waveText2
+        .split("")
+        .map((letter, idx) => {
+          if (letter === " ") return " ";
+          return `<span style="animation-delay:${idx * 15}ms" class="letter">${letter}</span>`;
+        })
+        .join("");
+    }
+  }, []);
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -90,68 +117,14 @@ function Login() {
   };
 
   return (
-    <div className="login-container">
-      <div className="login-form-box">
-        <h2>로그인</h2>
-        {error && <div className="error-message">{error}</div>}
-        <form onSubmit={handleLogin}>
-          <div className="input-group">
-            <input
-              type="text"
-              placeholder="ID"
-              value={id}
-              onChange={(e) => setId(e.target.value)}
-              required
-              disabled={isLoading}
-            />
-          </div>
-          <div className="input-group">
-            <input
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              disabled={isLoading}
-            />
-          </div>
-          <button
-            type="submit"
-            className="login-button"
-            disabled={isLoading}
-          >
-            {isLoading ? '로그인 중...' : '로그인'}
-          </button>
-          <button
-            type="button"
-            className="register-button"
-            onClick={() => navigate('/register')}
-            disabled={isLoading}
-          >
-            회원가입
-          </button>
-
-          <button
-            className="kakao-login-button"
-            onClick={handleKakaoLogin}
-            disabled={isLoading}
-            type="button"
-          >
-            카카오로 로그인
-          </button>
-
-        </form>
-        {showKakaoModal && (
-          <div className="modal-overlay">
-            <div className="modal-box">
-              <p>카카오톡 로그인을 클릭하셨습니다.<br/>카카오톡 연동을 하셨나요?</p>
-              <auth-button onClick={handleKakaoModalYes}>네</auth-button>
-              <auth-button onClick={handleKakaoModalNo}>아니요</auth-button>
-            </div>
-          </div>
-        )}
+    <>
+      <div className="wave-text-area">
+        <div ref={waveRef} className="wave title" />
+        <div ref={waveRef2} className="wave subtitle" style={{fontSize: "2rem", marginTop: "24px"}} />
       </div>
-    </div>
+      <div className="login-container">
+      </div>
+    </>
   );
 }
 
