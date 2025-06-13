@@ -5,6 +5,11 @@ import pymysql
 import json
 from utils.database import get_db_connection
 import requests
+from collections import Counter
+from ultralytics import YOLO
+import os
+
+
 
 
 greenhouse_bp = Blueprint('greenhouse', __name__)
@@ -283,7 +288,11 @@ def get_crop_groups(greenhouse_id):
 # --------------------------
 # 촬영 명령 전송
 # --------------------------
-RASPBERRY_PI_IP = "http://192.168.137.9:5002"  # Pi의 Flask 서버 주소
+# 상수
+RASPBERRY_PI_IP = "http://192.168.137.9:5002"
+IMAGE_DIR = "test_images/"
+MODEL_RIPE = YOLO("model/ripe_straw.pt")
+MODEL_ROTTEN = YOLO("model/rotten_straw.pt")
 
 @greenhouse_bp.route('/crop_groups/read', methods=['POST'])
 def crop_groups_read():
@@ -295,30 +304,67 @@ def crop_groups_read():
         if not group_id or not iot_id:
             return jsonify({'message': '필수 정보가 누락되었습니다.'}), 400
 
-        # ✅ DB 연결 및 업데이트 수행
-        conn = get_db_connection()
-        cur = conn.cursor()
-        cur.execute("UPDATE crop_groups SET is_read = TRUE WHERE id = %s", (group_id,))
-        conn.commit()  # 🔥 먼저 커밋하여 트랜잭션 락 해제
-        conn.close()
-
-        # ✅ IoT 명령 전송은 별도로 실행
+        # ✅ 촬영 명령 → Raspberry Pi
         try:
             res = requests.post(
                 f"{RASPBERRY_PI_IP}/run-pi-script",
                 json={"group_id": group_id, "iot_id": iot_id},
-                timeout=3  # 3초 안에 응답 없으면 실패 처리
+                timeout=5
             )
             res.raise_for_status()
-            return jsonify({'message': '📸 촬영 명령이 전송되었습니다!'}), 200
-
+            response_data = res.json()
+            filename = response_data.get("filename")
+            if not filename:
+                return jsonify({'message': '파일명이 반환되지 않았습니다.'}), 500
+            image_path = os.path.join(IMAGE_DIR, filename)
         except Exception as iot_err:
             print("❌ IoT 명령 전송 실패:", iot_err)
-            return jsonify({'message': 'DB는 성공했지만, IoT 촬영 명령 전송 실패'}), 502
+            return jsonify({'message': 'IoT 촬영 실패', 'error': str(iot_err)}), 502
+
+        # ✅ YOLO 추론 (익은/안익은 + 썩은 것)
+        result_ripe = MODEL_RIPE(image_path, conf=0.5)
+        result_rotten = MODEL_ROTTEN(image_path, conf=0.5)
+
+        ripe_classes = [MODEL_RIPE.names[int(cls)] for cls in result_ripe[0].boxes.cls]
+        rotten_classes = [MODEL_ROTTEN.names[int(cls)] for cls in result_rotten[0].boxes.cls]
+
+        count_ripe = Counter(ripe_classes)
+        count_rotten = Counter(rotten_classes)
+
+        ripe = count_ripe.get("straw-ripe", 0)
+        unripe = count_ripe.get("straw-unripe", 0)
+        total = ripe + unripe
+        has_rotten = count_rotten.get("starw_rotten", 0) > 0
+
+        # ✅ DB 업데이트 (harvest_amount, total_amount, is_read)
+        conn = get_db_connection()
+        cur = conn.cursor()
+        cur.execute("""
+            UPDATE crop_groups
+            SET harvest_amount = %s,
+                total_amount = %s,
+                is_read = %s
+            WHERE id = %s
+        """, (ripe, total, 1 if has_rotten else 0, group_id))
+        conn.commit()
+        conn.close()
+
+        # ✅ 응답 반환
+        return jsonify({
+            "message": "📸 촬영 및 분석 완료",
+            "result": {
+                "filename": filename,
+                "ripe": ripe,
+                "unripe": unripe,
+                "total": total,
+                "rotten": "✅ O" if has_rotten else "❌ X",
+                "is_read": 1 if has_rotten else 0
+            }
+        }), 200
 
     except Exception as e:
-        print("❌ 촬영 명령 오류:", e)
-        return jsonify({'message': '서버 오류 발생'}), 500
+        print("❌ 전체 오류:", e)
+        return jsonify({'message': '서버 오류 발생', 'error': str(e)}), 500
 
 def send_iot_capture_command(iot_id, group_id):
     # 실제 IoT 명령 전송 로직 작성
