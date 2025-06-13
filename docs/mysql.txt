@@ -17,9 +17,9 @@ CREATE TABLE board (
   name VARCHAR(20) NOT NULL,                 
   title VARCHAR(70) NOT NULL,       
   content TEXT NOT NULL,             
-  wdate TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, 
+  wdate TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   view INT(11) NOT NULL DEFAULT 0,
-  report INT(10) NoT NULL DEFAULT 0,
+  report INT(10) NOT NULL DEFAULT 0,
   PRIMARY KEY (id)
 );
 
@@ -104,16 +104,13 @@ CREATE TABLE notification (
 );
 
 CREATE TABLE crop_groups (
-    id INT AUTO_INCREMENT PRIMARY KEY,
+    id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
     greenhouse_id INT NOT NULL,
     group_cells JSON NOT NULL,
     crop_type INT NOT NULL,
     is_horizontal BOOLEAN NOT NULL,
     harvest_amount INT DEFAULT 0,
+    total_amount INT DEFAULT 0,
     is_read BOOLEAN DEFAULT FALSE,
     FOREIGN KEY (greenhouse_id) REFERENCES greenhouses(id) ON DELETE CASCADE
 );
-
-ALTER TABLE `smartfarm`.`crop_groups`
-ADD COLUMN `total_amount` INT NULL DEFAULT '0' AFTER `harvest_amount`;
-ALTER TABLE `smartfarm`.`crop_groups` MODIFY COLUMN `id` INT NOT NULL AUTO_INCREMENT;
