@@ -4,83 +4,9 @@ from flask import Blueprint, request, jsonify, session, render_template
 import pymysql
 import json
 from utils.database import get_db_connection
-import requests
-from collections import Counter
-from ultralytics import YOLO
-import os
-
-
-
 
 greenhouse_bp = Blueprint('greenhouse', __name__)
 
-# --------------------------
-# 그룹 생성 관련 유틸 함수
-# --------------------------
-def find_contiguous_segments(line):
-    segments = []
-    start = 0
-    val = line[0]
-    for i in range(1, len(line)):
-        if line[i] != val:
-            segments.append((start, i - 1, val))
-            start = i
-            val = line[i]
-    segments.append((start, len(line) - 1, val))
-    return segments
-
-def find_row_groups(grid):
-    groups = []
-    for row_idx, row in enumerate(grid):
-        segments = find_contiguous_segments(row)
-        for start, end, val in segments:
-            if end > start:
-                groups.append((row_idx, start, end, val))
-    return groups
-
-def find_col_groups(grid):
-    groups = []
-    for col_idx in range(len(grid[0])):
-        col = [row[col_idx] for row in grid]
-        segments = find_contiguous_segments(col)
-        for start, end, val in segments:
-            if end > start:
-                groups.append((start, col_idx, end, val))
-    return groups
-
-# ✅ 자동으로 수평 vs 수직 그룹 수 비교하여 하나만 저장
-
-def save_crop_groups(greenhouse_id, grid_data, conn):
-    cur = conn.cursor()
-    cur.execute("DELETE FROM crop_groups WHERE greenhouse_id = %s", (greenhouse_id,))
-
-    row_groups = find_row_groups(grid_data)
-    col_groups = find_col_groups(grid_data)
-
-    # ✅ 첫 번째 행의 값이 모두 같으면 가로 병합, 아니면 세로 병합
-    if all(x == grid_data[0][0] for x in grid_data[0]):
-        selected_groups = row_groups
-        is_horizontal = True
-    else:
-        selected_groups = col_groups
-        is_horizontal = False
-
-    for group in selected_groups:
-        if is_horizontal:
-            row_idx, start_col, end_col, value = group
-            cells = [[row_idx, col] for col in range(start_col, end_col + 1)]
-        else:
-            start_row, col_idx, end_row, value = group
-            cells = [[row, col_idx] for row in range(start_row, end_row + 1)]
-
-        cur.execute("""
-            INSERT INTO crop_groups (greenhouse_id, group_cells, crop_type, is_horizontal, is_read)
-            VALUES (%s, %s, %s, %s, %s)
-        """, (greenhouse_id, json.dumps(cells), value, is_horizontal, False))
-
-# --------------------------
-# 비닐하우스 생성
-# --------------------------
 @greenhouse_bp.route('/create', methods=['POST'])
 def create_greenhouse():
     try:
@@ -110,11 +36,6 @@ def create_greenhouse():
             num_cols,
             json.dumps(grid_data)
         ))
-        greenhouse_id = cur.lastrowid
-
-        # ✅ 그룹 저장
-        save_crop_groups(greenhouse_id, grid_data, conn)
-
         conn.commit()
         conn.close()
 
@@ -150,10 +71,6 @@ def update_greenhouse(greenhouse_id):
             json.dumps(grid_data),
             greenhouse_id
         ))
-
-        # ✅ 업데이트 시에도 그룹 재생성
-        save_crop_groups(greenhouse_id, grid_data, conn)
-
         conn.commit()
         conn.close()
 
@@ -263,109 +180,3 @@ def get_grid_data():
         'num_cols': greenhouse['num_cols'],
         'grid_data': json.loads(greenhouse['grid_data'])
     })
-
-@greenhouse_bp.route('/<int:greenhouse_id>/groups', methods=['GET'])
-def get_crop_groups(greenhouse_id):
-    conn = get_db_connection()
-    cur = conn.cursor(pymysql.cursors.DictCursor)
-    cur.execute("SELECT id, group_cells, crop_type, is_horizontal, harvest_amount, total_amount FROM crop_groups WHERE greenhouse_id = %s", (greenhouse_id,))
-    groups = cur.fetchall()
-    conn.close()
-    axis = None
-    if groups:
-        axis = 'row' if groups[0]['is_horizontal'] else 'col'
-    for g in groups:
-        if isinstance(g['group_cells'], str):
-            try:
-                g['group_cells'] = json.loads(g['group_cells'])
-            except Exception:
-                g['group_cells'] = []
-    groups = [g for g in groups if isinstance(g, dict) and 'group_cells' in g]
-    return jsonify({'groups': groups, 'axis': axis})
-
-
-
-# --------------------------
-# 촬영 명령 전송
-# --------------------------
-# 상수
-RASPBERRY_PI_IP = "http://192.168.137.9:5002"
-IMAGE_DIR = "test_images/"
-MODEL_RIPE = YOLO("model/ripe_straw.pt")
-MODEL_ROTTEN = YOLO("model/rotten_straw.pt")
-
-@greenhouse_bp.route('/crop_groups/read', methods=['POST'])
-def crop_groups_read():
-    try:
-        data = request.get_json()
-        group_id = data.get('group_id')
-        iot_id = data.get('iot_id')
-
-        if not group_id or not iot_id:
-            return jsonify({'message': '필수 정보가 누락되었습니다.'}), 400
-
-        # ✅ 촬영 명령 → Raspberry Pi
-        try:
-            res = requests.post(
-                f"{RASPBERRY_PI_IP}/run-pi-script",
-                json={"group_id": group_id, "iot_id": iot_id},
-                timeout=5
-            )
-            res.raise_for_status()
-            response_data = res.json()
-            filename = response_data.get("filename")
-            if not filename:
-                return jsonify({'message': '파일명이 반환되지 않았습니다.'}), 500
-            image_path = os.path.join(IMAGE_DIR, filename)
-        except Exception as iot_err:
-            print("❌ IoT 명령 전송 실패:", iot_err)
-            return jsonify({'message': 'IoT 촬영 실패', 'error': str(iot_err)}), 502
-
-        # ✅ YOLO 추론 (익은/안익은 + 썩은 것)
-        result_ripe = MODEL_RIPE(image_path, conf=0.5)
-        result_rotten = MODEL_ROTTEN(image_path, conf=0.5)
-
-        ripe_classes = [MODEL_RIPE.names[int(cls)] for cls in result_ripe[0].boxes.cls]
-        rotten_classes = [MODEL_ROTTEN.names[int(cls)] for cls in result_rotten[0].boxes.cls]
-
-        count_ripe = Counter(ripe_classes)
-        count_rotten = Counter(rotten_classes)
-
-        ripe = count_ripe.get("straw-ripe", 0)
-        unripe = count_ripe.get("straw-unripe", 0)
-        total = ripe + unripe
-        has_rotten = count_rotten.get("starw_rotten", 0) > 0
-
-        # ✅ DB 업데이트 (harvest_amount, total_amount, is_read)
-        conn = get_db_connection()
-        cur = conn.cursor()
-        cur.execute("""
-            UPDATE crop_groups
-            SET harvest_amount = %s,
-                total_amount = %s,
-                is_read = %s
-            WHERE id = %s
-        """, (ripe, total, 1 if has_rotten else 0, group_id))
-        conn.commit()
-        conn.close()
-
-        # ✅ 응답 반환
-        return jsonify({
-            "message": "📸 촬영 및 분석 완료",
-            "result": {
-                "filename": filename,
-                "ripe": ripe,
-                "unripe": unripe,
-                "total": total,
-                "rotten": "✅ O" if has_rotten else "❌ X",
-                "is_read": 1 if has_rotten else 0
-            }
-        }), 200
-
-    except Exception as e:
-        print("❌ 전체 오류:", e)
-        return jsonify({'message': '서버 오류 발생', 'error': str(e)}), 500
-
-def send_iot_capture_command(iot_id, group_id):
-    # 실제 IoT 명령 전송 로직 작성
-    pass

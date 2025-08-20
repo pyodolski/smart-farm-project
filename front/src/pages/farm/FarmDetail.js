@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import API_BASE_URL from '../../utils/config';
 import './FarmDetail.css';
@@ -31,13 +31,6 @@ function FarmDetail() {
   const [selectedBar, setSelectedBar] = useState(null);
   const [barDetailDirection, setBarDetailDirection] = useState('in');
   const [barDetailIndex, setBarDetailIndex] = useState(null);
-  const [showCaptureAreaCard, setShowCaptureAreaCard] = useState(false);
-  const [selectedCaptureBar, setSelectedCaptureBar] = useState(null);
-  const [selectedCaptureIot, setSelectedCaptureIot] = useState(null);
-  const [sensorData, setSensorData] = useState(null);
-  const [sensorLoading, setSensorLoading] = useState(true);
-
-  const mergedBarContainerRef = useRef(null);
 
   // 그리드 타입 매핑
   const gridTypeMapping = {
@@ -127,30 +120,6 @@ function FarmDetail() {
         setGroupAxis(data.axis);
       })
       .catch(err => setError(err.message));
-  }, [selectedGh]);
-
-  useEffect(() => {
-    if (mergedBarContainerRef.current) {
-      const container = mergedBarContainerRef.current;
-      // 세로/가로 스크롤 모두 중앙으로 설정
-      container.scrollTop = (container.scrollHeight - container.clientHeight) / 2;
-      container.scrollLeft = (container.scrollWidth - container.clientWidth) / 2;
-    }
-  }, [groups, groupAxis]);
-
-  useEffect(() => {
-    if (!selectedGh) return;
-    setSensorLoading(true);
-    fetch(`${API_BASE_URL}/api/sensor/latest?gh_id=${selectedGh.id}`)
-      .then(res => res.json())
-      .then(data => {
-        setSensorData(data);
-        setSensorLoading(false);
-      })
-      .catch(() => {
-        setSensorData(null);
-        setSensorLoading(false);
-      });
   }, [selectedGh]);
 
   const handleSidebarToggle = () => setSidebarOpen((open) => !open);
@@ -243,47 +212,10 @@ function FarmDetail() {
     setSelectedIot(iot);
   };
 
-  const handleIotConfirm = () => {
-    setShowIotModal(false);
-    setShowCaptureAreaCard(true);
-    setSelectedCaptureIot(selectedIot);
-  };
-
-  const handleCaptureCancel = () => {
-    setShowCaptureAreaCard(false);
-    setSelectedCaptureBar(null);
-    setSelectedCaptureIot(null);
-  };
-
-  const handleCaptureBarClick = (group) => {
-    if (group.crop_type === 0) return; // 길은 선택 불가
-    if (selectedCaptureBar && selectedCaptureBar.id === group.id) {
-      setSelectedCaptureBar(null); // 이미 선택된 바를 다시 클릭하면 해제
-    } else {
-      setSelectedCaptureBar(group);
-    }
-  };
-
-  const handleCaptureConfirm = async () => {
-    if (!selectedCaptureBar || !selectedCaptureIot) return;
-    try {
-      await fetch(`${API_BASE_URL}/api/greenhouses/crop_groups/read`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          group_id: selectedCaptureBar?.id,
-          iot_id: selectedCaptureIot?.id
-        })
-      });
-      setShowCaptureAreaCard(false);
-      setSelectedCaptureBar(null);
-      setSelectedCaptureIot(null);
-      alert('IoT 촬영 명령이 전송되었습니다.');
-      navigate(0);
-    } catch (err) {
-      setError('IoT 촬영 명령 전송에 실패했습니다.');
-    }
+  const handleIotConfirm = async () => {
+    /*
+    여기에 촬영할 iot 데이터 전송 코드 추가
+    */
   };
 
   function weatherIcon(description) {
@@ -298,128 +230,113 @@ function FarmDetail() {
     if (desc.includes('안개')) return '🌫️';
   }
 
-  const renderMergedBars = () => {
-    if (!groups) return null;
-    const isRow = groupAxis === 'row';
+  const renderGrid = () => {
     return (
-      <div
-        className="merged-bar-container"
-        ref={mergedBarContainerRef}
-        style={{
-          display: 'flex',
-          flexDirection: isRow ? 'column' : 'row',
-          gap: '16px',
-          alignItems: isRow ? 'flex-start' : 'flex-start',
-          justifyContent: isRow ? 'flex-start' : 'flex-start',
-          width: '100%',
-          height: 'auto',
-          overflow: 'auto',
-          position: 'relative',
-          margin: 0,
-          padding: '20px',
-          boxSizing: 'border-box',
-        }}
-      >
-        {groups.map((group, idx) => {
-          const { group_cells, crop_type, is_horizontal } = group;
-          if (!group_cells || group_cells.length === 0) return null;
-          const style = is_horizontal
-            ? { 
-                width: `${group_cells.length * 45}px`, 
-                height: '45px', 
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'center',
-                flexShrink: 0
-              }
-            : { 
-                width: '45px', 
-                height: `${group_cells.length * 45}px`, 
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'center', 
-                flexDirection: 'column',
-                flexShrink: 0
-              };
-          return (
-            <div
-              key={idx}
-              className={`merged-bar type-${crop_type}`}
-              style={style}
-              onClick={() => setSelectedBar({ group, axis: is_horizontal ? 'row' : 'col' })}
-            >
-              <span
-                className={is_horizontal ? undefined : 'vertical-text'}
-                style={{ fontWeight: 700 }}
+      <div className="grid-container">
+        {grid.map((row, i) => (
+          <div key={i} className="grid-row">
+            {row.map((cell, j) => (
+              <div
+                key={`${i}-${j}`}
+                className={`grid-cell type-${cell}`}
+                onClick={() => handleCellClick(i, j)}
               >
-                {gridTypeMapping[crop_type]?.label || crop_type}
-              </span>
-            </div>
-          );
-        })}
+                {gridTypeMapping[cell].label}
+              </div>
+            ))}
+          </div>
+        ))}
       </div>
     );
   };
 
-  const renderCaptureAreaCard = () => {
-    if (!groups) return null;
-    const isRow = groupAxis === 'row';
+  const handleCellClick = (row, col) => {
+    const newGrid = grid.map(r => [...r]);
+    newGrid[row][col] = (newGrid[row][col] + 1) % 3; // 0, 1, 2 순환
+    setGrid(newGrid);
+  };
+
+  const renderMergedBars = () => {
+    if (!groups || !groupAxis) return null;
     return (
-      <div className="modal-overlay">
-        <motion.div
-          key="capture-area"
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.9 }}
-          transition={{ type: "spring", bounce: 0.3, duration: 0.7 }}
-          className="capture-area-card"
-        >
-          <h2 style={{ marginBottom: 24 }}>촬영할 영역을 선택하세요</h2>
-          <div style={{ width: 700, height: 600, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <div
-              className="merged-bar-container"
-              style={{
-                display: 'flex',
-                flexDirection: isRow ? 'column' : 'row',
-                gap: '16px',
-                alignItems: isRow ? 'flex-start' : 'flex-start',
-                justifyContent: isRow ? 'flex-start' : 'flex-start',
-                minHeight: '200px',
-                minWidth: '300px',
-                position: 'relative',
-              }}
-            >
-              {groups.map((group, idx) => {
-                const { group_cells, crop_type, is_horizontal, id } = group;
-                if (!group_cells || group_cells.length === 0) return null;
-                const isSelected = selectedCaptureBar && selectedCaptureBar.id === id;
-                const isDisabled = crop_type === 0;
-                const style = is_horizontal
-                  ? { width: `${group_cells.length * 45}px`, height: '45px', display: 'flex', alignItems: 'center', justifyContent: 'center' }
-                  : { width: '45px', height: `${group_cells.length * 45}px`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column' };
-                return (
-                  <div
-                    key={id || idx}
-                    className={`merged-bar type-${crop_type} ${isSelected ? 'capture-bar-selected' : ''} ${isDisabled ? 'capture-bar-disabled' : ''}`}
-                    style={style}
-                    onClick={() => !isDisabled && handleCaptureBarClick(group)}
-                  >
-                    <span className={is_horizontal ? undefined : 'vertical-text'} style={{ fontWeight: 700 }}>
-                      {gridTypeMapping[crop_type]?.label || crop_type}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
+      <div className="merged-bar-container">
+        {groupAxis === 'row' && (
+          <div className="merged-bar-container">
+            {groups.map((group, idx) => {
+              const [rowIdx, startCol, endCol, value] = group;
+              return (
+                <div
+                  key={`row-${idx}`}
+                  className={`merged-bar type-${value}`}
+                  style={{
+                    width: `${(endCol - startCol + 1) * 45}px`,
+                    height: '45px',
+                    marginBottom: '6px',
+                    marginLeft: `${startCol * 45}px`,
+                    cursor: 'pointer'
+                  }}
+                  onClick={() => {
+                    setBarDetailDirection(1);
+                    setSelectedBar({ group, axis: groupAxis });
+                  }}
+                >
+                  {gridTypeMapping[value].label}
+                </div>
+              );
+            })}
           </div>
-          <div style={{ display: 'flex', gap: 16, marginTop: 32 }}>
-            <button className="control-btn delete" onClick={handleCaptureCancel}>취소</button>
-            <button className="control-btn capture" onClick={handleCaptureConfirm} disabled={!selectedCaptureBar}>확인</button>
+        )}
+        {groupAxis === 'col' && (
+          <div className="merged-bar-col-wrapper">
+            {groups.map((group, idx) => {
+              const [startRow, colIdx, endRow, value] = group;
+              return (
+                <div
+                  key={`col-${idx}`}
+                  className={`merged-bar type-${value}`}
+                  style={{
+                    width: '45px',
+                    height: `${(endRow - startRow + 1) * 45}px`,
+                    marginRight: '6px',
+                    marginTop: `${startRow * 45}px`,
+                    writingMode: 'vertical-rl',
+                    textAlign: 'center',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    cursor: 'pointer'
+                  }}
+                  onClick={() => {
+                    setBarDetailDirection(1);
+                    setSelectedBar({ group, axis: groupAxis });
+                  }}
+                >
+                  {gridTypeMapping[value].label}
+                </div>
+              );
+            })}
           </div>
-        </motion.div>
+        )}
       </div>
     );
   };
+
+  const weatherStepsIn = [
+    { style: { opacity: 0, transform: 'translateX(-80px)' }, duration: 400 },
+    { style: { opacity: 1, transform: 'translateX(0)' }, duration: 400 }
+  ];
+  const weatherStepsOut = [
+    { style: { opacity: 1, transform: 'translateX(0)' }, duration: 400 },
+    { style: { opacity: 0, transform: 'translateX(-80px)' }, duration: 400 }
+  ];
+  const barDetailStepsIn = [
+    { style: { opacity: 0, transform: 'translateX(80px)' }, duration: 400 },
+    { style: { opacity: 1, transform: 'translateX(0)' }, duration: 400 }
+  ];
+  const barDetailStepsOut = [
+    { style: { opacity: 1, transform: 'translateX(0)' }, duration: 400 },
+    { style: { opacity: 0, transform: 'translateX(80px)' }, duration: 400 }
+  ];
 
   return (
     <div className="farmdetail-container">
@@ -505,7 +422,67 @@ function FarmDetail() {
                         </div>
                       </div>
                     ) : (
-                      (groups && renderMergedBars())
+                      (groups && groupAxis) && (
+                        <div className="merged-bar-container">
+                          {groupAxis === 'row' && (
+                            <div className="merged-bar-container">
+                              {groups.map((group, idx) => {
+                                const [rowIdx, startCol, endCol, value] = group;
+                                return (
+                                  <div
+                                    key={`row-${idx}`}
+                                    className={`merged-bar type-${value}`}
+                                    style={{
+                                      width: `${(endCol - startCol + 1) * 45}px`,
+                                      height: '45px',
+                                      marginBottom: '6px',
+                                      marginLeft: `${startCol * 45}px`,
+                                      cursor: 'pointer'
+                                    }}
+                                    onClick={() => {
+                                      setBarDetailDirection(1);
+                                      setSelectedBar({ group, axis: groupAxis });
+                                    }}
+                                  >
+                                    {gridTypeMapping[value].label}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                          {groupAxis === 'col' && (
+                            <div className="merged-bar-col-wrapper">
+                              {groups.map((group, idx) => {
+                                const [startRow, colIdx, endRow, value] = group;
+                                return (
+                                  <div
+                                    key={`col-${idx}`}
+                                    className={`merged-bar type-${value}`}
+                                    style={{
+                                      width: '45px',
+                                      height: `${(endRow - startRow + 1) * 45}px`,
+                                      marginRight: '6px',
+                                      marginTop: `${startRow * 45}px`,
+                                      writingMode: 'vertical-rl',
+                                      textAlign: 'center',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      cursor: 'pointer'
+                                    }}
+                                    onClick={() => {
+                                      setBarDetailDirection(1);
+                                      setSelectedBar({ group, axis: groupAxis });
+                                    }}
+                                  >
+                                    {gridTypeMapping[value].label}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      )
                     )}
                   </div>
                 </div>
@@ -558,30 +535,22 @@ function FarmDetail() {
                     <hr className="weather-divider" />
                     <div className="env-card">
                       <div className="env-title">하우스 환경</div>
-                      {sensorLoading ? (
-                        <div>로딩 중...</div>
-                      ) : sensorData && !sensorData.message ? (
-                        <>
-                          <div className="env-info-row">
-                            <span className="env-label">온도</span>
-                            <span className="env-value">{sensorData.temperature}°C</span>
-                          </div>
-                          <div className="env-info-row">
-                            <span className="env-label">습도</span>
-                            <span className="env-value">{sensorData.humidity}%</span>
-                          </div>
-                          <div className="env-info-row">
-                            <span className="env-label">측정 시간</span>
-                            <span className="env-value">{sensorData.timestamp}</span>
-                          </div>
-                        </>
-                      ) : (
-                        <div style={{ color: '#ff4d4d', fontWeight: 600 }}>{sensorData?.message || '온습도를 측정하기 위해 IoT를 작동시키세요.'}</div>
-                      )}
+                      <div className="env-info-row">
+                        <span className="env-label">온도</span>
+                        <span className="env-value">25.5°C</span>
+                      </div>
+                      <div className="env-info-row">
+                        <span className="env-label">습도</span>
+                        <span className="env-value">64%</span>
+                      </div>
+                      <div className="env-info-row">
+                        <span className="env-label">측정 시간</span>
+                        <span className="env-value">2024-06-12 15:30:00</span>
+                      </div>
                     </div>
                   </motion.div>
                 ) : null}
-                {selectedBar && selectedBar.group && (
+                {selectedBar && selectedBar.group ? (
                   <motion.div
                     key="bar-detail"
                     initial={false}
@@ -591,49 +560,38 @@ function FarmDetail() {
                     className="bar-detail-card"
                     style={{ position: "absolute", width: "100%" }}
                   >
-                    <div className="bar-detail-back" onClick={() => { setBarDetailDirection(-1); setSelectedBar(null); }}>
+                    <div className="bar-detail-back" onClick={() => {
+                      setBarDetailDirection(-1);
+                      setSelectedBar(null);
+                    }}>
                       <GrFormPrevious size={30} />
                     </div>
                     <div className="bar-detail-content">
-                      <h2>
-                        {selectedBar.axis === 'row'
-                          ? `${selectedBar.group.group_cells?.[0]?.[0] + 1 || '-'}행 상세 정보`
-                          : `${selectedBar.group.group_cells?.[0]?.[1] + 1 || '-'}열 상세 정보`}
-                      </h2>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'flex-start' }}>
-                        <div>
-                          타입: <b
-                            style={{
-                              color: gridTypeMapping[selectedBar.group.crop_type]?.color || '#333'
-                            }}
-                          >
-                            {gridTypeMapping[selectedBar.group.crop_type]?.label || selectedBar.group.crop_type}
-                          </b>
-                        </div>
-                        {selectedBar.axis === 'row' ? (
-                          <>
-                            <div>행: {selectedBar.group.group_cells?.[0]?.[0] + 1 || '-'}</div>
-                            <div>길이: {selectedBar.group.group_cells?.length || '-'}m</div>
-                          </>
-                        ) : (
-                          <>
-                            <div>열: {selectedBar.group.group_cells?.[0]?.[1] + 1 || '-'}</div>
-                            <div>길이: {selectedBar.group.group_cells?.length || '-'}m</div>
-                          </>
-                        )}
-                        <div>수확 가능 작물: {selectedBar.group.harvest_amount ?? '-'}개</div>
-                        <div>총 작물: {selectedBar.group.total_amount ?? '-'}개</div>
-                        <div>
-                          수확 가능 비율: {
-                            (typeof selectedBar.group.harvest_amount === 'number' && typeof selectedBar.group.total_amount === 'number' && selectedBar.group.total_amount > 0)
-                              ? `${Math.round(selectedBar.group.harvest_amount / selectedBar.group.total_amount * 100)}%`
-                              : '-'
-                          }
-                        </div>
-                      </div>
+                      {selectedBar.axis === 'row' ? (
+                        <h2>{selectedBar.group[0] + 1}행 상세 정보</h2>
+                      ) : (
+                        <h2>{selectedBar.group[1] + 1}열 상세 정보</h2>
+                      )}
+                      <div>타입: <b
+                        className={selectedBar.group[3] === 0 ? "bar-label-outline" : ""}
+                        style={{ color: gridTypeMapping[selectedBar.group[3]].color }}
+                      >
+                        {gridTypeMapping[selectedBar.group[3]].label}
+                      </b></div>
+                      {selectedBar.axis === 'row' ? (
+                        <>
+                          <div>행: {selectedBar.group[0] + 1}행</div>
+                          <div>길이: {selectedBar.group[2] - selectedBar.group[1] + 1}m</div>
+                        </>
+                      ) : (
+                        <>
+                          <div>열: {selectedBar.group[1] + 1}열</div>
+                          <div>길이: {selectedBar.group[2] - selectedBar.group[0] + 1}m</div>
+                        </>
+                      )}
                     </div>
                   </motion.div>
-                )}
+                ) : null}
               </AnimatePresence>
             </div>
             <div className="control-card-col">
@@ -689,10 +647,6 @@ function FarmDetail() {
           </div>
         </div>
       )}
-
-      <AnimatePresence>
-        {showCaptureAreaCard && renderCaptureAreaCard()}
-      </AnimatePresence>
     </div>
   );
 }

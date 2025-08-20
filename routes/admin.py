@@ -14,7 +14,7 @@ def admin_page():
     try:
         # 1. 신고된 게시글 (5회 이상)
         cursor.execute("""
-            SELECT id, title, content, nickname AS author, report 
+            SELECT id, title, content, name AS author, report 
             FROM board 
             WHERE report >= 5 
             ORDER BY report DESC, id DESC
@@ -26,14 +26,13 @@ def admin_page():
             SELECT 
                 c.id, 
                 c.content, 
-                u.nickname AS author, 
+                c.commenter AS author, 
                 c.report, 
                 c.board_id,
                 b.title AS board_title,
-                b.nickname AS board_author
+                b.name AS board_author
             FROM comments c
             JOIN board b ON c.board_id = b.id
-            JOIN users u ON c.commenter = u.id
             WHERE c.report >= 5
             ORDER BY c.report DESC, c.id DESC
         """)

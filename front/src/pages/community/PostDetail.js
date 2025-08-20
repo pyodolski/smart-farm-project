@@ -151,7 +151,7 @@ function PostDetail() {
       <div className="post-header">
         <h2>{post.title}</h2>
         <div className="post-info">
-          <span>작성자: {post.nickname}</span>
+          <span>작성자: {post.name}</span>
           <span>작성일: {new Date(post.wdate).toLocaleDateString()}</span>
         </div>
       </div>

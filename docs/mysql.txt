@@ -14,15 +14,13 @@ CREATE TABLE IF NOT EXISTS users (
 
 CREATE TABLE board (
   id INT(11) UNSIGNED NOT NULL AUTO_INCREMENT,
-  user_id VARCHAR(50) NOT NULL,
-  nickname VARCHAR(50) NOT NULL,                 
+  name VARCHAR(20) NOT NULL,                 
   title VARCHAR(70) NOT NULL,       
   content TEXT NOT NULL,             
-  wdate TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  wdate TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, 
   view INT(11) NOT NULL DEFAULT 0,
-  report INT(10) NOT NULL DEFAULT 0,
-  PRIMARY KEY (id),
-  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  report INT(10) NoT NULL DEFAULT 0,
+  PRIMARY KEY (id)
 );
 
 CREATE TABLE comments (
@@ -38,11 +36,10 @@ CREATE TABLE comments (
 CREATE TABLE likes (
   id INT AUTO_INCREMENT PRIMARY KEY,
   board_id INT UNSIGNED NOT NULL,         
-  user_id VARCHAR(50) NOT NULL,         
+  user_name VARCHAR(20) NOT NULL,         
   ldate TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  UNIQUE (board_id, user_id),           
-  FOREIGN KEY (board_id) REFERENCES board(id) ON DELETE CASCADE,
-  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  UNIQUE (board_id, user_name),           
+  FOREIGN KEY (board_id) REFERENCES board(id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
 CREATE TABLE farms (
@@ -63,16 +60,6 @@ CREATE TABLE report_log (
   UNIQUE KEY unique_report (user_id, target_type, target_id)
 );
 
-CREATE TABLE greenhouses (
-    id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
-    farm_id INT,
-    name VARCHAR(100),
-    num_rows INT,
-    num_cols INT,
-    grid_data JSON,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-);
-
 CREATE TABLE iot (
     id INT AUTO_INCREMENT PRIMARY KEY,
     iot_name VARCHAR(100) NOT NULL,
@@ -83,6 +70,16 @@ CREATE TABLE iot (
     resolution ENUM('640x480', '1280x720', '1920x1080') DEFAULT '1280x720',
     camera_on BOOLEAN DEFAULT TRUE,
     FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE greenhouses (
+    id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    farm_id INT,
+    name VARCHAR(100),
+    num_rows INT,
+    num_cols INT,
+    grid_data JSON,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE sensor_log (
@@ -107,13 +104,12 @@ CREATE TABLE notification (
 );
 
 CREATE TABLE crop_groups (
-    id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    id INT AUTO_INCREMENT PRIMARY KEY,
     greenhouse_id INT NOT NULL,
     group_cells JSON NOT NULL,
     crop_type INT NOT NULL,
     is_horizontal BOOLEAN NOT NULL,
     harvest_amount INT DEFAULT 0,
-    total_amount INT DEFAULT 0,
     is_read BOOLEAN DEFAULT FALSE,
     FOREIGN KEY (greenhouse_id) REFERENCES greenhouses(id) ON DELETE CASCADE
 );

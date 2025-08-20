@@ -17,7 +17,6 @@ import EnemyDetail from './pages/encyclopedia/EnemyDetail';
 import Products from './pages/products/Products';
 import Statistics from './pages/statistics/Statistics';
 import './App.css';
-import './styles/common.css';
 import logo from './image/leaves-growing-from-ground-green-glyph-style_78370-6720.png';
 import { AuthContext } from './contexts/AuthContext';
 import CameraSetting from './pages/camera/CameraSetting';

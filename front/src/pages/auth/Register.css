@@ -77,9 +77,8 @@ button {
   margin-bottom: 15px;
 }
 
-.nav-login-btn:hover {
-  color: #22b904;
-  background-color: #ffffff;
+button:hover{
+  background-color: #47bd4d;
 }
 
 .error-message {

@@ -14,8 +14,8 @@ from routes.product import product_bp
 from routes.crop import crop_bp
 from routes.chart import chart_bp
 from routes.greenhouse import greenhouse_bp  # 새로 분리한 블루프린트
+from routes.group import group_bp
 from routes.notification import notification_bp
-from routes.sensor import sensor_bp
 
 # DB 연결 함수
 def get_db_connection():
@@ -43,10 +43,9 @@ app.register_blueprint(admin_bp)
 app.register_blueprint(weather_bp)
 app.register_blueprint(product_bp)
 app.register_blueprint(chart_bp)
-
 app.register_blueprint(greenhouse_bp, url_prefix='/api/greenhouses')
+app.register_blueprint(group_bp)
 app.register_blueprint(notification_bp)
-app.register_blueprint(sensor_bp)
 
 # 서버 실행
 if __name__ == '__main__':

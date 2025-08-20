@@ -116,7 +116,7 @@ function Community() {
                   <tr key={post.id} onClick={() => navigate(`/community/post/${post.id}`)}>
                     <td>{posts.length - index}</td>
                     <td className="post-title-cell">{post.title}</td>
-                    <td>{post.nickname}</td>
+                    <td>{post.author_nickname}</td>
                     <td>{formatDate(post.wdate)}</td>
                     <td>{post.view}</td>
                     <td>{post.like_count}</td>

@@ -3,12 +3,6 @@
   top: 0; left: 0; right: 0;
   z-index: 1000;
   transition: transform 0.4s cubic-bezier(0.77,0,0.175,1);
-  background: white;
-  width: 100%;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 .navbar-show {
   transform: translateY(0);
@@ -105,7 +99,12 @@
   }
 }
 
-button.notification-btn {
+.notification-container {
+  position: relative;
+  margin-right: 10px;
+}
+
+.notification-btn {
   background: none;
   border: none;
   color: #333;
@@ -114,16 +113,10 @@ button.notification-btn {
   position: relative;
   display: flex;
   align-items: center;
-  transition: color 0.3s;
 }
 
-.notification-container {
-  position: relative;
-}
-
-
-button.notification-btn:hover {
-  color: #22b904;
+.notification-btn:hover {
+  color: #4CAF50;
 }
 
 .notification-badge {
@@ -193,115 +186,4 @@ button.notification-btn:hover {
     max-height: calc(100vh - 60px);
     border-radius: 0;
   }
-}
-
-.login-modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 2000;
-}
-
-.login-modal-content {
-  position: relative;
-  z-index: 2001;
-  transform: none !important;
-  animation: none !important;
-}
-
-.login-modal-content .login-form-box {
-  transform: none !important;
-  animation: none !important;
-  background: white;
-  padding: 2rem;
-  border-radius: 8px;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.15);
-  width: 350px;
-  text-align: center;
-}
-
-.nav-login-btn {
-  background-color: #ffffff;
-  color: rgb(0, 0, 0);
-  border: none;
-  padding: 0.5rem 2rem;
-  border-radius: 25px;
-  border: 1.76px solid #000000;
-  cursor: pointer;
-  font-weight: 600;
-}
-.nav-login-btn:hover {
-  color:#000000;
-
-}
-
-.pending-farms-container {
-  position: relative;
-}
-
-.pending-farms-btn {
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 5px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #333;
-  transition: color 0.3s ease;
-}
-
-.pending-farms-btn:hover {
-  color: #4CAF50;
-}
-
-.pending-farms-popup {
-  position: absolute;
-  top: 100%;
-  right: 0;
-  background: white;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  min-width: 250px;
-  max-height: 300px;
-  overflow-y: auto;
-  z-index: 1000;
-  margin-top: 5px;
-}
-
-.pending-farm-item {
-  padding: 12px;
-  border-bottom: 1px solid #eee;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.pending-farm-item:hover {
-  background-color: #f5f5f5;
-}
-
-.pending-farm-item p {
-  margin: 4px 0;
-  font-size: 14px;
-}
-
-.pending-date {
-  display: block;
-  font-size: 12px;
-  color: #666;
-  margin-top: 4px;
-}
-
-.no-pending-farms {
-  padding: 20px;
-  text-align: center;
-  color: #666;
-  font-size: 14px;
-}
+} 

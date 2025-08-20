@@ -107,6 +107,9 @@ function MainPage() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedFarm, setSelectedFarm] = useState(null);
   const [isLoggedIn] = useContext(AuthContext);
+  const [weather, setWeather] = useState(null);
+  const [twoDay, setTwoDay] = useState([]);
+  const [selectedCity, setSelectedCity] = useState('서울특별시');
   const cities = [
     '서울특별시', '부산광역시', '대구광역시', '인천광역시', '광주광역시',
     '대전광역시', '울산광역시', '세종특별자치시', '경기도', '강원특별자치도',
@@ -120,6 +123,15 @@ function MainPage() {
       fetchFarms();
     }
   }, [isLoggedIn]);
+
+  useEffect(() => {
+    fetch(`/api/weather?city=${selectedCity}`)
+      .then(res => res.json())
+      .then(data => {
+        setWeather(data.weather);
+        setTwoDay(data.two_day);
+      });
+  }, [selectedCity]);
 
   const fetchFarms = async () => {
     try {
@@ -153,7 +165,6 @@ function MainPage() {
       if (response.ok) {
         await fetchFarms();
         setShowAddModal(false);
-        alert('농장 추가 신청이 완료되었습니다. 승인까지 최대 24시간 소요됩니다.');
       }
     } catch (error) {
       console.error('농장 추가 실패:', error);
@@ -218,6 +229,17 @@ function MainPage() {
     setSelectedFarm(null);
   };
 
+  function weatherIcon(description) {
+    if (!description) return '🌤️';
+    const desc = description.toLowerCase();
+    if (desc.includes('비')) return '🌧️';
+    if (desc.includes('눈')) return '❄️';
+    if (desc.includes('구름')) return '☁️';
+    if (desc.includes('맑')) return '☀️';
+    if (desc.includes('흐림')) return '🌥️';
+    if (desc.includes('번개')) return '⛈️';
+    if (desc.includes('안개')) return '🌫️';
+  }
 
   return (
     <div className="mainpage-layout">

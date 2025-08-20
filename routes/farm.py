@@ -170,25 +170,3 @@ def farm_weather(farm_id):
         'temperature': weather['temperature'],
         'description': weather['description']
     })
-
-#승인 대기 목록
-@farm_bp.route('/api/farms/pending', methods=['GET'])
-def get_user_pending_farms():
-    user_id = session.get('user_id')
-    if not user_id:
-        return jsonify({'error': '로그인이 필요합니다.'}), 403
-
-    conn, cursor = get_dict_cursor_connection()
-    if not (conn and cursor):
-        return jsonify({'error': 'DB 연결 실패'}), 500
-
-    try:
-        cursor.execute(
-            "SELECT * FROM farms WHERE owner_username = %s AND is_approved = 0",
-            (user_id,)
-        )
-        pending_farms = cursor.fetchall()
-        return jsonify({'pending_farms': pending_farms})
-    finally:
-        cursor.close()
-        conn.close()
