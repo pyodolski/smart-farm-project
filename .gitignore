@@ -1,0 +1,50 @@
+# 운영체제 관련
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# 파이썬
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.so
+
+*.egg-info/
+.eggs/
+pip-wheel-metadata/
+.site/
+build/
+dist/
+
+.venv/
+venv/
+env/
+ENV/
+.python-version
+
+.pytest_cache/
+.mypy_cache/
+.tox/
+.ruff_cache/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+
+# 환경변수 / 비밀정보
+.env
+.env.*
+*.local
+*.secret
+secrets.toml
+config.local.*
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# 기타 정보 파일 (개인 설정 파일 등)
+config.py
+camera_config.json
