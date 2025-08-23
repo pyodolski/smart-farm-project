@@ -1,8 +1,13 @@
 # app.py
+import os
 import pymysql
 from flask import Flask, request, session, jsonify, render_template
 from flask_cors import CORS
+from dotenv import load_dotenv
 from config import DB_CONFIG
+
+# .env 파일 로드
+load_dotenv()
 
 # 블루프린트 임포트
 from routes.user import user_bp
@@ -27,7 +32,7 @@ def get_db_connection():
 
 # Flask 앱 설정
 app = Flask(__name__)
-app.secret_key = 'your_secret_key'  # 세션 보안 키
+app.secret_key = os.getenv('FLASK_SECRET_KEY', 'your_secret_key')  # 세션 보안 키
 
 # CORS 허용 (React 연결)
 CORS(app,
@@ -50,4 +55,6 @@ app.register_blueprint(sensor_bp)
 
 # 서버 실행
 if __name__ == '__main__':
-    app.run(port=5001, debug=True)
+    port = int(os.getenv('FLASK_PORT', 5001))
+    debug = os.getenv('FLASK_DEBUG', 'True').lower() == 'true'
+    app.run(port=port, debug=debug)

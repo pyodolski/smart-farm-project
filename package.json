@@ -4,7 +4,10 @@
   "description": "Flask backend server",
   "main": "app.py",
   "scripts": {
-    "start": "python app.py"
+    "start": "python app.py",
+    "dev": "python app.py",
+    "install-deps": "pip install -r requirements.txt",
+    "setup": "pip install -r requirements.txt && cd front && npm install"
   },
   "dependencies": {
     "flask": "^2.0.0",

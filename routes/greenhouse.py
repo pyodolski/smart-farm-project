@@ -6,7 +6,7 @@ import json
 from utils.database import get_db_connection
 import requests
 from collections import Counter
-from ultralytics import YOLO
+# from ultralytics import YOLO
 import os
 
 
@@ -291,8 +291,8 @@ def get_crop_groups(greenhouse_id):
 # 상수
 RASPBERRY_PI_IP = "http://192.168.137.9:5002"
 IMAGE_DIR = "test_images/"
-MODEL_RIPE = YOLO("model/ripe_straw.pt")
-MODEL_ROTTEN = YOLO("model/rotten_straw.pt")
+# MODEL_RIPE = YOLO("model/ripe_straw.pt")
+# MODEL_ROTTEN = YOLO("model/rotten_straw.pt")
 
 @greenhouse_bp.route('/crop_groups/read', methods=['POST'])
 def crop_groups_read():
@@ -321,20 +321,26 @@ def crop_groups_read():
             print("❌ IoT 명령 전송 실패:", iot_err)
             return jsonify({'message': 'IoT 촬영 실패', 'error': str(iot_err)}), 502
 
-        # ✅ YOLO 추론 (익은/안익은 + 썩은 것)
-        result_ripe = MODEL_RIPE(image_path, conf=0.5)
-        result_rotten = MODEL_ROTTEN(image_path, conf=0.5)
+        # ✅ YOLO 추론 (익은/안익은 + 썩은 것) - 임시 주석처리
+        # result_ripe = MODEL_RIPE(image_path, conf=0.5)
+        # result_rotten = MODEL_ROTTEN(image_path, conf=0.5)
 
-        ripe_classes = [MODEL_RIPE.names[int(cls)] for cls in result_ripe[0].boxes.cls]
-        rotten_classes = [MODEL_ROTTEN.names[int(cls)] for cls in result_rotten[0].boxes.cls]
+        # ripe_classes = [MODEL_RIPE.names[int(cls)] for cls in result_ripe[0].boxes.cls]
+        # rotten_classes = [MODEL_ROTTEN.names[int(cls)] for cls in result_rotten[0].boxes.cls]
 
-        count_ripe = Counter(ripe_classes)
-        count_rotten = Counter(rotten_classes)
+        # count_ripe = Counter(ripe_classes)
+        # count_rotten = Counter(rotten_classes)
 
-        ripe = count_ripe.get("straw-ripe", 0)
-        unripe = count_ripe.get("straw-unripe", 0)
-        total = ripe + unripe
-        has_rotten = count_rotten.get("starw_rotten", 0) > 0
+        # ripe = count_ripe.get("straw-ripe", 0)
+        # unripe = count_ripe.get("straw-unripe", 0)
+        # total = ripe + unripe
+        # has_rotten = count_rotten.get("starw_rotten", 0) > 0
+        
+        # 임시 더미 데이터
+        ripe = 5
+        unripe = 3
+        total = 8
+        has_rotten = False
 
         # ✅ DB 업데이트 (harvest_amount, total_amount, is_read)
         conn = get_db_connection()
