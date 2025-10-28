@@ -43,7 +43,7 @@ def admin_page():
         cursor.execute("""
             SELECT id, name, location, owner_username, document_path 
             FROM farms 
-            WHERE is_approved = 0 
+            WHERE is_approved = false 
             ORDER BY id DESC
         """)
         pending_farms = cursor.fetchall()
@@ -126,7 +126,7 @@ def approve_farm(farm_id):
                 return "농장을 찾을 수 없습니다", 404
 
             # 농장 승인 상태 업데이트
-            cursor.execute("UPDATE farms SET is_approved = 1 WHERE id = %s", (farm_id,))
+            cursor.execute("UPDATE farms SET is_approved = true WHERE id = %s", (farm_id,))
             
             # 알림 생성
             notification_mgr = NotificationManager()

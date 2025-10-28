@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import './DiseaseDetail.css';
+import API_BASE_URL from '../../utils/config';
 
 const DiseaseDetail = () => {
   const { diseaseId } = useParams();
@@ -18,7 +19,9 @@ const DiseaseDetail = () => {
     const fetchDiseaseData = async () => {
       try {
         setLoading(true);
-        const response = await fetch(`/api/diseases/${diseaseId}`);
+        const response = await fetch(`${API_BASE_URL}/api/diseases/${diseaseId}`, {
+          credentials: 'include'
+        });
         
         if (!response.ok) {
           throw new Error('병해 정보를 불러올 수 없습니다.');

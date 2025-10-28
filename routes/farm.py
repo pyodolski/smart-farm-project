@@ -19,7 +19,7 @@ def get_farms():
     conn, cursor = get_dict_cursor_connection()
     if conn and cursor:
         try:
-            cursor.execute("SELECT * FROM farms WHERE is_approved = 1 AND owner_username = %s", (owner,))
+            cursor.execute("SELECT * FROM farms WHERE is_approved = true AND owner_username = %s", (owner,))
             farms = cursor.fetchall()
             return jsonify({'farms': farms})
         finally:
@@ -69,7 +69,7 @@ def get_farm_detail(farm_id):
     conn, cursor = get_dict_cursor_connection()
     if conn and cursor:
         try:
-            cursor.execute("SELECT * FROM farms WHERE id = %s AND is_approved = 1", (farm_id,))
+            cursor.execute("SELECT * FROM farms WHERE id = %s AND is_approved = true", (farm_id,))
             farm = cursor.fetchone()
             
             if not farm:
@@ -148,7 +148,7 @@ def farm_weather(farm_id):
         return jsonify({'error': 'DB 연결 실패'}), 500
     try:
         cursor.execute(
-            "SELECT id, name, location FROM farms WHERE id = %s AND is_approved = 1",
+            "SELECT id, name, location FROM farms WHERE id = %s AND is_approved = true",
             (farm_id,)
         )
         farm = cursor.fetchone()
@@ -184,7 +184,7 @@ def get_user_pending_farms():
 
     try:
         cursor.execute(
-            "SELECT * FROM farms WHERE owner_username = %s AND is_approved = 0",
+            "SELECT * FROM farms WHERE owner_username = %s AND is_approved = false",
             (user_id,)
         )
         pending_farms = cursor.fetchall()

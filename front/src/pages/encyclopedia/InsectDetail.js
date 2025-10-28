@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import './InsectDetail.css';
+import API_BASE_URL from '../../utils/config';
 
 const InsectDetail = () => {
   const { insectId } = useParams();
@@ -18,7 +19,9 @@ const InsectDetail = () => {
     const fetchInsectData = async () => {
       try {
         setLoading(true);
-        const response = await fetch(`/api/insects/${insectId}`);
+        const response = await fetch(`${API_BASE_URL}/api/insects/${insectId}`, {
+          credentials: 'include'
+        });
         
         if (!response.ok) {
           throw new Error('해충 정보를 불러올 수 없습니다.');

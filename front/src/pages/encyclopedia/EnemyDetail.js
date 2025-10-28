@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import './EnemyDetail.css';
+import API_BASE_URL from '../../utils/config';
 
 const EnemyDetail = () => {
   const { enemyId } = useParams();
@@ -18,7 +19,9 @@ const EnemyDetail = () => {
     const fetchEnemyData = async () => {
       try {
         setLoading(true);
-        const response = await fetch(`/api/enemies/${enemyId}`);
+        const response = await fetch(`${API_BASE_URL}/api/enemies/${enemyId}`, {
+          credentials: 'include'
+        });
         
         if (!response.ok) {
           throw new Error('천적 정보를 불러올 수 없습니다.');

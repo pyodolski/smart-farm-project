@@ -7,11 +7,18 @@ from flask_cors import CORS
 from email.mime.text import MIMEText
 from email.header import Header
 from utils.database import get_db_connection, get_dict_cursor_connection
+import psycopg2
 
 user_bp = Blueprint('user', __name__)
 
 def get_db_conn():
-    return pymysql.connect(**DB_CONFIG)
+    return psycopg2.connect(
+        host=DB_CONFIG['host'],
+        user=DB_CONFIG['user'],
+        password=DB_CONFIG['password'],
+        database=DB_CONFIG['database'],
+        port=DB_CONFIG['port']
+    )
 
 @user_bp.route('/login', methods=['GET', 'POST'])
 def login():
@@ -47,7 +54,7 @@ def login():
                             "nickname": nickname
                         }
 
-                        if is_admin == 1:
+                        if is_admin:
                             response["admin"] = True
 
                         return jsonify(response), 200
@@ -71,6 +78,7 @@ def send_code():
     code = str(random.randint(100000, 999999))
     session['verify_email'] = email
     session['verify_code'] = code
+    
     try:
         msg = MIMEText(f'인증번호는 {code} 입니다.', _charset='utf-8')
         msg['Subject'] = Header('이메일 인증번호', 'utf-8')

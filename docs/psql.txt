@@ -1,0 +1,125 @@
+CREATE TYPE report_target_type AS ENUM('post', 'comment');
+CREATE TYPE iot_capture_interval AS ENUM('5', '15', '30');
+CREATE TYPE iot_direction AS ENUM('left', 'right', 'both');
+CREATE TYPE iot_resolution AS ENUM('640x480', '1280x720', '1920x1080');
+CREATE TYPE notification_type AS ENUM('iot 탐색 종료', '병해충 발생', '새 댓글', '승인 허가');
+
+-- 테이블
+CREATE TABLE users (
+    id VARCHAR(50) NOT NULL PRIMARY KEY,
+    password VARCHAR(100) NOT NULL,
+    nickname VARCHAR(50) NOT NULL UNIQUE,
+    email VARCHAR(100) NOT NULL UNIQUE,
+    name VARCHAR(50) NOT NULL,
+    is_black BOOLEAN NOT NULL DEFAULT FALSE,
+    is_admin BOOLEAN NOT NULL DEFAULT FALSE,
+    kakao_id VARCHAR(64) UNIQUE,
+    oauth_provider VARCHAR(16),
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE board (
+    id SERIAL PRIMARY KEY,
+    user_id VARCHAR(50) NOT NULL,
+    nickname VARCHAR(50) NOT NULL,
+    title VARCHAR(70) NOT NULL,
+    content TEXT NOT NULL,
+    wdate TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    view INTEGER NOT NULL DEFAULT 0,
+    report INTEGER NOT NULL DEFAULT 0,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE comments (
+    id SERIAL PRIMARY KEY,
+    board_id INTEGER NOT NULL,
+    commenter VARCHAR(20) NOT NULL,
+    content TEXT NOT NULL,
+    report INTEGER NOT NULL DEFAULT 0,
+    cdate TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (board_id) REFERENCES board(id) ON DELETE CASCADE
+);
+
+CREATE TABLE likes (
+    id SERIAL PRIMARY KEY,
+    board_id INTEGER NOT NULL,
+    user_id VARCHAR(50) NOT NULL,
+    ldate TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (board_id, user_id),
+    FOREIGN KEY (board_id) REFERENCES board(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE farms (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100),
+    location VARCHAR(255),
+    owner_username VARCHAR(100),
+    document_path VARCHAR(255),
+    is_approved BOOLEAN DEFAULT FALSE
+);
+
+CREATE TABLE report_log (
+    id SERIAL PRIMARY KEY,
+    user_id VARCHAR(50) NOT NULL,
+    target_type report_target_type NOT NULL,
+    target_id INTEGER NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (user_id, target_type, target_id)
+);
+
+CREATE TABLE greenhouses (
+    id SERIAL PRIMARY KEY,
+    farm_id INTEGER,
+    name VARCHAR(100),
+    num_rows INTEGER,
+    num_cols INTEGER,
+    grid_data JSON,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE iot (
+    id SERIAL PRIMARY KEY,
+    iot_name VARCHAR(100) NOT NULL,
+    owner_id VARCHAR(50) NOT NULL,
+    start_date TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    capture_interval iot_capture_interval DEFAULT '15',
+    direction iot_direction DEFAULT 'both',
+    resolution iot_resolution DEFAULT '1280x720',
+    camera_on BOOLEAN DEFAULT TRUE,
+    FOREIGN KEY (owner_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE sensor_log (
+    id SERIAL PRIMARY KEY,
+    gh_id INTEGER,
+    temperature FLOAT,
+    humidity FLOAT,
+    logged_at TIMESTAMPTZ,
+    FOREIGN KEY (gh_id) REFERENCES greenhouses(id) ON DELETE SET NULL
+);
+
+CREATE TABLE notification (
+    id SERIAL PRIMARY KEY,
+    receiver_id VARCHAR(50) NOT NULL,
+    message TEXT NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+    type notification_type NOT NULL,
+    image_url VARCHAR(255),
+    target_id INTEGER NOT NULL,
+    is_read BOOLEAN DEFAULT FALSE,
+    FOREIGN KEY (receiver_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE crop_groups (
+    id SERIAL PRIMARY KEY,
+    greenhouse_id INTEGER NOT NULL,
+    group_cells JSON NOT NULL,
+    crop_type INTEGER NOT NULL,
+    is_horizontal BOOLEAN NOT NULL,
+    harvest_amount INTEGER DEFAULT 0,
+    total_amount INTEGER DEFAULT 0,
+    is_read BOOLEAN DEFAULT FALSE,
+    FOREIGN KEY (greenhouse_id) REFERENCES greenhouses(id) ON DELETE CASCADE
+);
+

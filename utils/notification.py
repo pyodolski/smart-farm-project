@@ -1,11 +1,18 @@
-import pymysql
+import psycopg2
+from psycopg2.extras import RealDictCursor
 from config import DB_CONFIG
 from datetime import datetime
 
 class NotificationManager:
     def __init__(self):
-        self.db = pymysql.connect(**DB_CONFIG)
-        self.cursor = self.db.cursor(pymysql.cursors.DictCursor)
+        self.db = psycopg2.connect(
+            host=DB_CONFIG['host'],
+            user=DB_CONFIG['user'],
+            password=DB_CONFIG['password'],
+            database=DB_CONFIG['database'],
+            port=DB_CONFIG['port']
+        )
+        self.cursor = self.db.cursor(cursor_factory=RealDictCursor)
 
     #알림 생성
     def create_notification(self, receiver_id: str, message: str, type: str, target_id: int, image_url: str = None):
@@ -87,7 +94,7 @@ class NotificationManager:
                 print(f"Error: Greenhouse {greenhouse_id} not found")
                 return False
             
-            farm_id = result[0]
+            farm_id = result['farm_id']
             message = f"'{greenhouse_name}' 비닐하우스의 탐색이 완료되었습니다."
             return self.create_notification(
                 receiver_id=receiver_id,

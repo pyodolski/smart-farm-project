@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session, jsonify
-import pymysql.cursors
+import psycopg2
+from psycopg2.extras import RealDictCursor
 from config import DB_CONFIG
 from utils.notification import NotificationManager
 
@@ -7,12 +8,18 @@ post_bp = Blueprint('post', __name__)
 
 # DB 연결 공통 함수
 def get_db_conn():
-    return pymysql.connect(**DB_CONFIG)
+    return psycopg2.connect(
+        host=DB_CONFIG['host'],
+        user=DB_CONFIG['user'],
+        password=DB_CONFIG['password'],
+        database=DB_CONFIG['database'],
+        port=DB_CONFIG['port']
+    )
 
 def get_dict_cursor_conn():
     conn = get_db_conn()
     if conn:
-        return conn, conn.cursor(pymysql.cursors.DictCursor)
+        return conn, conn.cursor(cursor_factory=RealDictCursor)
     return None, None
 
 # 게시물 신고 기능

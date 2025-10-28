@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import './EncyclopediaDetail.css';
 import '../../styles/common.css';
+import API_BASE_URL from '../../utils/config';
 
 const cropImages = {
   'strawberry': 'https://cdn.pixabay.com/photo/2018/04/29/11/54/strawberries-3359755_1280.jpg',
@@ -28,12 +29,14 @@ const EncyclopediaDetail = () => {
       return cropMap[id] || id;
     };
 
-    const fetchCropData= async ()=> {
-      try{
+    const fetchCropData = async () => {
+      try {
         setLoading(true);
-        const response = await fetch(`/api/crops/detail/${crop}`);
+        const response = await fetch(`${API_BASE_URL}/api/crops/detail/${crop}`, {
+          credentials: 'include'
+        });
         
-        if(!response.ok) {
+        if (!response.ok) {
           console.error(`API 응답 오류: ${response.status}`);
           throw new Error(`${crop}에 대한 정보를 불러올 수 없습니다.`);
         }
@@ -52,7 +55,7 @@ const EncyclopediaDetail = () => {
         setEnemies(data.enemies || []);
         setCropName(getCropNameKor(crop));
 
-      }catch(error) {
+      } catch (error) {
         console.error('데이터 불러오기 실패:', error);
         setError(error.message);
       } finally {
@@ -61,8 +64,7 @@ const EncyclopediaDetail = () => {
     };
 
     fetchCropData();
-  }, 
-  [crop]);
+  }, [crop]);
 
 
   const handleDiseaseClick = (diseaseId) => {

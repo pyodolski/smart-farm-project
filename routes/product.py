@@ -111,7 +111,7 @@ def upload_sensor():
     try:
         with conn.cursor() as cursor:
             sql = """
-                INSERT INTO sensor_log (temperature, humidity, timestamp)
+                INSERT INTO sensor_log (temperature, humidity, logged_at)
                 VALUES (%s, %s, %s)
             """
             cursor.execute(sql, (temperature, humidity, timestamp))
